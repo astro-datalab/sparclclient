@@ -6,7 +6,7 @@ from pathlib import Path, PosixPath
 from warnings import warn
 import json
 # Local Packages
-#import api.conf
+from api.utils import tic,toc
 # External Packages
 import requests
 
@@ -14,16 +14,19 @@ import requests
 # http :8030/sparc/version
 
 # sids = [394069118933821440, 1355741587413428224, 1355617892355303424, 1355615143576233984, 1355661872820414464, 1355755331308775424, 1355716848401803264]
-# client.retrieve(sids, verbose=False)[0]['spectra']['coadd'].keys()
-# > Out[122]: dict_keys(['sky', 'flux', 'ivar', 'model', 'wdisp', 'loglam', 'or_mask', 'and_mask'])
-
+# client = api.api.SparcApi(url='http://localhost:8030/sparc')
+# client.retrieve(sids)[0].keys() # >> dict_keys(['flux','loglam'])
+#
+# data0 = client.retrieve(sids,columns='flux')
+# f'{len(str(data0)):,}'   # -> '3,435,687'
+#
+# dataall = client.retrieve(sids,columns=allc)
+# f'{len(str(dataall)):,}' # -> '27,470,052'
 
 _PROD = 'https://specserver.noirlab.edu'
 _DEV = 'http://localhost:8030/sparc'
 
-coadd_columns = set(['flux', 'loglam', 'ivar',
-                     'and_mask', 'or_mask',
-                     'wdisp', 'sky', 'model'])
+allc = ['flux','loglam', 'ivar', 'and_mask', 'or_mask','wdisp', 'sky', 'model']
 
 class SparcApi():
     """Astro Data Archive - Application Programming Interface.
@@ -66,11 +69,17 @@ class SparcApi():
 
         url = f'{self.apiurl}/retrieve/?{qstr}'
         if verbose:
-            print(f'From "{url}" get {len(objid_list)} spectra')
+            tic()
         res = self.session.post(url, json=objid_list)
+        if verbose:
+            elapsed = toc()
         res.raise_for_status()
 
         if res.status_code != 200:
             raise Exception(res)
 
+        if verbose:
+            count = len(res.json())
+            print(f'From "{url}" got {count} spectra in '
+                  f'{elapsed:.2f} seconds ({count/elapsed:.0f} spectra/sec)')
         return res.json()
