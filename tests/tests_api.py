@@ -1,5 +1,6 @@
 # Unit tests for the NOIRLab SPARC API Client
 # EXAMPLES:
+#   python -m unittest tests.tests_api
 #   python -m unittest tests.tests_api.ApiTest
 #   python -m unittest tests.tests_api.ApiTest.test_find_3
 
@@ -25,7 +26,7 @@ class ApiTest(unittest.TestCase):
         # AdaApi object creation compares the version from the Server
         # against the one expected by the Client. Throws error if
         # the Client is a major version behind.
-        cls.client = api.api.SparcApi(url='http://localhost:8030/sparc')
+        cls.client = api.api.SparcApi(url=rooturl)
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()

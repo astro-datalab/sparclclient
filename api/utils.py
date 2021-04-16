@@ -22,11 +22,18 @@ def here_now():
     return(hostname,now)
 
 # dict((k,len(v)) for (k,v) in qs[0]['spzline'].items())
-def json_structure(dd):
-    """Nested structure of JSON object. Avoid spewing big lists."""
-    if type(dd) is list:
-        return f'CNT={len(dd)}'
-    elif type(dd) is dict:
-        return dict((k,dict_structure(v)) for (k,v) in dd.items())
+def objform(obj):
+    """Nested structure of python object. Avoid spewing big lists."""
+    if obj is None:
+        return None
+    elif type(obj) is list:
+        if len(obj) > 999:
+            return f'CNT={len(obj)}'
+        elif len(obj) < 9:
+            return [objform(x) for x in obj]
+        else:
+            return [objform(x) for x in obj[:10]] + ['...']
+    elif type(obj) is dict:
+        return dict((k,objform(v)) for (k,v) in obj.items())
     else:
-        return 'NA'
+        return str(type(obj))

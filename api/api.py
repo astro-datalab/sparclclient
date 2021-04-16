@@ -25,7 +25,8 @@ import requests
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
 _PROD = 'https://specserver.noirlab.edu'
-_DEV = 'http://localhost:8030/sparc'
+_DEV = 'http://localhost:8030'
+
 
 allc = ['flux','loglam', 'ivar', 'and_mask', 'or_mask','wdisp', 'sky', 'model']
 
@@ -40,13 +41,17 @@ class SparcApi():
     #! def __init__(self, url=_PROD, verbose=False): @@@
     def __init__(self, url=_DEV, verbose=False, limit=None):
         self.rooturl=url.rstrip("/")
-        self.apiurl = f'{self.rooturl}'
+        self.apiurl = f'{self.rooturl}/sparc'
         self.apiversion = None
         self.verbose = verbose
         self.limit = limit
+        # require response within this num seconds
+        self.timeout = (1.1, 90*60) #(connect timeout, read timeout) seconds
+        #@@@ read timeout should be func post payload size
 
         # Get API Version
-        self.apiversion = float(requests.get(f'{self.apiurl}/version/').content)
+        verstr = requests.get(f'{self.apiurl}/version/',timeout=self.timeout).content
+        self.apiversion = float(verstr)
 
         if (int(self.apiversion) - int(SparcApi.KNOWN_GOOD_API_VERSION)) >= 1:
             msg = (f'The helpers.api module is expecting an older '
@@ -71,27 +76,37 @@ class SparcApi():
 
         """
         if self.apiversion is None:
-            response = self.requests.get(f'{self.apiurl}/version',
-                                         timeout=self.TIMEOUT,
-                                         cache=True)
+            response = requests.get(f'{self.apiurl}/version',
+                                    timeout=self.TIMEOUT,
+                                    cache=True)
             self.apiversion = float(response.content)
         return self.apiversion
 
     def retrieve(self, objid_list, columns=None,
                  xfer=None, limit=False, verbose=False):
         """Get spectrum from spectObjId list"""
+        coadd_columns = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
+                         'wdisp', 'sky', 'model']
+        dftcols = ['flux', 'loglam']
         verbose = verbose or self.verbose
         lim = None if limit is None else (limit or self.limit)
 
-        cols = ['flux', 'loglam'] if columns is None else columns
-        uparams =dict(limit=lim, xfer=xfer, columns=','.join(cols))
+        cols = dftcols if columns is None else columns
+        uparams =dict(columns=','.join(cols), limit=lim)
+        if xfer is not None:
+            uparams['xfer'] = xfer
         qstr = urlencode(uparams)
 
         url = f'{self.apiurl}/retrieve/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
+            if columns is None:
+                print(f'WARNING: No "columns" parameter provided. '
+                      f'Defaulting to {dftcols}. '
+                      f'The available columns are {allc}')
             tic()
-        res = self.session.post(url, json=objid_list)
+        #@@@res = self.session.post(url, json=objid_list, timeout=self.timeout)
+        res = requests.post(url, json=objid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
 
@@ -107,7 +122,7 @@ class SparcApi():
             ret =  res.json()
         if verbose:
             count = len(ret)
-            print(f'From "Got spectra in '
+            print(f'Got {count} spectra in '
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
 
