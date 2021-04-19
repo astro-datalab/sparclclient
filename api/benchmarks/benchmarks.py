@@ -6,7 +6,7 @@
 # python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list
 # python3 -m api.benchmarks.benchmarks ~/data/sparc/sids5.list
 
-# Alice reported ~38 minutes on 64K retrieved from specClient (rate=28 spec/sec)
+# Alice reported 22 minutes on 64K retrieved from specClient (rate=48 spec/sec)
 #   slack.spectro: 3/31/2021
 
 ## Standard Python library
@@ -29,14 +29,14 @@ def human_size(num, units=['b','KB','MB','GB','TB', 'PB', 'EB']):
 
 # with open('/data/sparc/sids5.list') as f: sids = [int(line.strip()) for line in f if not line.startswith('#')]
 def run_retrieve(sids, columns=None, xfer='p', verbose=True):
-    print(f'Retrieving {len(sids):,} spectra')
+    #!print(f'Retrieving {len(sids):,} spectra')
     psutil.cpu_percent() # begin interval
     client = SparcApi(url=rooturl)
     result = dict(numcols=len(columns), numsids=len(sids))
     if verbose:
         print(f'Experiment: {pformat(result)}')
     tic()
-    data = client.retrieve(sids,columns=columns, xfer=xfer, verbose=verbose)
+    data = client.retrieve(sids,columns=columns, xfer=xfer)
     elapsed = toc()
     cpu = psutil.cpu_percent(interval=1)
     if verbose:
@@ -53,29 +53,83 @@ def run_retrieve(sids, columns=None, xfer='p', verbose=True):
                   )
     return(result)
 
+def run_paged_retrieve(sids, columns=None, xfer='p', page=1000, verbose=True, keepall=False):
+    """Do 1 more more PAGE size retrieves to get data for all sids"""
+    print(f'Paged Retrieve of {len(sids):,} spectra')
+    psutil.cpu_percent() # begin interval
+    client = SparcApi(url=rooturl)
+    result = dict(numcols=len(columns), numsids=len(sids), xfer=xfer, page=page)
+    if verbose:
+        print(f'Experiment: {pformat(result)}')
 
-def run_trials(allsids, xfer='p',  verbose=True):
-    allcols = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
-               'wdisp', 'sky', 'model']
-    #sidcnts = [644, 500, 400, 300, 200, 5, 2] #@@@
-    #sidcnts = [62000, 6000, 600, 60, 6] #@@@
-    sidcnts = [60000, 6000, 600, 60, 6] #@@@
-    sidcnts = [6*10**x for x in range(5)]
+    data = []
+    tic()
+    for cnt in range(0,len(sids),page):
+        if keepall:
+            data.extend(client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer))
+        else:
+            client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer)
+    elapsed = toc()
 
-    numcols = range(1,len(allcols)+1) #@@@
-    numcols = range(1,3)
+    cpu = psutil.cpu_percent(interval=1)
+    if verbose:
+        print(f'len(sids)={len(sids)} len(data)={len(data)}')
+    #assert len(sids) == len(data)   # @@@ but some of ingest may have failed
+    #!assert len(data[0]['spectra__coadd__flux']) > 1000 # @@@
+    result.update(elapsed=elapsed,
+                  retrieved=len(data),
+                  rate=len(data)/elapsed,
+                  end_smrem=psutil.swap_memory().free,
+                  end_vmrem=psutil.virtual_memory().available,
+                  end_cpuload=os.getloadavg()[1],
+                  end_cpuperc=psutil.cpu_percent() # end interval
+                  )
+    return(result)
+
+
+# flux,loglam,ivar,and_mask,or_mask,wdisp,sky,model
+allcols = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
+           'wdisp', 'sky', 'model']
+
+experiment_0 = dict(
+    xfers    = ['p'],
+    sidcnts = [600, 60],
+    numcols = range(1,3),
+    )
+experiment_1 = dict(
+    xfers    = ['p'],
+    sidcnts = [6, 60, 600, 6000, 30000],
+    numcols = range(1,3),
+    #numcols = range(1,len(allcols)+1),
+    )
+experiment_9 = dict(
+    xfers    = ['p','j'],
+    sidcnts = sorted(set([min(7*10**x, 65000) for x in range(6)])),
+    numcols = range(1,len(allcols)+1),
+    )
+
+def run_trials(allsids,  verbose=True):
+    ex = experiment_9 #@@@
+
+    xfers = ex['xfers']
+    sidcnts = ex['sidcnts']
+    numcols = ex['numcols']
+
+    klist = ['elapsed','numcols','numsids','page','rate','xfer']
 
     all = []
-    for n in numcols:
-        for sidcnt in sidcnts:
-            if sidcnt > len(allsids):
-                continue
-            sids = allsids[:sidcnt]
+    for xfer in xfers:
+        for n in numcols:
             cols = allcols[:n]
-            result = run_retrieve(sids, columns=cols, xfer='p')
-            if verbose:
-                print(f'Run-Result: {pformat(result)}')
-            all.append(result)
+            for sidcnt in sidcnts:
+                sids = allsids[:sidcnt]
+                #!result = run_retrieve(sids, columns=cols, xfer='p')
+                result = run_paged_retrieve(sids, columns=cols, xfer='p')
+                if verbose:
+                    #print(f'Run-Result: {pformat(result)}')
+                    reduced = dict((k,result[k]) for k in result.keys() if k in klist)
+                    print(f'Run-Result: {reduced}')
+                all.append(result)
     report(all, len(allsids), xfer=xfer)
     return(all)
 
@@ -94,31 +148,34 @@ def report(results,sidcnt, xfer=None, bandwidth=True):
         ul_speed = 0
         dl_speed = 0
 
+    #! Upload speed:    {human_size(ul_speed)}
     print(f'\nBenchmark run on {hostname} at {now} with {sidcnt} sids.')
     print(f'''
 Transfer Method: {"Pickle" if xfer=='p' else "JSON"}
 Download speed:  {human_size(dl_speed)}
-Upload speed:    {human_size(ul_speed)}
-Load Avg:        {min5:.1f} (avg num processes running over last 5 minutes)
-CPU utilization: {cpuperc:.0f}%
-Swap Mem Avail:    {human_size(smrem)}
-Virtual Mem Avail: {human_size(vmrem)}
-(Above statistics are for CLIENT.)
     ''')
+    # Load Avg:        {min5:.1f} (avg num processes running over last 5 minutes)
+    # CPU utilization: {cpuperc:.0f}%
+    # Swap Mem Avail:    {human_size(smrem)}
+    # Virtual Mem Avail: {human_size(vmrem)}
+    # (Above statistics are for CLIENT.)
 
-    print(f'Column\tSID\tRate \tAvg \tCPU \tSwap\tVirt')
-    print(f' Count\tCnt\ts/sec\tLoad\tUtil\t Mem\t Mem')
-    print(f'------\t---\t-----\t----\t----')
+    #!print(f'Column\tSID\tRate \tAvg \tCPU \tSwap\tVirt')
+    #!print(f' Count\tCnt\ts/sec\tLoad\tUtil\t Mem\t Mem')
+    #!print(f'------\t---\t-----\t----\t----')
+    print(f'Column\tSID\tRate ')
+    print(f' Count\tCnt\ts/sec')
+    print(f'------\t---\t-----')
     for r in results:
         print(("{numcols}\t"
                "{numsids}\t"
                "{rate:.0f}\t"
-               "{end_cpuload:.02f}\t"
-               "{end_cpuperc:.0f}%\t"
-               "{smrem}\t"
-               "{vmrem}\t"
-               ).format(smrem=human_size(r['end_smrem']),
-                        vmrem=human_size(r['end_vmrem']),
+               #!"{end_cpuload:.02f}\t"
+               #!"{end_cpuperc:.0f}%\t"
+               #!"{smrem}\t"
+               #!"{vmrem}\t"
+               ).format(#smrem=human_size(r['end_smrem']),
+                        #vmrem=human_size(r['end_vmrem']),
                         **r))
 
     print('''

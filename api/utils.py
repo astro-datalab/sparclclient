@@ -23,7 +23,9 @@ def here_now():
 
 # dict((k,len(v)) for (k,v) in qs[0]['spzline'].items())
 def objform(obj):
-    """Nested structure of python object. Avoid spewing big lists."""
+    """Nested structure of python object. Avoid spewing big lists.
+    See also: https://code.activestate.com/recipes/577504/
+    """
     if obj is None:
         return None
     elif type(obj) is list:

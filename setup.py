@@ -13,7 +13,7 @@ setuptools.setup(
     python_requires=">=3.6",
     description="A client for getting spectra data from NOIRLab.",
 
-    author="DataLab",
+    author="NOIRLab DataLab",
     author_email="datalab@noirlab.edu",
     classifiers=[
         "License :: OSI Approved :: BSD License",
