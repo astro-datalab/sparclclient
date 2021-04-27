@@ -46,14 +46,21 @@ class ApiTest(unittest.TestCase):
         version = self.client.version
         assert 1.0 <= version < 2.0
 
+    def test_sample(self):
+        sids = self.client.sample_sids()
+        #print(f'sids={sids}')
+        assert len(sids) == 5
+
+
     def test_retrieve_0(self):
         """Get spectra using small list of spectObjIds"""
         name = 'retrieve_0'
         this = self.test_retrieve_0
-        sids = [1355590404564609024, 1355598650901817344]
+        sids = self.client.sample_sids()[:2]
         tic()
         data = self.client.retrieve(sids)
         self.timing[name] = toc()
         self.doc[name] = this.__doc__
         self.count[name] = len(data)
+        #print(f'DBG: len(data) = {len(data)}')
         assert len(data) == 2

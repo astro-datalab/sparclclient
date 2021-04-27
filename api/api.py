@@ -63,6 +63,11 @@ class SparcApi():
             raise Exception(msg)
         self.session = requests.Session()
 
+    def sample_sids(self):
+        """Return a small list of spect ids"""
+        response = requests.get(f'{self.apiurl}/sample', timeout=self.timeout)
+        #print(f'content={response.content}')
+        return response.json()
 
     @property
     def version(self):

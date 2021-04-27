@@ -7,9 +7,9 @@ with open("requirements.txt") as f:
     install_require = f.read().splitlines()
 
 setuptools.setup(
-    name="sparcclient",
+    name="sparclclient",
     version="0.0.3",
-    url="https://github.com/noaodatalab/sparcclient",
+    url="https://github.com/noaodatalab/sparclclient",
     python_requires=">=3.6",
     description="A client for getting spectra data from NOIRLab.",
 
