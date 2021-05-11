@@ -163,6 +163,8 @@ class SparclApi():
 
         if xfer=='p':
             ret = pickle.loads(res.content)
+        elif xfer=='database':
+            ret =  res.json()
         else:
             print(f'Unknown xfer paremter value "{xfer}". Defaulting to json')
             ret =  res.json()
