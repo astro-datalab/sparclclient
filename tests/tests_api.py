@@ -10,8 +10,10 @@ from unittest import skip,mock,skipIf,skipUnless
 import warnings
 from pprint import pformat,pprint
 from urllib.parse import urlparse
+from unittest.mock import MagicMock
+from unittest.mock import create_autospec
 # Local Packages
-import api.api
+import api.client
 from tests.utils import tic,toc
 # External Packages
 # <none>
@@ -23,10 +25,12 @@ class ApiTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # AdaApi object creation compares the version from the Server
+        # Client object creation compares the version from the Server
         # against the one expected by the Client. Throws error if
         # the Client is a major version behind.
-        cls.client = api.api.SparcApi(url=rooturl)
+
+        #! cls.client = api.client.SparcApi(url=rooturl)
+        cls.client = create_autospec(api.client.SparclApi(url=rooturl))
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -41,10 +45,12 @@ class ApiTest(unittest.TestCase):
                   f'\t{cls.count.get(k)}'
                   f'\t{cls.doc.get(k)}')
 
+
     def test_version(self):
         """Get version of the NOIRLab SPARC server API"""
         version = self.client.version
         assert 1.0 <= version < 2.0
+
 
     def test_sample(self):
         sids = self.client.sample_sids()

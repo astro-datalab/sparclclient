@@ -1,3 +1,12 @@
+"""Client module for SPARCL.
+
+This module interfaces to the SPARC-Server to get spectra data.
+
+Todo:
+  * Add conversion from Server pickle (json) to Pandas.
+
+"""
+
 # Python Standard Library
 from urllib.parse import urlencode
 from enum import Enum,auto
@@ -11,11 +20,21 @@ from api.utils import tic,toc
 # External Packages
 import requests
 
+# Use Google Style Python Docstrings so autogen of Sphinx doc works:
+#  https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google
+
+#### Generate documentation:
+# cd ~/sandbox/sparclclient
+# sphinx-apidoc -f -o source api
+# make html
+# firefox -new-tab "`pwd`/build/html/index.html"
+
+
 # Using HTTPie (http://httpie.org):
 # http :8030/sparc/version
 
 # sids = [394069118933821440, 1355741587413428224, 1355617892355303424, 1355615143576233984, 1355661872820414464, 1355755331308775424, 1355716848401803264]
-# client = api.api.SparcApi(url='http://localhost:8030/sparc')
+# client = api.api.SparclApi(url='http://localhost:8030/sparc')
 # client.retrieve(sids)[0].keys() # >> dict_keys(['flux','loglam'])
 #
 # data0 = client.retrieve(sids,columns='flux')
@@ -25,21 +44,23 @@ import requests
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
 _PROD = 'https://specserver.noirlab.edu'
+#_TEST = 'https://sparc1.datalab.noirlab.edu'
+_TEST = 'http://sparc1.datalab.noirlab.edu:8000'
 _DEV = 'http://localhost:8030'
 
 
 allc = ['flux','loglam', 'ivar', 'and_mask', 'or_mask','wdisp', 'sky', 'model']
 
-class SparcApi():
-    """Astro Data Archive - Application Programming Interface.
+class SparclApi():
+    """Provides interface to SPARCL Server.
+
     Object creation compares the version from the Server
     against the one expected by the Client. Throws error if
     the Client is a major version or more behind.
     """
-    KNOWN_GOOD_API_VERSION = 6.0 #@@@ Change this when Server version increments
+    KNOWN_GOOD_API_VERSION = 1.0 #@@@ Change this when Server version increments
 
-    #! def __init__(self, url=_PROD, verbose=False): @@@
-    def __init__(self, url=_DEV, verbose=False, limit=None):
+    def __init__(self, url=_TEST, verbose=False, limit=None):
         self.rooturl=url.rstrip("/")
         self.apiurl = f'{self.rooturl}/sparc'
         self.apiversion = None
@@ -47,13 +68,13 @@ class SparcApi():
         self.limit = limit
         # require response within this num seconds
         self.timeout = (1.1, 90*60) #(connect timeout, read timeout) seconds
-        #@@@ read timeout should be func post payload size
+        #@@@ read timeout should be a function of the POST payload size
 
         # Get API Version
         verstr = requests.get(f'{self.apiurl}/version/',timeout=self.timeout).content
         self.apiversion = float(verstr)
 
-        if (int(self.apiversion) - int(SparcApi.KNOWN_GOOD_API_VERSION)) >= 1:
+        if (int(self.apiversion) - int(SparclApi.KNOWN_GOOD_API_VERSION)) >= 1:
             msg = (f'The helpers.api module is expecting an older '
                    f'version of the {self.rooturl} API services. '
                    f'Please upgrade to latest "aa_wrap".  '
@@ -61,24 +82,30 @@ class SparcApi():
                    f'{AdaApi.KNOWN_GOOD_API_VERSION} but got '
                    f'{self.apiversion} from the API.')
             raise Exception(msg)
-        self.session = requests.Session()
+        #self.session = requests.Session()
 
     def sample_sids(self):
-        """Return a small list of spect ids"""
+        """Return a small list of spect ids.
+
+        This is intended to make it easy to get just a few spect ids to use
+        for experimenting with the rest of the API.
+        """
         response = requests.get(f'{self.apiurl}/sample', timeout=self.timeout)
-        #print(f'content={response.content}')
         return response.json()
 
     @property
     def version(self):
-        """Return version of Rest API used by this module.
+        """Return version of Server Rest API used by this client.
 
         If the Rest API changes such that the Major version increases,
         a new version of this module will likely need to be used.
 
-        :returns: API version
-        :rtype: float
+        Returns:
+          float: API version
 
+        Examples:
+           >>> SparclApi('http://localhost:8030').version
+           1.0
         """
         if self.apiversion is None:
             response = requests.get(f'{self.apiurl}/version',
@@ -87,9 +114,23 @@ class SparcApi():
             self.apiversion = float(response.content)
         return self.apiversion
 
-    def retrieve(self, objid_list, columns=None,
-                 xfer=None, limit=False, verbose=False):
-        """Get spectrum from spectObjId list"""
+    def retrieve(self, objid_list: list[int],
+                 columns=None,  format=None,
+                 xfer=None, limit=False, verbose=False) -> list:
+        """Get spectrum from spectObjId list.
+
+        Args:
+           columns (list, optional): List of column names.
+              Defaults to ['flux', 'loglam'].
+              One of: flux, loglam, ivar,  and_mask, or_mask, wdisp, sky, model
+           format (str): TODO. Format of the data structure that contains spectra
+           xfer (str): DEBUGGING. Format to use to transfer from Server to Client
+           limit (int, optional): Maximum number of spectra records to return.
+
+        Returns:
+           list: JSON structures (format=None).
+
+        """
         coadd_columns = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
                          'wdisp', 'sky', 'model']
         dftcols = ['flux', 'loglam']
@@ -132,3 +173,7 @@ class SparcApi():
                   'spectra/sec)')
 
         return ret
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

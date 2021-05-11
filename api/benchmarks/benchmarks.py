@@ -2,9 +2,9 @@
 '''Benchmark speed of SPARC spectra retrieve with various parameters.
 '''
 # EXAMPLES:
-# cd ~/sandbox/sparcclient
-# python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list
+# cd ~/sandbox/sparclclient
 # python3 -m api.benchmarks.benchmarks ~/data/sparc/sids5.list
+# python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list
 
 # Alice reported 22 minutes on 64K retrieved from specClient (rate=48 spec/sec)
 #   slack.spectro: 3/31/2021
@@ -14,9 +14,9 @@ import sys, argparse, logging, os
 from pprint import pprint,pformat
 ## External packages
 import psutil
-import speedtest
+#!import speedtest
 ## Local packages
-from ..api import SparcApi
+from ..client import SparclApi
 from ..utils import tic,toc,here_now
 
 #rooturl = 'http://localhost:8030/' #@@@
@@ -31,7 +31,7 @@ def human_size(num, units=['b','KB','MB','GB','TB', 'PB', 'EB']):
 def run_retrieve(sids, columns=None, xfer='p', verbose=True):
     #!print(f'Retrieving {len(sids):,} spectra')
     psutil.cpu_percent() # begin interval
-    client = SparcApi(url=rooturl)
+    client = SparclApi(url=rooturl)
     result = dict(numcols=len(columns), numsids=len(sids))
     if verbose:
         print(f'Experiment: {pformat(result)}')
@@ -53,32 +53,34 @@ def run_retrieve(sids, columns=None, xfer='p', verbose=True):
                   )
     return(result)
 
-def run_paged_retrieve(sids, columns=None, xfer='p', page=1000, verbose=True, keepall=False):
+def run_paged_retrieve(sids, columns=None, xfer='p',
+                       page=5000, verbose=True, keepall=False):
     """Do 1 more more PAGE size retrieves to get data for all sids"""
     print(f'Paged Retrieve of {len(sids):,} spectra')
     psutil.cpu_percent() # begin interval
-    client = SparcApi(url=rooturl)
+    client = SparclApi(url=rooturl)
     result = dict(numcols=len(columns), numsids=len(sids), xfer=xfer, page=page)
     if verbose:
         print(f'Experiment: {pformat(result)}')
 
     data = []
+    datacnt = 0
     tic()
     for cnt in range(0,len(sids),page):
+        pdata = client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer)
+        datacnt += len(pdata)
         if keepall:
-            data.extend(client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer))
-        else:
-            client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer)
+            data.extend(pdata)
     elapsed = toc()
 
     cpu = psutil.cpu_percent(interval=1)
     if verbose:
-        print(f'len(sids)={len(sids)} len(data)={len(data)}')
+        print(f'len(sids)={len(sids)} datacnt={datacnt}')
     #assert len(sids) == len(data)   # @@@ but some of ingest may have failed
     #!assert len(data[0]['spectra__coadd__flux']) > 1000 # @@@
     result.update(elapsed=elapsed,
                   retrieved=len(data),
-                  rate=len(data)/elapsed,
+                  rate=datacnt/elapsed,
                   end_smrem=psutil.swap_memory().free,
                   end_vmrem=psutil.virtual_memory().available,
                   end_cpuload=os.getloadavg()[1],
@@ -102,6 +104,22 @@ experiment_1 = dict(
     numcols = range(1,3),
     #numcols = range(1,len(allcols)+1),
     )
+experiment_2 = dict(
+    xfers    = ['p'],
+    sidcnts = [1000, 100, 10],
+    numcols = range(1,len(allcols)+1),
+    )
+experiment_3 = dict(
+    xfers    = ['p'],
+    sidcnts = [1000, ],
+    numcols = reversed(range(1,len(allcols)+1)),
+    )
+
+experiment_8 = dict(
+    xfers    = ['p',],
+    sidcnts = [65000,],
+    numcols = [1,2,8]
+    )
 experiment_9 = dict(
     xfers    = ['p','j'],
     sidcnts = sorted(set([min(7*10**x, 65000) for x in range(6)])),
@@ -109,7 +127,8 @@ experiment_9 = dict(
     )
 
 def run_trials(allsids,  verbose=True):
-    ex = experiment_9 #@@@
+    #ex = experiment_9 #@@@
+    ex = experiment_8 #@@@
 
     xfers = ex['xfers']
     sidcnts = ex['sidcnts']
@@ -133,7 +152,7 @@ def run_trials(allsids,  verbose=True):
     report(all, len(allsids), xfer=xfer)
     return(all)
 
-def report(results,sidcnt, xfer=None, bandwidth=True):
+def report(results,sidcnt, xfer=None, bandwidth=False):
     hostname,now = here_now()
     min1,min5,min15 = os.getloadavg()
     smrem = psutil.swap_memory().free

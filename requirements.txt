@@ -1,3 +1,7 @@
 pandas # ==1.2.3
 requests # ==2.25.1
+psutil    # for benchmarks
+speedtest # for benchmarks
 # packaging   # for noaodatalab
+sphinx
+sphinx_rtd_theme
