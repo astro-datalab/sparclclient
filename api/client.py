@@ -114,13 +114,13 @@ class SparclApi():
             self.apiversion = float(response.content)
         return self.apiversion
 
-    def retrieve(self, objid_list: list[int],
+    def retrieve(self, objid_list,
                  columns=None,  format=None,
-                 xfer=None, limit=False, verbose=False) -> list:
+                 xfer=None, limit=False, verbose=False):
         """Get spectrum from spectObjId list.
 
         Args:
-           columns (list, optional): List of column names.
+           columns (list[int], optional): List of column names.
               Defaults to ['flux', 'loglam'].
               One of: flux, loglam, ivar,  and_mask, or_mask, wdisp, sky, model
            format (str): TODO. Format of the data structure that contains spectra
