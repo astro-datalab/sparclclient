@@ -84,13 +84,14 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
-    def sample_sids(self):
+    def sample_sids(self, samples=5):
         """Return a small list of spect ids.
 
         This is intended to make it easy to get just a few spect ids to use
         for experimenting with the rest of the API.
         """
-        response = requests.get(f'{self.apiurl}/sample', timeout=self.timeout)
+        response = requests.get(f'{self.apiurl}/sample/?samples={samples}',
+                                timeout=self.timeout)
         return response.json()
 
     @property
