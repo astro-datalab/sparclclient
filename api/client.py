@@ -67,6 +67,8 @@ class SparclApi():
         self.verbose = verbose
         self.limit = limit
         # require response within this num seconds
+        # https://docs.python-requests.org/en/master/user/advanced/#timeouts
+        # (connect time, read time)
         self.timeout = (1.1, 90*60) #(connect timeout, read timeout) seconds
         #@@@ read timeout should be a function of the POST payload size
 

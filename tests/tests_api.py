@@ -18,7 +18,8 @@ from tests.utils import tic,toc
 # External Packages
 # <none>
 
-rooturl = 'http://localhost:8030/' #@@@
+#!rooturl = 'http://localhost:8030/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 class ApiTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
@@ -29,8 +30,8 @@ class ApiTest(unittest.TestCase):
         # against the one expected by the Client. Throws error if
         # the Client is a major version behind.
 
-        #! cls.client = api.client.SparcApi(url=rooturl)
-        cls.client = create_autospec(api.client.SparclApi(url=rooturl))
+        cls.client = api.client.SparclApi(url=rooturl)
+        #! cls.client = create_autospec(api.client.SparclApi(url=rooturl))
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
