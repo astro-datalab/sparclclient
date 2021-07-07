@@ -154,10 +154,10 @@ class SparclApi():
         verbose = verbose or self.verbose
         uparams = dict()
         qstr = urlencode(uparams)
-        url = f'{self.apiurl}/missing_sids/?{qstr}'
+        url = f'{self.apiurl}/missing/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
-        res = requests.post(url, json=objid_list, timeout=self.timeout)
+        res = requests.post(url, json=sid_list, timeout=self.timeout)
         res.raise_for_status()
         if res.status_code != 200:
             raise Exception(res)

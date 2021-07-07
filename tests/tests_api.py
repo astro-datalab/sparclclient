@@ -59,6 +59,18 @@ class ApiTest(unittest.TestCase):
         #print(f'sids={sids}')
         assert len(sids) == 5
 
+    def test_missing_0(self):
+        """Known missing"""
+        sids= [99,88]
+        missing = self.client.missing_sids(sids)
+        assert sorted(missing) == sorted(sids)
+
+    def test_missing_1(self):
+        """None missing"""
+        sids = self.client.sample_sids()
+        missing = self.client.missing_sids(sids)
+        assert missing == []
+
 
     def test_retrieve_0(self):
         """Get spectra using small list of spectObjIds"""
