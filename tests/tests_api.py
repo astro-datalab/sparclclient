@@ -18,8 +18,8 @@ from tests.utils import tic,toc
 # External Packages
 # <none>
 
-#!rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 class ApiTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
@@ -50,7 +50,8 @@ class ApiTest(unittest.TestCase):
     def test_version(self):
         """Get version of the NOIRLab SPARC server API"""
         version = self.client.version
-        assert 1.0 <= version < 2.0
+        expected = 2.0 # only major version part matters. Minor=.0
+        assert expected <= version < (1 + expected)
 
 
     def test_sample(self):
@@ -63,11 +64,15 @@ class ApiTest(unittest.TestCase):
         """Get spectra using small list of spectObjIds"""
         name = 'retrieve_0'
         this = self.test_retrieve_0
-        sids = self.client.sample_sids()[:2]
+        getcnt = 3
+        sids = sorted(self.client.sample_sids(samples=getcnt))
         tic()
-        data = self.client.retrieve(sids)
+        ret = self.client.retrieve(sids)
+        status = ret['status']
+        records = ret['records']
+        gotsids = sorted(r['specid'] for r in records)
+
         self.timing[name] = toc()
         self.doc[name] = this.__doc__
-        self.count[name] = len(data)
-        #print(f'DBG: len(data) = {len(data)}')
-        assert len(data) == 2
+        self.count[name] = len(records)
+        assert gotsids == sids, "Actual to Expected"
