@@ -36,22 +36,28 @@ def obj_format(obj, seen=None, indent=0, tab=4):
         seen = set()
     obj_id = id(obj)
     if obj_id in seen:
-        return None
+        return ''
     seen.add(obj_id)
 
-    instr = '\n' + ' ' * indent
-    res = instr
+    spaces = ' ' * (indent * tab)
+    res = spaces
+    indent += 1
+    spaces2 = ' ' * (indent * tab)
     if isinstance(obj, dict):
         res += 'dict('
-        indent += tab
         for k,v in obj.items():
-            res += f'\n{" " * indent}{k} = {obj_format(v, seen, indent+tab)},'
-        #!res += f'\n{instr})'
-        res += f'{instr})'
+            if v is None:
+                valstr = None
+            else:
+                valstr = obj_format(v, seen, indent).strip()
+            res += f'\n{spaces2}{k:16} = {valstr},'
+        res += f'\n{spaces2})'
     elif isinstance(obj, list):
-        indent += tab
-        res += f'<list {len(obj)}: obj[0]={obj_format(obj[0],seen,indent)}>'
-        res += f'\n{instr}...'
+        if obj[0] is None:
+            valstr = None
+        else:
+            valstr = obj_format(obj[0],seen,indent).strip()
+        res += f'<list {len(obj)}: obj[0]={valstr}> ...'
     else:
         res += f'type: {type(obj)}'
 
@@ -164,6 +170,7 @@ class SparclApi():
         ret =  res.json()
         return ret
 
+
     def retrieve(self, objid_list,
                  columns=None,  format=None, dr='SDSS-DR16',
                  xfer=None, limit=False, verbose=False):
@@ -228,6 +235,18 @@ class SparclApi():
                   'spectra/sec)')
 
         return ret
+
+    def sample_records(self, count, dr='SDSS-DR16', **kwargs):
+        """Return COUNT random records from given DR"""
+        return self.retrieve(self.sample_sids(count, dr=dr), dr=dr, **kwargs)
+
+    def show_record_structure(self, dr, **kwargs):
+        """Show the structure of a record retrieved from DR using
+        transfer method XFER"""
+        res = self.sample_records(1, dr=dr, **kwargs)
+        print(obj_format(res['records'][0]))
+        return None
+
 
 if __name__ == "__main__":
     import doctest
