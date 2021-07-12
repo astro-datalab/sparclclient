@@ -20,6 +20,10 @@ from api.utils import tic,toc
 # External Packages
 import requests
 
+# Upload to PyPi:
+#   python3 -m build --wheel
+#   twine upload dist/*
+
 # Use Google Style Python Docstrings so autogen of Sphinx doc works:
 #  https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google
 
@@ -29,34 +33,75 @@ import requests
 # make html
 # firefox -new-tab "`pwd`/build/html/index.html"
 
-def obj_format(obj, seen=None, indent=0, tab=4):
+
+## data = {
+##     "a": "aval",
+##     "b": {
+##         "b1": {
+##             "b2b": "b2bval",
+##             "b2a": {
+##                 "b3a": "b3aval",
+##                 "b3b": "b3bval"
+##             }
+##         }
+##     }
+## }
+##
+## data1 = AttrDict(data)
+## print(data1.b.b1.b2a.b3b)  # -> b3bval
+class AttrDict(dict):
+    """ Dictionary subclass whose entries can be accessed by attributes
+    (as well as normally).
+    """
+    def __init__(self, *args, **kwargs):
+        def from_nested_dict(data):
+            """ Construct nested AttrDicts from nested dictionaries. """
+            if not isinstance(data, dict):
+                return data
+            else:
+                return AttrDict({key: from_nested_dict(data[key])
+                                 for key in data})
+
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+        for key in self.keys():
+            self[key] = from_nested_dict(self[key])
+
+
+def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
     """Recursively get the rough composition of a pure python object"""
     # Prevent following loops (self reference) in structures
     if seen is None:
         seen = set()
-    obj_id = id(obj)
-    if obj_id in seen:
+    oid = id(obj)
+    if oid in seen:
         return ''
-    seen.add(obj_id)
+    seen.add(oid)
+    idstr = f'{oid:<16}: ' if showid else ''
+    s = ' '
+    idspc = f'{s:<16}: ' if showid else ''
 
     spaces = ' ' * (indent * tab)
     res = spaces
+    #!res = f'[{oid}] {spaces}'
     indent += 1
     spaces2 = ' ' * (indent * tab)
     if isinstance(obj, dict):
-        res += 'dict('
+        res += f'{idstr}dict(\n'
         for k,v in obj.items():
             if v is None:
                 valstr = None
             else:
-                valstr = obj_format(v, seen, indent).strip()
-            res += f'\n{spaces2}{k:16} = {valstr},'
-        res += f'\n{spaces2})'
+                valstr = obj_format(v, seen, indent, showid).strip()
+            #!res += f'{idstr}{spaces2}{k:16} = {valstr},\n'
+            res += f'{idstr}{spaces2}{k} = {valstr},\n'
+        res += f'{idspc}{spaces2})'
     elif isinstance(obj, list):
         if obj[0] is None:
             valstr = None
         else:
-            valstr = obj_format(obj[0],seen,indent).strip()
+            valstr = obj_format(obj[0],seen,indent, showid).strip()
         res += f'<list {len(obj)}: obj[0]={valstr}> ...'
     else:
         res += f'type: {type(obj)}'
@@ -240,13 +285,21 @@ class SparclApi():
         """Return COUNT random records from given DR"""
         return self.retrieve(self.sample_sids(count, dr=dr), dr=dr, **kwargs)
 
+    # EXAMPLES:
+    # client.show_record_structure('DESI-denali',xfer='database')
+    # client.show_record_structure('SDSS-DR16')
+    # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
+    #
     def show_record_structure(self, dr, **kwargs):
         """Show the structure of a record retrieved from DR using
         transfer method XFER"""
         res = self.sample_records(1, dr=dr, **kwargs)
-        print(obj_format(res['records'][0]))
-        return None
-
+        rec = res['records'][0]
+        print(obj_format(rec))
+        return rec
+    # rec = client.show_record_structure('SDSS-DR16',xfer='database')
+    # rec1 = api.client.AttrDict(rec)
+    # rec1.spectra.specobj.CZ => [0.6159544898118924]
 
 if __name__ == "__main__":
     import doctest
