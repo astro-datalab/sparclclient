@@ -15,6 +15,7 @@ from pathlib import Path, PosixPath
 from warnings import warn
 import json
 import pickle
+from collections.abc import MutableMapping
 # Local Packages
 from api.utils import tic,toc
 # External Packages
@@ -68,6 +69,33 @@ class AttrDict(dict):
         for key in self.keys():
             self[key] = from_nested_dict(self[key])
 
+            from collections.abc import MutableMapping
+
+# A non-recursive version, which also works for numeric dictionary keys:
+def set_value_at_path(obj, path, value):
+    *parts, last = path.split('.')
+
+    for part in parts:
+        if isinstance(obj, MutableMapping):
+            obj = obj[part]
+        else:
+            obj = obj[int(part)]
+
+    if isinstance(obj, MutableMapping):
+        obj[last] = value
+    else:
+        obj[int(last)] = value
+
+def get_value_at_path(obj, path):
+    *parts, last = path.split('.')
+
+    for part in parts:
+        if isinstance(obj, MutableMapping):
+            obj = obj[part]
+        else:
+            obj = obj[int(part)]
+
+    return(obj[last])
 
 def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
     """Recursively get the rough composition of a pure python object"""
@@ -167,14 +195,14 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
-    def sample_sids(self, samples=5, dr='SDSS-DR16'):
+    def sample_sids(self, samples=5, structure='SDSS-DR16'):
         """Return a small list of spect ids.
 
         This is intended to make it easy to get just a few spect ids to use
         for experimenting with the rest of the API.
         """
         response = requests.get(
-            f'{self.apiurl}/sample/?samples={samples}&dr={dr}',
+            f'{self.apiurl}/sample/?samples={samples}&dr={structure}',
             timeout=self.timeout)
         return response.json()
 
@@ -216,17 +244,17 @@ class SparclApi():
         return ret
 
 
-    def retrieve(self, objid_list,
-                 columns=None,  format=None, dr='SDSS-DR16',
-                 xfer=None, limit=False, verbose=False):
+    def retrieve(self, sid_list,
+                 #! columns=None,
+                 include=None,  # None means include ALL
+                 format=None,
+                 structure='SDSS-DR16',
+                 xfer='database', limit=False, verbose=False):
         """Get spectrum from spectObjId list.
 
         Args:
-           columns (list[int], optional): List of column names.
-              Defaults to ['flux', 'loglam'].
-              One of: flux, loglam, ivar,  and_mask, or_mask, wdisp, sky, model
            format (str): TODO. Format of the data structure that contains spectra
-           xfer (str): DEBUGGING. Format to use to transfer from Server to Client
+           xfer (str): (default='database') DEBUGGING. Format to use to transfer from Server to Client
            limit (int, optional): Maximum number of spectra records to return.
 
         Returns:
@@ -234,16 +262,22 @@ class SparclApi():
            records (list): JSON structures (format=None).
 
         """
-        coadd_columns = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
-                         'wdisp', 'sky', 'model']
-        dftcols = ['flux', 'loglam']
+        #! Args:
+        #!    columns (list[int], optional): List of column names.
+        #!       Defaults to ['flux', 'loglam'].
+        #!       One of: flux, loglam, ivar,  and_mask, or_mask, wdisp, sky, model
         verbose = verbose or self.verbose
         lim = None if limit is None else (limit or self.limit)
 
-        cols = dftcols if columns is None else columns
-        uparams =dict(columns=','.join(cols),
+        #! columns=None
+        #! coadd_columns = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
+        #!                  'wdisp', 'sky', 'model']
+        #! dftcols = ['flux', 'loglam']
+        #! cols = dftcols if columns is None else columns
+        uparams =dict(include=include,
+                      #columns=','.join(cols),
                       limit=lim,
-                      dr=dr)
+                      dr=structure)
         if xfer is not None:
             uparams['xfer'] = xfer
         qstr = urlencode(uparams)
@@ -256,8 +290,8 @@ class SparclApi():
                       f'Defaulting to {dftcols}. '
                       f'The available columns are {allc}')
             tic()
-        #@@@res = self.session.post(url, json=objid_list, timeout=self.timeout)
-        res = requests.post(url, json=objid_list, timeout=self.timeout)
+        #@@@res = self.session.post(url, json=sid_list, timeout=self.timeout)
+        res = requests.post(url, json=sid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
 
@@ -271,7 +305,7 @@ class SparclApi():
         elif xfer=='database':
             ret =  res.json()
         else:
-            print(f'Unknown xfer paremter value "{xfer}". Defaulting to json')
+            print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
             ret =  res.json()
         if verbose:
             count = len(ret)
@@ -279,21 +313,25 @@ class SparclApi():
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
 
+        if ret['status'].get('warning'):
+            print(f"WARNING: {ret['status'].get('warning')}")
+
         return ret
 
-    def sample_records(self, count, dr='SDSS-DR16', **kwargs):
-        """Return COUNT random records from given DR"""
-        return self.retrieve(self.sample_sids(count, dr=dr), dr=dr, **kwargs)
+    def sample_records(self, count, structure='SDSS-DR16', **kwargs):
+        """Return COUNT random records from given STRUCTURE"""
+        return self.retrieve(self.sample_sids(count, structure=structure),
+                             structure=structure, **kwargs)
 
     # EXAMPLES:
     # client.show_record_structure('DESI-denali',xfer='database')
     # client.show_record_structure('SDSS-DR16')
     # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
     #
-    def show_record_structure(self, dr, **kwargs):
-        """Show the structure of a record retrieved from DR using
+    def show_record_structure(self, structure, **kwargs):
+        """Show the structure of a record retrieved from STRUCTURE using
         transfer method XFER"""
-        res = self.sample_records(1, dr=dr, **kwargs)
+        res = self.sample_records(1, structure=structure, **kwargs)
         rec = res['records'][0]
         print(obj_format(rec))
         return rec

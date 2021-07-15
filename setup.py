@@ -1,4 +1,6 @@
 # see https://packaging.python.org/tutorials/packaging-projects/#configuring-metadata
+# python3 -m build --wheel
+# twine upload dist/*
 
 import setuptools
 
@@ -10,7 +12,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="sparclclient",
-    version="0.0.8",
+    version="0.0.10",
     author="NOIRLab DataLab",
     author_email="datalab@noirlab.edu",
     description="A client for getting spectra data from NOIRLab.",
