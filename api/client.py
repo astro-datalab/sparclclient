@@ -21,6 +21,8 @@ from api.utils import tic,toc
 # External Packages
 import requests
 
+#23456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.
+
 # Upload to PyPi:
 #   python3 -m build --wheel
 #   twine upload dist/*
@@ -68,8 +70,6 @@ class AttrDict(dict):
 
         for key in self.keys():
             self[key] = from_nested_dict(self[key])
-
-            from collections.abc import MutableMapping
 
 # A non-recursive version, which also works for numeric dictionary keys:
 def set_value_at_path(obj, path, value):
@@ -245,16 +245,18 @@ class SparclApi():
 
 
     def retrieve(self, sid_list,
-                 #! columns=None,
                  include=None,  # None means include ALL
-                 format=None,
+                 #!format=None,
                  structure='SDSS-DR16',
-                 xfer='database', limit=False, verbose=False):
+                 xfer='database',
+                 limit=False, verbose=False):
         """Get spectrum from spectObjId list.
 
         Args:
-           format (str): TODO. Format of the data structure that contains spectra
-           xfer (str): (default='database') DEBUGGING. Format to use to transfer from Server to Client
+           include (dict, optional): (default: include ALL) List of paths
+              to include in each record. key=alias, val=storedPath
+           xfer (str): (default='database') DEBUG.
+              Format to use to transfer from Server to Client
            limit (int, optional): Maximum number of spectra records to return.
 
         Returns:
@@ -262,20 +264,13 @@ class SparclApi():
            records (list): JSON structures (format=None).
 
         """
-        #! Args:
-        #!    columns (list[int], optional): List of column names.
-        #!       Defaults to ['flux', 'loglam'].
-        #!       One of: flux, loglam, ivar,  and_mask, or_mask, wdisp, sky, model
+        #! Args TODO
+        #!   format (str): Format of the data structure that contains spectra
+
         verbose = verbose or self.verbose
         lim = None if limit is None else (limit or self.limit)
 
-        #! columns=None
-        #! coadd_columns = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
-        #!                  'wdisp', 'sky', 'model']
-        #! dftcols = ['flux', 'loglam']
-        #! cols = dftcols if columns is None else columns
         uparams =dict(include=include,
-                      #columns=','.join(cols),
                       limit=lim,
                       dr=structure)
         if xfer is not None:
@@ -285,12 +280,8 @@ class SparclApi():
         url = f'{self.apiurl}/retrieve/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
-            if columns is None:
-                print(f'WARNING: No "columns" parameter provided. '
-                      f'Defaulting to {dftcols}. '
-                      f'The available columns are {allc}')
             tic()
-        #@@@res = self.session.post(url, json=sid_list, timeout=self.timeout)
+
         res = requests.post(url, json=sid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
@@ -303,7 +294,9 @@ class SparclApi():
         if xfer=='p':
             ret = pickle.loads(res.content)
         elif xfer=='database':
-            ret =  res.json()
+            #!ret =  res.json()
+            meta,*records =  res.json()
+            print(f'meta={meta} len(records)={len(records)}')
         else:
             print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
             ret =  res.json()
@@ -313,10 +306,14 @@ class SparclApi():
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
 
-        if ret['status'].get('warning'):
-            print(f"WARNING: {ret['status'].get('warning')}")
+        if meta['status'].get('warning'):
+            warn(f"WARNING: {meta['status'].get('warning')}")
 
-        return ret
+        if not meta['status'].get('success'):
+            raise Exception(f"Error in retrieve: {meta['status']}")
+
+        #!return( [AttrDict(r) for r in ret['records']] )
+        return( [AttrDict(r) for r in records] )
 
     def sample_records(self, count, structure='SDSS-DR16', **kwargs):
         """Return COUNT random records from given STRUCTURE"""

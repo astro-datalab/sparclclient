@@ -18,8 +18,8 @@ from tests.utils import tic,toc
 # External Packages
 # <none>
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 class ApiTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
@@ -79,9 +79,9 @@ class ApiTest(unittest.TestCase):
         getcnt = 3
         sids = sorted(self.client.sample_sids(samples=getcnt))
         tic()
-        ret = self.client.retrieve(sids)
-        status = ret['status']
-        records = ret['records']
+        records = self.client.retrieve(sids)
+        #! status = ret['status']
+        #! records = ret['records']
         gotsids = sorted(r['specid'] for r in records)
 
         self.timing[name] = toc()
