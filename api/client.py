@@ -228,7 +228,7 @@ class SparclApi():
         return self.apiversion
 
     def missing_sids(self, sid_list, countOnly=False, verbose=False):
-        """Return the suset of the given SpectraID list that is NOT stored
+        """Return the subset of the given spect id list that is NOT stored
         in the database."""
         verbose = verbose or self.verbose
         uparams = dict()
@@ -250,19 +250,19 @@ class SparclApi():
                  structure='SDSS-DR16',
                  xfer='database',
                  limit=False, verbose=False):
-        """Get spectrum from spectObjId list.
+        """Get spectrum from spect id list.
 
         Args:
+           sid_list (list): list of spect ids
            include (dict, optional): (default: include ALL) List of paths
               to include in each record. key=alias, val=storedPath
+           structure (str): the data structure of the spect ids
            xfer (str): (default='database') DEBUG.
               Format to use to transfer from Server to Client
            limit (int, optional): Maximum number of spectra records to return.
 
         Returns:
-           (status, records)
-           records (list): JSON structures (format=None).
-
+           list of record's data
         """
         #! Args TODO
         #!   format (str): Format of the data structure that contains spectra
