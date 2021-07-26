@@ -255,7 +255,7 @@ class SparclApi():
         Args:
            sid_list (list): list of spect ids
            include (dict, optional): (default: include ALL) List of paths
-              to include in each record. key=alias, val=storedPath
+              to include in each record. key=storedPath, val=alias
            structure (str): the data structure of the spect ids
            xfer (str): (default='database') DEBUG.
               Format to use to transfer from Server to Client
