@@ -286,7 +286,7 @@ class SparclApi():
         if verbose:
             elapsed = toc()
 
-        res.raise_for_status()
+        #res.raise_for_status()
 
         if res.status_code != 200:
             raise Exception(res)
@@ -301,7 +301,7 @@ class SparclApi():
             print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
             ret =  res.json()
         if verbose:
-            count = len(ret)
+            count = len(records)
             print(f'Got {count} spectra in '
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
@@ -329,7 +329,7 @@ class SparclApi():
         """Show the structure of a record retrieved from STRUCTURE using
         transfer method XFER"""
         res = self.sample_records(1, structure=structure, **kwargs)
-        rec = res['records'][0]
+        rec = res[0]
         print(obj_format(rec))
         return rec
     # rec = client.show_record_structure('SDSS-DR16',xfer='database')
