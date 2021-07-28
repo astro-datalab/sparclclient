@@ -285,6 +285,7 @@ class SparclApi():
         res = requests.post(url, json=sid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
+        print(f'res.content[:40]={res.content[:40]}')
 
         #res.raise_for_status()
 
