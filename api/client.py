@@ -260,7 +260,6 @@ class SparclApi():
            xfer (str): (default='database') DEBUG.
               Format to use to transfer from Server to Client
            limit (int, optional): Maximum number of spectra records to return.
-
         Returns:
            list of record's data
         """
@@ -285,19 +284,15 @@ class SparclApi():
         res = requests.post(url, json=sid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
-        print(f'res.content[:40]={res.content[:40]}')
-
-        #res.raise_for_status()
 
         if res.status_code != 200:
-            raise Exception(res)
+            raise Exception(res.json())
 
         if xfer=='p':
             ret = pickle.loads(res.content)
         elif xfer=='database':
             #!ret =  res.json()
             meta,*records =  res.json()
-            print(f'meta={meta} len(records)={len(records)}')
         else:
             print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
             ret =  res.json()
@@ -306,6 +301,8 @@ class SparclApi():
             print(f'Got {count} spectra in '
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
+            print(f'{meta["status"]}')
+
 
         if meta['status'].get('warning'):
             warn(f"WARNING: {meta['status'].get('warning')}")
