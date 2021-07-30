@@ -24,9 +24,6 @@ class BaseSparclException(Exception):
         if error_code:
             self.error_code = error_code
 
-        logging.error(f'SPCL-{self.get_subclass_name()}({error_code}): '
-                      f'{error_message}')
-
     def __str__(self):
         return f'[{self.error_code}] {self.error_message}'
 

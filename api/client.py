@@ -18,6 +18,7 @@ import pickle
 from collections.abc import MutableMapping
 # Local Packages
 from api.utils import tic,toc
+import api.exceptions as ex
 # External Packages
 import requests
 
@@ -286,7 +287,8 @@ class SparclApi():
             elapsed = toc()
 
         if res.status_code != 200:
-            raise Exception(res.json())
+            #!raise Exception(res.json())
+            raise ex.genSparclException(**res.json())
 
         if xfer=='p':
             ret = pickle.loads(res.content)

@@ -1,6 +1,7 @@
 # Unit tests for the NOIRLab SPARC API Client
 # EXAMPLES:
 #   python -m unittest tests.tests_api
+#   python -m unittest  -v tests.tests_api    # VERBOSE
 #   python -m unittest tests.tests_api.ApiTest
 #   python -m unittest tests.tests_api.ApiTest.test_find_3
 
@@ -91,13 +92,13 @@ class ApiTest(unittest.TestCase):
         assert gotsids == sids, "Actual to Expected"
 
     def test_retrieve_1(self):
-        """Error: Unknown core field referenced"""
-        name = 'retrieve_1'
-        this = self.test_retrieve_1
-        getcnt = 3
+        """Raise exception when unknown core field referenced in include"""
         inc2 = {'spectra.coadd.FLUX': 'flux',
+                'bad_field_name': 'alias',
                 'spectra.specobj.CX': 'cx'}
-        sids = sorted(self.client.sample_sids(samples=getcnt,
+        sids = sorted(self.client.sample_sids(samples=1,
                                               structure='BOSS-DR16'))
-        records = self.client.retrieve(sids, structure='BOSS-DR16')
-        self.assertRaises(ex.BadPath)
+        with self.assertRaises(ex.BadPath):
+            records = self.client.retrieve(sids,
+                                           include=inc2,
+                                           structure='BOSS-DR16')
