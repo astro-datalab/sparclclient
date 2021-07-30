@@ -295,6 +295,7 @@ class SparclApi():
         elif xfer=='database':
             #!ret =  res.json()
             meta,*records =  res.json()
+            #!print(f'DBG: meta={meta}')
         else:
             print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
             ret =  res.json()
@@ -305,9 +306,8 @@ class SparclApi():
                   'spectra/sec)')
             print(f'{meta["status"]}')
 
-
-        if meta['status'].get('warning'):
-            warn(f"WARNING: {meta['status'].get('warning')}")
+        if meta.get('WARNINGS'):
+            warn(f"WARNINGS: {'; '.join(meta.get('WARNINGS'))}")
 
         if not meta['status'].get('success'):
             raise Exception(f"Error in retrieve: {meta['status']}")
