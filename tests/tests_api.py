@@ -114,3 +114,13 @@ class ApiTest(unittest.TestCase):
             records = self.client.retrieve(sids,
                                            include=inc2,
                                            structure='BOSS-DR16')
+    def test_retrieve_3(self):
+        """Issue warning when some sids do not exist."""
+        inc2 = {'spectra.coadd.FLUX': 'flux',
+                'spectra.specobj.CX': 'cx'}
+        sids = sorted(self.client.sample_sids(samples=1,
+                                              structure='BOSS-DR16'))
+        with self.assertWarns(Warning):
+            records = self.client.retrieve(sids+[999],
+                                           include=inc2,
+                                           structure='BOSS-DR16')

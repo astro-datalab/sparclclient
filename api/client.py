@@ -287,7 +287,7 @@ class SparclApi():
             elapsed = toc()
 
         if res.status_code != 200:
-            #!raise Exception(res.json())
+            #!print(f'DBG: res.json={res.json()}')
             raise ex.genSparclException(**res.json())
 
         if xfer=='p':
@@ -306,13 +306,12 @@ class SparclApi():
                   'spectra/sec)')
             print(f'{meta["status"]}')
 
-        if meta.get('WARNINGS'):
-            warn(f"WARNINGS: {'; '.join(meta.get('WARNINGS'))}")
+        if len(meta['status'].get('warnings',[])) > 0:
+            warn(f"{'; '.join(meta['status'].get('warnings'))}")
 
-        if not meta['status'].get('success'):
-            raise Exception(f"Error in retrieve: {meta['status']}")
+        #!if not meta['status'].get('success'):
+        #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        #!return( [AttrDict(r) for r in ret['records']] )
         return( [AttrDict(r) for r in records] )
 
     def sample_records(self, count, structure='SDSS-DR16', **kwargs):
