@@ -15,6 +15,7 @@ from unittest.mock import create_autospec
 # Local Packages
 import api.client
 from tests.utils import tic,toc
+import api.exceptions as ex
 # External Packages
 # <none>
 
@@ -27,8 +28,8 @@ class ApiTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Client object creation compares the version from the Server
-        # against the one expected by the Client. Throws error if
-        # the Client is a major version behind.
+        # against the one expected by the Client. Raise error if
+        # the Client is at least one major version behind.
 
         cls.client = api.client.SparclApi(url=rooturl)
         #! cls.client = create_autospec(api.client.SparclApi(url=rooturl))
@@ -88,3 +89,15 @@ class ApiTest(unittest.TestCase):
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
         assert gotsids == sids, "Actual to Expected"
+
+    def test_retrieve_1(self):
+        """Error: Unknown core field referenced"""
+        name = 'retrieve_1'
+        this = self.test_retrieve_1
+        getcnt = 3
+        inc2 = {'spectra.coadd.FLUX': 'flux',
+                'spectra.specobj.CX': 'cx'}
+        sids = sorted(self.client.sample_sids(samples=getcnt,
+                                              structure='BOSS-DR16'))
+        records = self.client.retrieve(sids, structure='BOSS-DR16')
+        self.assertRaises(ex.BadPath)
