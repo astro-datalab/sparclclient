@@ -1,15 +1,9 @@
 api package
 ===========
 
-Subpackages
------------
-
 .. toctree::
    :maxdepth: 4
 
-
-Submodules
-----------
 
 api.client module
 -----------------
@@ -28,10 +22,10 @@ api.utils module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
+api.exceptions module
+---------------------
 
-.. automodule:: api
+.. automodule:: api.exceptions
    :members:
    :undoc-members:
    :show-inheritance:

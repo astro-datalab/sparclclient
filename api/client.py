@@ -18,6 +18,7 @@ import pickle
 from collections.abc import MutableMapping
 # Local Packages
 from api.utils import tic,toc
+import api.exceptions as ex
 # External Packages
 import requests
 
@@ -72,33 +73,46 @@ class AttrDict(dict):
             self[key] = from_nested_dict(self[key])
 
 # A non-recursive version, which also works for numeric dictionary keys:
-def set_value_at_path(obj, path, value):
-    *parts, last = path.split('.')
-
-    for part in parts:
-        if isinstance(obj, MutableMapping):
-            obj = obj[part]
-        else:
-            obj = obj[int(part)]
-
-    if isinstance(obj, MutableMapping):
-        obj[last] = value
-    else:
-        obj[int(last)] = value
-
-def get_value_at_path(obj, path):
-    *parts, last = path.split('.')
-
-    for part in parts:
-        if isinstance(obj, MutableMapping):
-            obj = obj[part]
-        else:
-            obj = obj[int(part)]
-
-    return(obj[last])
+#def set_value_at_path(obj, path, value):
+#    *parts, last = path.split('.')
+#
+#    for part in parts:
+#        if isinstance(obj, MutableMapping):
+#           obj = obj[part]
+#        else:
+#            obj = obj[int(part)]
+#
+#    if isinstance(obj, MutableMapping):
+#        obj[last] = value
+#    else:
+#        obj[int(last)] = value
+#
+#def get_value_at_path(obj, path):
+#    *parts, last = path.split('.')
+#
+#    for part in parts:
+#        if isinstance(obj, MutableMapping):
+#            obj = obj[part]
+#        else:
+#            obj = obj[int(part)]
+#
+#    return(obj[last])
 
 def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
-    """Recursively get the rough composition of a pure python object"""
+    """Recursively get the rough composition of a pure python object. Used in show_record_structure().
+
+        Args:
+           obj (AttrDict): pure python object. 
+           seen (str, optional): (default: None) set of objects already visited. Avoid infinite loops!
+           indent (int, optional): (default: 0) level of indentation for printing the format of obj.
+           showid (boolean, optional): (default: False) OBSOLETE. # Code should be changed to remove use of this.
+           tab (int, optional): (default: 4) amount of spaces to use for one level of indentation.
+        Returns:
+           The rough composition of a pure python object.
+        Example:
+           >>> res = client.sample_records(1)[0]
+           >>> print(obj_format(res))
+        """
     # Prevent following loops (self reference) in structures
     if seen is None:
         seen = set()
@@ -140,14 +154,14 @@ def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
 # Using HTTPie (http://httpie.org):
 # http :8030/sparc/version
 
-# sids = [394069118933821440, 1355741587413428224, 1355617892355303424, 1355615143576233984, 1355661872820414464, 1355755331308775424, 1355716848401803264]
+# specids = [394069118933821440, 1355741587413428224, 1355617892355303424, 1355615143576233984, 1355661872820414464, 1355755331308775424, 1355716848401803264]
 # client = api.api.SparclApi(url='http://localhost:8030/sparc')
-# client.retrieve(sids)[0].keys() # >> dict_keys(['flux','loglam'])
+# client.retrieve(specids)[0].keys() # >> dict_keys(['flux','loglam'])
 #
-# data0 = client.retrieve(sids,columns='flux')
+# data0 = client.retrieve(specids,columns='flux')
 # f'{len(str(data0)):,}'   # -> '3,435,687'
 #
-# dataall = client.retrieve(sids,columns=allc)
+# dataall = client.retrieve(specids,columns=allc)
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
 _PROD = 'https://specserver.noirlab.edu'
@@ -195,11 +209,20 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
-    def sample_sids(self, samples=5, structure='SDSS-DR16'):
-        """Return a small list of spect ids.
+    def sample_specids(self, samples=5, structure='SDSS-DR16'):
+        """Return a small list of specids.
 
-        This is intended to make it easy to get just a few spect ids to use
+        This is intended to make it easy to get just a few specids to use
         for experimenting with the rest of the API.
+
+        Args:
+           samples (int, optional): (default: 5) The number of sample specids to get.
+           structure (str, optional): (default: 'SDSS-DR16') The data structure from which to get specids.
+        Returns:
+           List of specids.
+        Example:
+           >>> client.sample_specids(samples=3, structure='DESI-denali')
+           [616088561849992155, 39633331515559899, 39633328084618293]
         """
         response = requests.get(
             f'{self.apiurl}/sample/?samples={samples}&dr={structure}',
@@ -214,9 +237,8 @@ class SparclApi():
         a new version of this module will likely need to be used.
 
         Returns:
-          float: API version
-
-        Examples:
+          float: API version.
+        Example:
            >>> SparclApi('http://localhost:8030').version
            1.0
         """
@@ -227,16 +249,29 @@ class SparclApi():
             self.apiversion = float(response.content)
         return self.apiversion
 
-    def missing_sids(self, sid_list, countOnly=False, verbose=False):
-        """Return the subset of the given spect id list that is NOT stored
-        in the database."""
+    def missing_specids(self, specid_list, countOnly=False, verbose=False):
+        """Return the subset of the given specid list that is NOT stored
+        in the database.
+
+        Args:
+           specid_list (list): List of specids.
+           countOnly (boolean, optional): (default: False) If true, only return the count of missing specids.
+           verbose (boolean, optional): (default: False)
+        Returns:
+           The subset of the given specid list that is NOT stored in the database.
+        Example:
+           >>> si = [1858907533188556800, 6171312851359387648, 1647268306035435520]
+           >>> client.missing_specids(si)
+           [1858907533188556800, 6171312851359387648]
+        """
+
         verbose = verbose or self.verbose
         uparams = dict()
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/missing/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
-        res = requests.post(url, json=sid_list, timeout=self.timeout)
+        res = requests.post(url, json=specid_list, timeout=self.timeout)
         res.raise_for_status()
         if res.status_code != 200:
             raise Exception(res)
@@ -244,25 +279,28 @@ class SparclApi():
         return ret
 
 
-    def retrieve(self, sid_list,
+    def retrieve(self, specid_list,
                  include=None,  # None means include ALL
                  #!format=None,
                  structure='SDSS-DR16',
                  xfer='database',
                  limit=False, verbose=False):
-        """Get spectrum from spect id list.
+        """Get spectrum from specid list.
 
         Args:
-           sid_list (list): list of spect ids
+           specid_list (list): List of specids.
            include (dict, optional): (default: include ALL) List of paths
-              to include in each record. key=storedPath, val=alias
-           structure (str): the data structure of the spect ids
+              to include in each record. key=storedPath, val=alias.
+           structure (str): The data structure of the specids.
            xfer (str): (default='database') DEBUG.
-              Format to use to transfer from Server to Client
+              Format to use to transfer from Server to Client.
            limit (int, optional): Maximum number of spectra records to return.
-
         Returns:
-           list of record's data
+           List of record's data.
+        Example:
+           >>> ink = {'spectra.coadd.loglam': 'loglam'}
+           >>> sdss_ids = [849044290804934656, 309718438815754240]
+           >>> res_sdss = client.retrieve(sdss_ids, structure='SDSS-DR16', include=ink)
         """
         #! Args TODO
         #!   format (str): Format of the data structure that contains spectra
@@ -282,32 +320,32 @@ class SparclApi():
             print(f'Using url="{url}"')
             tic()
 
-        res = requests.post(url, json=sid_list, timeout=self.timeout)
+        res = requests.post(url, json=specid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
 
-        res.raise_for_status()
-
         if res.status_code != 200:
-            raise Exception(res)
+            #!raise Exception(res.json())
+            raise ex.genSparclException(**res.json())
 
         if xfer=='p':
             ret = pickle.loads(res.content)
         elif xfer=='database':
             #!ret =  res.json()
             meta,*records =  res.json()
-            print(f'meta={meta} len(records)={len(records)}')
+            #!print(f'DBG: meta={meta}')
         else:
             print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
             ret =  res.json()
         if verbose:
-            count = len(ret)
+            count = len(records)
             print(f'Got {count} spectra in '
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
+            print(f'{meta["status"]}')
 
-        if meta['status'].get('warning'):
-            warn(f"WARNING: {meta['status'].get('warning')}")
+        if meta.get('WARNINGS'):
+            warn(f"WARNINGS: {'; '.join(meta.get('WARNINGS'))}")
 
         if not meta['status'].get('success'):
             raise Exception(f"Error in retrieve: {meta['status']}")
@@ -316,8 +354,29 @@ class SparclApi():
         return( [AttrDict(r) for r in records] )
 
     def sample_records(self, count, structure='SDSS-DR16', **kwargs):
-        """Return COUNT random records from given STRUCTURE"""
-        return self.retrieve(self.sample_sids(count, structure=structure),
+        """Return COUNT random records from given STRUCTURE.
+
+        Args:
+           count (int): Number of sample records to get from database.
+           structure (str, optional): (default: 'SDSS-DR16') The data structure from which to get sample records.
+        Returns:
+           COUNT random records from given STRUCTURE.
+        Example:
+           >>> samrec = client.sample_records(1, structure='BOSS-DR16')
+           >>> pprint.pprint(samrec,depth=2)
+           [{'data_release_id': 'BOSS-DR16',
+             'dec_center': 47.193549,
+             'dirpath': '/net/mss1/archive/hlsp/sdss/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/7399',
+             'fiberid': 376,
+             'filename': 'spec-7399-57162-0376.fits',
+             'mjd': 57162,
+             'plateid': 7399,
+             'ra_center': 172.26905,
+             'specid': 1429845755960551,
+             'spectra': {...},
+             'updated': '2021-04-28T20:16:20.399464Z'}]
+        """
+        return self.retrieve(self.sample_specids(count, structure=structure),
                              structure=structure, **kwargs)
 
     # EXAMPLES:
@@ -327,9 +386,19 @@ class SparclApi():
     #
     def show_record_structure(self, structure, **kwargs):
         """Show the structure of a record retrieved from STRUCTURE using
-        transfer method XFER"""
+        transfer method XFER.
+
+        Args:
+           structure (str): The data structure.
+           xfer (str): (default='database') DEBUG.
+              Format to use to transfer from Server to Client.
+        Returns:
+           String of the record structure for the specified data structure.
+        Example:
+           >>> d = client.show_record_structure('DESI-denali')
+        """
         res = self.sample_records(1, structure=structure, **kwargs)
-        rec = res['records'][0]
+        rec = res[0]
         print(obj_format(rec))
         return rec
     # rec = client.show_record_structure('SDSS-DR16',xfer='database')
