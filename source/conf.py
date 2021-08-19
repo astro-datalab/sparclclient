@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'SPARCL'
-copyright = '2021, A.Jacques, S.Pothier'
-author = 'A.Jacques, S.Pothier'
+copyright = '2021, S.Pothier, A.Jacques'
+author = 'S.Pothier, A.Jacques'
 
 # The full version, including alpha/beta/rc tags
 release = 'Alpha-3'
