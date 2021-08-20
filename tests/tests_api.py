@@ -88,6 +88,7 @@ class ApiTest(unittest.TestCase):
         self.timing[name] = toc()
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
+        
         assert gotspecids == specids, "Actual to Expected"
 
     def test_retrieve_1(self):
@@ -95,6 +96,7 @@ class ApiTest(unittest.TestCase):
         inc2 = {'spectra.coadd.FLUX': 'flux',
                 'bad_field_name': 'alias',
                 'spectra.specobj.CX': 'cx'}
+
         specids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
         with self.assertRaises(ex.BadPath):
@@ -107,6 +109,7 @@ class ApiTest(unittest.TestCase):
         inc2 = {'spectra.coadd.FLUX': 'flux',
                 'spectra.bad_field_name': 'alias', # None value
                 'spectra.specobj.CX': 'cx'}
+
         specids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
         with self.assertWarns(Warning):
