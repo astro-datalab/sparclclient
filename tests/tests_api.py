@@ -57,49 +57,50 @@ class ApiTest(unittest.TestCase):
 
 
     def test_sample(self):
-        sids = self.client.sample_sids()
-        #print(f'sids={sids}')
-        assert len(sids) == 5
+        specids = self.client.sample_specids()
+        #print(f'specids={specids}')
+        assert len(specids) == 5
 
     def test_missing_0(self):
         """Known missing"""
-        sids= [99,88]
-        missing = self.client.missing_sids(sids)
-        assert sorted(missing) == sorted(sids)
+        specids= [99,88]
+        missing = self.client.missing_specids(specids)
+        assert sorted(missing) == sorted(specids)
 
     def test_missing_1(self):
         """None missing"""
-        sids = self.client.sample_sids()
-        missing = self.client.missing_sids(sids)
+        specids = self.client.sample_specids()
+        missing = self.client.missing_specids(specids)
         assert missing == []
 
-
     def test_retrieve_0(self):
-        """Get spectra using small list of spectObjIds"""
+        """Get spectra using small list of specids."""
         name = 'retrieve_0'
         this = self.test_retrieve_0
         getcnt = 3
-        sids = sorted(self.client.sample_sids(samples=getcnt))
+        specids = sorted(self.client.sample_specids(samples=getcnt))
         tic()
-        records = self.client.retrieve(sids)
+        records = self.client.retrieve(specids)
         #! status = ret['status']
         #! records = ret['records']
-        gotsids = sorted(r['specid'] for r in records)
+        gotspecids = sorted(r['specid'] for r in records)
 
         self.timing[name] = toc()
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
-        assert gotsids == sids, "Actual to Expected"
+        
+        assert gotspecids == specids, "Actual to Expected"
 
     def test_retrieve_1(self):
         """Raise exception when unknown core field referenced in include"""
         inc2 = {'spectra.coadd.FLUX': 'flux',
                 'bad_field_name': 'alias',
                 'spectra.specobj.CX': 'cx'}
-        sids = sorted(self.client.sample_sids(samples=1,
+
+        specids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
         with self.assertRaises(ex.BadPath):
-            records = self.client.retrieve(sids,
+            records = self.client.retrieve(specids,
                                            include=inc2,
                                            structure='BOSS-DR16')
 
@@ -108,10 +109,11 @@ class ApiTest(unittest.TestCase):
         inc2 = {'spectra.coadd.FLUX': 'flux',
                 'spectra.bad_field_name': 'alias', # None value
                 'spectra.specobj.CX': 'cx'}
-        sids = sorted(self.client.sample_sids(samples=1,
+
+        specids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
         with self.assertWarns(Warning):
-            records = self.client.retrieve(sids,
+            records = self.client.retrieve(specids,
                                            include=inc2,
                                            structure='BOSS-DR16')
     def test_retrieve_3(self):
