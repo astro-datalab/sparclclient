@@ -98,11 +98,47 @@ class AttrDict(dict):
 #
 #    return(obj[last])
 
+#! # tree :: [name, element1, element2, ...]  ALWAYS a list (CONS cell)
+#! def dict2tree_0(name, obj):
+#!     if isinstance(obj, dict):
+#!         tree = [name] + [dict2tree(k,v) for (k,v) in obj.items()]
+#!     #! elif isinstance(obj, list):
+#!     #!     tree = [name] + [dict2tree(str(n),v) for (n,v) in enumerate(obj)
+#!     #!                      if (isinstance(v, dict) or isinstance(v, list))]
+#!     elif isinstance(obj, list):
+#!         tree = [name] + [dict2tree('0',obj[0]),
+#!                          f'<{len(obj)-1} more>']
+#!     else:
+#!         tree = [name,type(obj)]
+#!     return(tree)
+
+def dict2tree(name, obj):
+    if isinstance(obj, dict):
+        children = dict()
+        for (k,v) in obj.items():
+            if isinstance(v, dict) or isinstance(v, list):
+                val = dict2tree(k,v)
+            else:
+                val = {k: type(v)}
+            children.update(val)
+        tree = {name:  children}
+    elif isinstance(obj, list):
+        tree = {name: [dict2tree(str(n),v) for (n,v) in enumerate(obj)]}
+    else:
+        tree = {name: type(obj)}
+    return(tree)
+
+def tree_nodes(tree):
+    #!print(f'tree={tree}')
+    if tree[0] != '0':
+        return [tree[0]] + [tree_nodes(e) for e in tree[1:]
+                            if isinstance(e, list) ]
+
 def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
     """Recursively get the rough composition of a pure python object. Used in show_record_structure().
 
         Args:
-           obj (AttrDict): pure python object. 
+           obj (AttrDict): pure python object.
            seen (str, optional): (default: None) set of objects already visited. Avoid infinite loops!
            indent (int, optional): (default: 0) level of indentation for printing the format of obj.
            showid (boolean, optional): (default: False) OBSOLETE. # Code should be changed to remove use of this.
@@ -279,6 +315,12 @@ class SparclApi():
         return ret
 
 
+    def specids2tuples(self, specids, structure):
+        uparams =dict(dr=structure)
+        qstr = urlencode(uparams)
+        url = f'{self.apiurl}/specids2tuples/?{qstr}'
+        res = requests.post(url, json=specids, timeout=self.timeout)
+
     def retrieve(self, specid_list,
                  include=None,  # None means include ALL
                  #!format=None,
@@ -403,6 +445,8 @@ class SparclApi():
     # rec = client.show_record_structure('SDSS-DR16',xfer='database')
     # rec1 = api.client.AttrDict(rec)
     # rec1.spectra.specobj.CZ => [0.6159544898118924]
+
+
 
 if __name__ == "__main__":
     import doctest
