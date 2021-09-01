@@ -12,6 +12,7 @@ def genSparclException(**status):
 
 
 class BaseSparclException(Exception):
+    """Base Class for all SPARCL exceptions. """
     error_code = 'UNKNOWN'
     error_message = '<NA>'
 
@@ -28,14 +29,16 @@ class BaseSparclException(Exception):
         return f'[{self.error_code}] {self.error_message}'
 
     def to_dict(self):
+        """Convert a SPARCL exception to a python dictionary"""
         dd = dict(errorMessage = self.error_message,
                   errorCode = self.error_code)
         return dd
 
 class BadPath(BaseSparclException):
-    """A path starts with a non-core field."""
+    """A field path starts with a non-core field."""
     error_code = 'BADPATH'
 
 class UnknownServerError(BaseSparclException):
-    """Got a status from SPARC Server we do not know how to decode."""
+    """Client got a status response from the SPARC Server that we do not
+    know how to decode."""
     error_code = 'UNKNOWN'

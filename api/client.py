@@ -112,27 +112,49 @@ class AttrDict(dict):
 #!         tree = [name,type(obj)]
 #!     return(tree)
 
-def dict2tree(name, obj):
+def dict2tree(obj, name=None):
+    """Return abstracted nested tree. Terminals contain TYPE"""
     if isinstance(obj, dict):
         children = dict()
         for (k,v) in obj.items():
             if isinstance(v, dict) or isinstance(v, list):
-                val = dict2tree(k,v)
+                val = dict2tree(v, name=k)
             else:
                 val = {k: type(v)}
+                #!val = {k: '-'}
+            children.update(val)
+        tree = children if name is None else {name:  children}
+    elif isinstance(obj, list):
+        children = dict()
+        for n,v in enumerate(obj[:1]):
+            k = f'<list({len(obj)})[0]>'
+            if isinstance(v, dict) or isinstance(v, list):
+                val = dict2tree(v, name=k)
+            else:
+                val = {k: type(v)}
+                #!val = {k: '-'}
             children.update(val)
         tree = {name:  children}
-    elif isinstance(obj, list):
-        tree = {name: [dict2tree(str(n),v) for (n,v) in enumerate(obj)]}
     else:
-        tree = {name: type(obj)}
+        tree = {name,type(obj)}
     return(tree)
 
+# RETURN: nested list of node names
 def tree_nodes(tree):
-    #!print(f'tree={tree}')
-    if tree[0] != '0':
-        return [tree[0]] + [tree_nodes(e) for e in tree[1:]
-                            if isinstance(e, list) ]
+    """e.g. [name, name-child1, name-child2, [name-child3, name-granchild]]"""
+    res = []
+    if not isinstance(tree, dict):
+        return tree
+    for k,v in tree.items():
+        if isinstance(v, dict):
+            if list(v.keys())[0].startswith('<list') :
+                res.append(k) # treat "type dict" as terminal
+            else:
+                res.append([k] + tree_nodes(v))
+        else: # v is not dict
+            res.append(k)
+    return res
+
 
 def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
     """Recursively get the rough composition of a pure python object. Used in show_record_structure().
