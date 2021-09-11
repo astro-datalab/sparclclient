@@ -19,6 +19,7 @@ from collections.abc import MutableMapping
 # Local Packages
 from api.utils import tic,toc
 import api.exceptions as ex
+import api.type_conversion as tc
 # External Packages
 import requests
 
@@ -267,7 +268,7 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
-    def sample_specids(self, samples=5, structure='SDSS-DR16'):
+    def sample_specids(self, samples=5, structure=None):
         """Return a small list of specids.
 
         This is intended to make it easy to get just a few specids to use
@@ -275,16 +276,17 @@ class SparclApi():
 
         Args:
            samples (int, optional): (default: 5) The number of sample specids to get.
-           structure (str, optional): (default: 'SDSS-DR16') The data structure from which to get specids.
+           structure (str, optional): (default: None means ANY) The data structure from which to get specids.
         Returns:
            List of specids.
         Example:
            >>> client.sample_specids(samples=3, structure='DESI-denali')
            [616088561849992155, 39633331515559899, 39633328084618293]
         """
-        response = requests.get(
-            f'{self.apiurl}/sample/?samples={samples}&dr={structure}',
-            timeout=self.timeout)
+        url = f'{self.apiurl}/sample/?samples={samples}&dr={structure}'
+        if self.verbose:
+            print(f'Using url="{url}"')
+        response = requests.get(url, timeout=self.timeout)
         return response.json()
 
     @property
@@ -346,7 +348,8 @@ class SparclApi():
     def retrieve(self, specid_list,
                  include=None,  # None means include ALL
                  #!format=None,
-                 structure='SDSS-DR16',
+                 rtype=None,
+                 structure=None, # was 'SDSS-DR16'
                  xfer='database',
                  limit=False, verbose=False):
         """Get spectrum from specid list.
@@ -355,7 +358,8 @@ class SparclApi():
            specid_list (list): List of specids.
            include (dict, optional): (default: include ALL) List of paths
               to include in each record. key=storedPath, val=alias.
-           structure (str): The data structure of the specids.
+           structure (str): The data structure (DS) name associated with the specids.
+              Or None to retrieve from any DS that contains the specid.
            xfer (str): (default='database') DEBUG.
               Format to use to transfer from Server to Client.
            limit (int, optional): Maximum number of spectra records to return.
@@ -370,7 +374,7 @@ class SparclApi():
         #!   format (str): Format of the data structure that contains spectra
 
         verbose = verbose or self.verbose
-        lim = None if limit is None else (limit or self.limit)
+        lim = None if limit is None else (limit or self.limit or 13)
 
         uparams =dict(include=include,
                       limit=lim,
@@ -387,9 +391,10 @@ class SparclApi():
         res = requests.post(url, json=specid_list, timeout=self.timeout)
         if verbose:
             elapsed = toc()
+            print(f'Got response to post in {elapsed} seconds')
 
         if res.status_code != 200:
-            #!print(f'DBG: res.json={res.json()}')
+            print(f'DBG: res.json={res.json()}')
             raise ex.genSparclException(**res.json())
 
         if xfer=='p':
@@ -414,14 +419,14 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return( [AttrDict(r) for r in records] )
+        return( [AttrDict(tc.convert(r, rtype)) for r in records] )
 
-    def sample_records(self, count, structure='SDSS-DR16', **kwargs):
+    def sample_records(self, count, structure=None, **kwargs):
         """Return COUNT random records from given STRUCTURE.
 
         Args:
            count (int): Number of sample records to get from database.
-           structure (str, optional): (default: 'SDSS-DR16') The data structure from which to get sample records.
+           structure (str, optional): (default: None means ANY) The data structure from which to get sample records.
         Returns:
            COUNT random records from given STRUCTURE.
         Example:
@@ -439,8 +444,9 @@ class SparclApi():
              'spectra': {...},
              'updated': '2021-04-28T20:16:20.399464Z'}]
         """
-        return self.retrieve(self.sample_specids(count, structure=structure),
-                             structure=structure, **kwargs)
+        sids = self.sample_specids(count, structure=structure)
+        print(f'DBG: sids={sids}, structure={structure}, kwargs={kwargs}')
+        return self.retrieve(sids, structure=structure, limit=None, **kwargs)
 
     # EXAMPLES:
     # client.show_record_structure('DESI-denali',xfer='database')
@@ -467,6 +473,7 @@ class SparclApi():
     # rec = client.show_record_structure('SDSS-DR16',xfer='database')
     # rec1 = api.client.AttrDict(rec)
     # rec1.spectra.specobj.CZ => [0.6159544898118924]
+
 
 
 

@@ -58,7 +58,7 @@ class ApiTest(unittest.TestCase):
 
     def test_sample(self):
         specids = self.client.sample_specids()
-        #print(f'specids={specids}')
+        print(f'DBG: specids={specids}')
         assert len(specids) == 5
 
     def test_missing_0(self):
@@ -88,7 +88,8 @@ class ApiTest(unittest.TestCase):
         self.timing[name] = toc()
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
-        
+
+        print(f'gotspecids={gotspecids} specids={specids}')
         assert gotspecids == specids, "Actual to Expected"
 
     def test_retrieve_1(self):
@@ -120,7 +121,7 @@ class ApiTest(unittest.TestCase):
         """Issue warning when some sids do not exist."""
         inc2 = {'spectra.coadd.FLUX': 'flux',
                 'spectra.specobj.CX': 'cx'}
-        sids = sorted(self.client.sample_sids(samples=1,
+        sids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
         with self.assertWarns(Warning):
             records = self.client.retrieve(sids+[999],

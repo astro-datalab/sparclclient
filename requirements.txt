@@ -1,4 +1,4 @@
-pandas # ==1.2.3
+#! pandas # ==1.2.3
 requests # ==2.25.1
 psutil    # for benchmarks
 #! speedtest # for benchmarks
