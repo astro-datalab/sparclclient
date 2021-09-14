@@ -419,7 +419,8 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return( [AttrDict(tc.convert(r, rtype)) for r in records] )
+        #!turn( [AttrDict(tc.convert(r, rtype)) for r in records] )
+        return( records )
 
     def sample_records(self, count, structure=None, **kwargs):
         """Return COUNT random records from given STRUCTURE.

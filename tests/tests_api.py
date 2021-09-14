@@ -58,7 +58,7 @@ class ApiTest(unittest.TestCase):
 
     def test_sample(self):
         specids = self.client.sample_specids()
-        print(f'DBG: specids={specids}')
+        #!print(f'DBG: specids={specids}')
         assert len(specids) == 5
 
     def test_missing_0(self):
@@ -89,7 +89,7 @@ class ApiTest(unittest.TestCase):
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
 
-        print(f'gotspecids={gotspecids} specids={specids}')
+        print(f'DBG gotspecids={gotspecids} specids={specids}')
         assert gotspecids == specids, "Actual to Expected"
 
     def test_retrieve_1(self):
