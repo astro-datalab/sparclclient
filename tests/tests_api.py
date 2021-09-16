@@ -90,7 +90,7 @@ class ApiTest(unittest.TestCase):
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
 
-        print(f'DBG gotspecids={gotspecids} specids={specids}')
+        #!print(f'DBG gotspecids={gotspecids} specids={specids}')
         assert gotspecids == specids, "Actual to Expected"
 
     def test_retrieve_1(self):
