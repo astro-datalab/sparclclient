@@ -78,7 +78,8 @@ class ApiTest(unittest.TestCase):
         name = 'retrieve_0'
         this = self.test_retrieve_0
         getcnt = 3
-        specids = sorted(self.client.sample_specids(samples=getcnt))
+        dr='SDSS-DR16'
+        specids = sorted(self.client.sample_specids(samples=getcnt,structure=dr))
         tic()
         records = self.client.retrieve(specids)
         #! status = ret['status']
