@@ -38,6 +38,10 @@ class BadPath(BaseSparclException):
     """A field path starts with a non-core field."""
     error_code = 'BADPATH'
 
+class BadInclude(BaseSparclException):
+    """Include list contains invalid data field(s)."""
+    error_code = 'BADINCL'
+
 class UnknownServerError(BaseSparclException):
     """Client got a status response from the SPARC Server that we do not
     know how to decode."""

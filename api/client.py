@@ -268,6 +268,9 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
+        # dict[drName] = [fieldName, ...]
+        self.dr_fields = requests.get(f'{self.apiurl}/fields').json()
+
     def sample_specids(self, samples=5, structure=None):
         """Return a small list of specids.
 
@@ -345,6 +348,21 @@ class SparclApi():
         url = f'{self.apiurl}/specids2tuples/?{qstr}'
         res = requests.post(url, json=specids, timeout=self.timeout)
 
+    def validate_include(self, dr, include_list):
+        if include_list is None:
+            return True
+        incSet = set(include_list)
+        unknown = incSet.difference(self.dr_fields[dr])
+        if len(unknown) > 0:
+            msg = (f'The INCLUDE list contains invalid data field names '
+                   f'for Structure "{dr}" '
+                   f'({", ".join(sorted(list(unknown)))}) '
+                   f'Available fields are: '
+                   f'{", ".join(sorted(self.dr_fields[dr]))}.'
+                   )
+            raise ex.BadInclude(msg)
+        return True
+
     def retrieve(self, specid_list,
                  include=None,  # None means include ALL
                  #!format=None,
@@ -370,8 +388,8 @@ class SparclApi():
            >>> sdss_ids = [849044290804934656, 309718438815754240]
            >>> res_sdss = client.retrieve(sdss_ids, structure='SDSS-DR16', include=ink)
         """
-        #! Args TODO
-        #!   format (str): Format of the data structure that contains spectra
+
+        self.validate_include(structure, include)
 
         verbose = verbose or self.verbose
         lim = None if limit is None else (limit or self.limit or 13)
@@ -394,7 +412,9 @@ class SparclApi():
             print(f'Got response to post in {elapsed} seconds')
 
         if res.status_code != 200:
-            print(f'DBG: res.json={res.json()}')
+            if verbose and ('traceback' in res.json()):
+                #!print(f'DBG: res.json={res.json()}')
+                print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(**res.json())
 
         if xfer=='p':
@@ -446,7 +466,6 @@ class SparclApi():
              'updated': '2021-04-28T20:16:20.399464Z'}]
         """
         sids = self.sample_specids(count, structure=structure)
-        print(f'DBG: sids={sids}, structure={structure}, kwargs={kwargs}')
         return self.retrieve(sids, structure=structure, limit=None, **kwargs)
 
     # EXAMPLES:
