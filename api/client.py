@@ -271,6 +271,9 @@ class SparclApi():
         # dict[drName] = [fieldName, ...]
         self.dr_fields = requests.get(f'{self.apiurl}/fields').json()
 
+    def __repr__(self):
+        return(f'({self.apiversion}, {self.apiurl})')
+
     def sample_specids(self, samples=5, structure=None):
         """Return a small list of specids.
 
@@ -356,7 +359,7 @@ class SparclApi():
         if len(unknown) > 0:
             msg = (f'The INCLUDE list contains invalid data field names '
                    f'for Structure "{dr}" '
-                   f'({", ".join(sorted(list(unknown)))}) '
+                   f'({", ".join(sorted(list(unknown)))}). '
                    f'Available fields are: '
                    f'{", ".join(sorted(self.dr_fields[dr]))}.'
                    )

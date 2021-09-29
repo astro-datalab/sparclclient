@@ -94,23 +94,20 @@ class ApiTest(unittest.TestCase):
         assert gotspecids == specids, "Actual to Expected"
 
     def test_retrieve_1(self):
-        """Raise exception when unknown core field referenced in include"""
-        inc2 = {'spectra.coadd.FLUX': 'flux',
-                'bad_field_name': 'alias',
-                'spectra.specobj.CX': 'cx'}
+        """Raise exception when unknown field referenced in include"""
+        inc2 = ['bad_field_name', 'flux', 'spectra.coadd.OR_MASK']
 
         specids = sorted(self.client.sample_specids(samples=1,
-                                              structure='BOSS-DR16'))
-        with self.assertRaises(ex.BadPath):
+                                                    structure='BOSS-DR16'))
+        with self.assertRaises(ex.BadInclude):
             records = self.client.retrieve(specids,
                                            include=inc2,
                                            structure='BOSS-DR16')
 
+    @skip('Cannot find an example of this edge case occuring')
     def test_retrieve_2(self):
         """Issue warning when a Path has no value."""
-        inc2 = {'spectra.coadd.FLUX': 'flux',
-                'spectra.bad_field_name': 'alias', # None value
-                'spectra.specobj.CX': 'cx'}
+        inc2 = ['flux', 'spectra.coadd.OR_MASK']
 
         specids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
@@ -120,8 +117,7 @@ class ApiTest(unittest.TestCase):
                                            structure='BOSS-DR16')
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
-        inc2 = {'spectra.coadd.FLUX': 'flux',
-                'spectra.specobj.CX': 'cx'}
+        inc2 = ['flux']
         sids = sorted(self.client.sample_specids(samples=1,
                                               structure='BOSS-DR16'))
         with self.assertWarns(Warning):
