@@ -354,6 +354,11 @@ class SparclApi():
     def validate_include(self, dr, include_list):
         if include_list is None:
             return True
+        if not isinstance(include_list, list):
+            raise Exception(
+                f'INCLUDE parameter must be a LIST of field names. '
+                f'Got: "{include_list}"')
+
         incSet = set(include_list)
         unknown = incSet.difference(self.dr_fields[dr])
         if len(unknown) > 0:
@@ -397,7 +402,7 @@ class SparclApi():
         verbose = verbose or self.verbose
         lim = None if limit is None else (limit or self.limit or 13)
 
-        uparams =dict(include=include,
+        uparams =dict(include=','.join(include),
                       limit=lim,
                       dr=structure)
         if xfer is not None:
@@ -450,7 +455,10 @@ class SparclApi():
 
         Args:
            count (int): Number of sample records to get from database.
+
            structure (str, optional): (default: None means ANY) The data structure from which to get sample records.
+
+
         Returns:
            COUNT random records from given STRUCTURE.
         Example:

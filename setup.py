@@ -12,7 +12,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="sparclclient",
-    version="0.0.24",
+    version="0.0.25",
     author="NOIRLab DataLab",
     author_email="datalab@noirlab.edu",
     description="A client for getting spectra data from NOIRLab.",

@@ -124,3 +124,5 @@ class ApiTest(unittest.TestCase):
             records = self.client.retrieve(sids+[999],
                                            include=inc2,
                                            structure='BOSS-DR16')
+    def test_show_record_structure(self):
+        self.assertEqual(True, False) # UNDER CONSTRUCTION DLS-106
