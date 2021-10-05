@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 import copy
 import numpy as np
-import astropy.units as u
+import pandas as pd
 from specutils import Spectrum1D
+import astropy.units as u
 from astropy.nddata import InverseVariance
 
 
@@ -35,74 +36,79 @@ class NoopConvert(Convert):
         return(record)
 
 class SdssDr16(Convert):
-    out_data_paths = [
-        'specid',
-        'ra_center',
-        'dec_center',
-        'red_shift',
-        'coadd', # 5 columns
-        ]
-
-    # client = api.client.SparclApi()
-    # sdss_rec = client.sample_records(1,structure='SDSS-DR16')[0]
-    def to_numpy(self, record):
+    def to_numpy(self, record, o2nLUT):
         """Convert FitsFile record to a structure that uses Numpy"""
-
-
-        newrec = dict(
-            ra = record.get('ra_center'),
-            dec = record.get('dec_center'),
-            red_shift = record.get('red_shift'),
-            coadd = np.array([
-                record['sky'],
-                record['flux'],
-                record['ivar'],
-                record['model'],
-                record['loglam'],
-                ]),
-            #! specobj = record['spectra']['specobj'],
-        )
+        arflds = [
+            'spectra.coadd.and_mask',
+            'spectra.coadd.flux',
+            'spectra.coadd.ivar',
+            'spectra.coadd.loglam',
+            'spectra.coadd.model',
+            'spectra.coadd.or_mask',
+            'spectra.coadd.sky',
+            'spectra.coadd.wdisp',
+            ]
+        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
+        newrec = dict(coadd = numpy.array(lofl))
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
         return(newrec)
 
-    def to_spectrum1d(self, record):
-        #! return(record)
+    def to_spectrum1d(self, record, o2nLUT):
+        arflds = [
+            'spectra.coadd.flux',
+            'spectra.coadd.ivar',
+            'spectra.coadd.loglam',
+            ]
 
-        coadd = record['spectra']['coadd']
-        wavelength = (10**np.array(coadd['loglam']))*u.AA
-        flux = np.array(coadd['flux'])*u.Jy
-        ivar = InverseVariance(np.array(coadd['ivar']))
+        loglam = record[o2nLUT['spectra.coadd.loglam']]
+        flux = record[o2nLUT['spectra.coadd.flux']]
+        ivar = record[o2nLUT['spectra.coadd.ivar']]
+
+        wavelength = (10**np.array(loglam))*u.AA
+        flux = np.array(flux)*u.Jy
+        ivar = InverseVariance(np.array(ivar))
         z = record.get('red_shift')
 
-        lofl = []
-
         newrec = dict(
-            ra = record.get('ra_center'),
-            dec = record.get('dec_center'),
-            red_shift = record.get('red_shift'),
             # flux, uncertainty, wavevelength, mask(or, and), redshift
-            spec1d = Spectrum1D(spectral_axis=wavelength, flux=flux,
-                                uncertainty=ivar, redshift=z),
+            spec1d = Spectrum1D(spectral_axis=wavelength,
+                                flux=flux,
+                                uncertainty=ivar,
+                                redshift=z),
             )
-            #! specobj = record['spectra']['specobj'],
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+
         return(newrec)
 
 
-    def to_pandas(self, record):
-        return(record)
+    def to_pandas(self, record, o2nLUT):
+        arflds = [
+            'spectra.coadd.and_mask',
+            'spectra.coadd.flux',
+            'spectra.coadd.ivar',
+            'spectra.coadd.loglam',
+            'spectra.coadd.model',
+            'spectra.coadd.or_mask',
+            'spectra.coadd.sky',
+            'spectra.coadd.wdisp',
+            ]
+        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
+        newrec = dict(df = pd.DataFrame(lofl))
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+        return(newrec)
+
 
 class BossDr16(Convert):
-    out_data_paths = [
-        'specid',
-        'ra_center',
-        'dec_center',
-        'red_shift',
-        'spectra.coadd', # 5 columns
-        ]
-    def to_numpy(self, record, o2nLUT, verbose=True):
-        if verbose:
-            print(f'DBG-1: BOSS-DR16.to_numpy record.keys={list(record.keys())}')
-
-
+    def to_numpy(self, record, o2nLUT):
         arflds = [
             'spectra.coadd.AND_MASK',
             'spectra.coadd.FLUX',
@@ -114,29 +120,157 @@ class BossDr16(Convert):
             'spectra.coadd.WDISP',
             ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-
-        newrec = dict(
-            specid = record.get('specid'),
-            #! ra = record.get('ra_center'),
-            #! dec = record.get('dec_center'),
-            #! red_shift = record.get('red_shift'),
-            coadd = numpy.array(lofl),
-            #! specobj = record['spectra']['specobj'],
-        )
+        newrec = dict(coadd = numpy.array(lofl))
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
         return(newrec)
 
-    def to_spectrum1d(self, record):
-        return(record)
-    def to_pandas(self, record):
-        return(record)
+    def to_spectrum1d(self, record, o2nLUT):
+        arflds = [
+            'spectra.coadd.FLUX',
+            'spectra.coadd.IVAR',
+            'spectra.coadd.LOGLAM',
+            ]
+
+        loglam = record[o2nLUT['spectra.coadd.LOGLAM']]
+        flux = record[o2nLUT['spectra.coadd.FLUX']]
+        ivar = record[o2nLUT['spectra.coadd.IVAR']]
+
+        wavelength = (10**np.array(loglam))*u.AA
+        flux = np.array(flux)*u.Jy
+        ivar = InverseVariance(np.array(ivar))
+        z = record.get('red_shift')
+
+        newrec = dict(
+            # flux, uncertainty, wavevelength, mask(or, and), redshift
+            spec1d = Spectrum1D(spectral_axis=wavelength,
+                                flux=flux,
+                                uncertainty=ivar,
+                                redshift=z),
+            )
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+        return(newrec)
+
+    def to_pandas(self, record, o2nLUT):
+        arflds = [
+            'spectra.coadd.AND_MASK',
+            'spectra.coadd.FLUX',
+            'spectra.coadd.IVAR',
+            'spectra.coadd.LOGLAM',
+            'spectra.coadd.MODEL',
+            'spectra.coadd.OR_MASK',
+            'spectra.coadd.SKY',
+            'spectra.coadd.WDISP',
+            ]
+        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
+        newrec = dict(df = pd.DataFrame(lofl))
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+        return(newrec)
+
 
 class DesiDenali(Convert):
-    def to_numpy(self, record):
-        return(record)
-    def to_spectrum1d(self, record):
-        return(record)
-    def to_pandas(self, record):
-        return(record)
+    def to_numpy(self, record, o2nLUT):
+        arflds = [
+            'spectra.b_flux',
+            'spectra.b_ivar',
+            'spectra.b_mask',
+            'spectra.b_wavelength',
+            'spectra.r_flux',
+            'spectra.r_ivar',
+            'spectra.r_mask',
+            'spectra.r_wavelength',
+            'spectra.z_flux',
+            'spectra.z_ivar',
+            'spectra.z_mask',
+            'spectra.z_wavelength',
+        ]
+        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
+        newrec = dict(coadd = numpy.array(lofl))
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+        return(newrec)
+
+
+    def to_spectrum1d(self, record, o2nLUT):
+        arflds = [
+            'spectra.b_flux',
+            'spectra.b_ivar',
+            'spectra.b_mask',
+            'spectra.b_wavelength',
+            'spectra.r_flux',
+            'spectra.r_ivar',
+            'spectra.r_mask',
+            'spectra.r_wavelength',
+            'spectra.z_flux',
+            'spectra.z_ivar',
+            'spectra.z_mask',
+            'spectra.z_wavelength',
+        ]
+
+        loglam_b = record[o2nLUT['spectra.b_wavelength']]
+        flux_b = record[o2nLUT['spectra.b_flux']]
+        ivar_b = record[o2nLUT['spectra.b_ivar']]
+
+        wavelength_b = (10**np.array(loglam_b))*u.AA
+        flux_b = np.array(flux_b)*u.Jy
+        ivar_b = InverseVariance(np.array(ivar_b))
+        z = record.get('red_shift')
+
+        newrec = dict(
+            # flux, uncertainty, wavevelength, mask(or, and), redshift
+            spec1d_b = Spectrum1D(spectral_axis=wavelength_b,
+                                  flux=flux_b,
+                                  uncertainty=ivar_b,
+                                  redshift=z),
+            spec1d_r = Spectrum1D(spectral_axis=wavelength_r,
+                                  flux=flux_r,
+                                  uncertainty=ivar_r,
+                                  redshift=z),
+            spec1d_z = Spectrum1D(spectral_axis=wavelength_z,
+                                  flux=flux_z,
+                                  uncertainty=ivar_z,
+                                  redshift=z),
+            )
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+        return(newrec)
+
+
+    def to_pandas(self, record, o2nLUT):
+        arflds = [
+            'spectra.b_flux',
+            'spectra.b_ivar',
+            'spectra.b_mask',
+            'spectra.b_wavelength',
+            'spectra.r_flux',
+            'spectra.r_ivar',
+            'spectra.r_mask',
+            'spectra.r_wavelength',
+            'spectra.z_flux',
+            'spectra.z_ivar',
+            'spectra.z_mask',
+            'spectra.z_wavelength',
+        ]
+        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
+        newrec = dict(df = pd.DataFrame(lofl))
+        for orig,new in o2nLUT.items():
+            if orig in arflds:
+                continue
+            newrec[new] = record[new]
+        return(newrec)
+
 
 
 # DR Instance LookUp Table
@@ -159,8 +293,9 @@ def convert(record, rtype, client, include, verbose=False):
 
     o2nLUT = copy.copy(client.orig2newLUT[dr]) # orig2newLUT[dr][orig] = new
     n2oLUT = client.new2origLUT[dr]
+    required = set(client.required[dr])
     if include is not None:
-        nuke = set(n2oLUT.keys()).difference(include)
+        nuke = set(n2oLUT.keys()).difference(required.union(include))
         for new in nuke:
             del o2nLUT[n2oLUT[new]]
 

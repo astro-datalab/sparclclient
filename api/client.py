@@ -274,6 +274,12 @@ class SparclApi():
         # dfLUT[dr][origPath] => dict[new=newPath,required=bool]
         self.dfLUT = requests.get(f'{self.apiurl}/fields/').json()
 
+
+        # required[dr] => newPath
+        self.required = dict(
+            (dr, [d['new'] for orig,d in v.items() if d['required']])
+            for dr,v in self.dfLUT.items())
+
         # orig2newLUT[dr][orig] = new
         self.orig2newLUT = dict((dr,dict((orig,d['new'])
                                          for orig,d in v.items()))
