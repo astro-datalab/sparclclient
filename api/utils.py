@@ -22,8 +22,8 @@ def tic():
 def toc():
     """Return elapsed time since previous tic().
 
-    Args:   
-       None. 
+    Args:
+       None.
     Returns:
        Elapsed time since previous tic().
     """
@@ -34,7 +34,7 @@ def here_now():
     """Used to track info for benchmark. Probably OBE?
 
     Args:
-       None. 
+       None.
     Returns:
        Time, date, and hostname.
     """
@@ -48,7 +48,7 @@ def objform(obj):
     See also: https://code.activestate.com/recipes/577504/
 
     Args:
-       obj: Python object. 
+       obj: Python object.
     Returns:
        Length if list, objforms of dict contents if dict, type if anything else.
     Example:
@@ -69,3 +69,30 @@ def objform(obj):
         return dict((k,objform(v)) for (k,v) in obj.items())
     else:
         return str(type(obj))
+
+def dict2tree(obj, name=None, prefix=''):
+    """Return abstracted nested tree. Terminals contain TYPE.
+    As a special case, a list is given as a dict that represents a compound
+    type.  E.G. {'<list(3835)[0]>': float} means a list of 3835 elements where
+    the first element is of type 'float'.  NB: Only the type of the first element
+    in a list is given.  If the list has hetergeneous types, that fact is
+    invisible in the structure!!
+    """
+    nextpfx = '' if name is None else (prefix + name + '.')
+    showname = prefix if name is None else (prefix + name)
+    if isinstance(obj, dict):
+        children = dict()
+        for (k,v) in obj.items():
+            if isinstance(v, dict) or isinstance(v, list):
+                val = dict2tree(v, name=k, prefix=nextpfx)
+            else:
+                #!val = {k: type(v).__name__}
+                val = {nextpfx+k: type(v).__name__}
+            children.update(val)
+        tree = children if name is None else {showname:  children}
+    elif isinstance(obj, list):
+        children = f'<list({len(obj)})[0]>:{type(obj[0]).__name__}'
+        tree = {showname: children}
+    else:
+        tree = {showname: type(obj).__name__}
+    return(tree)

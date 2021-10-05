@@ -16,6 +16,7 @@ from unittest.mock import create_autospec
 # Local Packages
 import api.client
 from tests.utils import tic,toc
+import tests.expected as exp
 import api.exceptions as ex
 # External Packages
 # <none>
@@ -42,7 +43,8 @@ class ApiTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print(f'\n## Times on: {urlparse(rooturl).netloc.split(".")[0]}')
+        print(f'\n## Times on: {urlparse(rooturl).netloc.split(".")[0]}'
+              ' (TestName, NumRecs, Description)')
         for k,v in cls.timing.items():
             print(f'##   {k}: elapsed={v:.1f} secs;'
                   f'\t{cls.count.get(k)}'
@@ -124,5 +126,9 @@ class ApiTest(unittest.TestCase):
             records = self.client.retrieve(sids+[999],
                                            include=inc2,
                                            structure='BOSS-DR16')
-    def test_show_record_structure(self):
-        self.assertEqual(True, False) # UNDER CONSTRUCTION DLS-106
+
+    def test_get_record_structure(self):
+        actual = self.client.get_record_structure('BOSS-DR16')
+        #!print(f'actual={pformat(actual)}')
+        self.assertEqual(actual, exp.boss_record_structure,
+                         msg = 'Actual to Expected')

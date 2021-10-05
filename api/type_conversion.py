@@ -1,3 +1,35 @@
+"""It would be much better if this were abstracted and easier to
+update with new Data Types and new DataReleases.  Perhaps use
+something like the Server "Personalities".  I've rejected abstracting
+for now because I think we need operational experience with the DataType
+feature and how it interacts with other features (especially global
+Rename and retrieve(INCLUDE).
+
+DataType conversion should be done completely within the Client, not
+the on the Server.  The obvious reason is Clients are language
+dependent, the Server API is not.  But for Client to be able to know
+all about fields names (mapping from original to new names, which ones
+are required) it needs info from the Server.  The Client gets such
+tables on instance instantiation through one web-service call that
+grabs everything that pulls it appart into multiple DataField related
+LUTs (LookUpTables, aka dictionaries).
+
+Questions abound for use-cases.
+
+1. Is it very important to be able to convert a record LIST to a
+   single data structure? Example: for Pandas DataFrame we combine all
+   vectors in a record into a 2D DataFrame.  What about those across
+   records into a 3D DataFrame?
+
+2. Should vectors and scalars be funadmentally separated? (see #1) If
+   so, how do we avoid hard coding the distinction for every
+   DataRelease?
+
+3. There
+
+"""
+
+
 from abc import ABC, abstractmethod
 import copy
 import numpy as np
@@ -228,15 +260,15 @@ class DesiDenali(Convert):
 
         newrec = dict(
             # flux, uncertainty, wavevelength, mask(or, and), redshift
-            spec1d_b = Spectrum1D(spectral_axis=wavelength_b,
+            b_spec1d = Spectrum1D(spectral_axis=wavelength_b,
                                   flux=flux_b,
                                   uncertainty=ivar_b,
                                   redshift=z),
-            spec1d_r = Spectrum1D(spectral_axis=wavelength_r,
+            r_spec1d = Spectrum1D(spectral_axis=wavelength_r,
                                   flux=flux_r,
                                   uncertainty=ivar_r,
                                   redshift=z),
-            spec1d_z = Spectrum1D(spectral_axis=wavelength_z,
+            z_spec1d = Spectrum1D(spectral_axis=wavelength_z,
                                   flux=flux_z,
                                   uncertainty=ivar_z,
                                   redshift=z),

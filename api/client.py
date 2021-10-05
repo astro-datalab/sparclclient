@@ -18,6 +18,7 @@ import pickle
 from collections.abc import MutableMapping
 # Local Packages
 from api.utils import tic,toc
+import api.utils as ut
 import api.exceptions as ex
 import api.type_conversion as tc
 # External Packages
@@ -381,7 +382,7 @@ class SparclApi():
                 f'Got: "{include_list}"')
 
         incSet = set(include_list)
-        print(f'incSet={incSet} dr_fields={self.dr_fields[dr]}')
+        #!print(f'incSet={incSet} dr_fields={self.dr_fields[dr]}')
         unknown = incSet.difference(self.dr_fields[dr])
         if len(unknown) > 0:
             msg = (f'The INCLUDE list contains invalid data field names '
@@ -509,23 +510,21 @@ class SparclApi():
     # client.show_record_structure('SDSS-DR16')
     # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
     #
-    def show_record_structure(self, structure, **kwargs):
-        """Show the structure of a record retrieved from STRUCTURE using
+    def get_record_structure(self, structure, **kwargs):
+        """Get the structure of a record retrieved from STRUCTURE using
         transfer method XFER.
 
         Args:
            structure (str): The data structure.
-           xfer (str): (default='database') DEBUG.
-              Format to use to transfer from Server to Client.
         Returns:
            String of the record structure for the specified data structure.
         Example:
            >>> d = client.show_record_structure('DESI-denali')
         """
-        res = self.sample_records(1, structure=structure, **kwargs)
-        rec = res[0]
-        print(obj_format(rec))
-        return rec
+        recs = self.sample_records(1, structure=structure, **kwargs)
+        return ut.dict2tree(recs[0])
+
+
     # rec = client.show_record_structure('SDSS-DR16',xfer='database')
     # rec1 = api.client.AttrDict(rec)
     # rec1.spectra.specobj.CZ => [0.6159544898118924]
