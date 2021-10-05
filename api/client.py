@@ -268,8 +268,23 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
+        ##########
+        ### Convencience LookUp Tables derived one one query
+        ###
+        # dfLUT[dr][origPath] => dict[new=newPath,required=bool]
+        self.dfLUT = requests.get(f'{self.apiurl}/fields/').json()
+
+        # orig2newLUT[dr][orig] = new
+        self.orig2newLUT = dict((dr,dict((orig,d['new'])
+                                         for orig,d in v.items()))
+                                for dr,v in self.dfLUT.items())
+        # new2origLUT[dr][new] = orig
+        self.new2origLUT = dict((dr,dict((d['new'],orig)
+                                         for orig,d in v.items()))
+                                for dr,v in self.dfLUT.items())
+
         # dict[drName] = [fieldName, ...]
-        self.dr_fields = requests.get(f'{self.apiurl}/fields').json()
+        self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
 
     def __repr__(self):
         return(f'({self.apiversion}, {self.apiurl})')
@@ -360,6 +375,7 @@ class SparclApi():
                 f'Got: "{include_list}"')
 
         incSet = set(include_list)
+        print(f'incSet={incSet} dr_fields={self.dr_fields[dr]}')
         unknown = incSet.difference(self.dr_fields[dr])
         if len(unknown) > 0:
             msg = (f'The INCLUDE list contains invalid data field names '
@@ -400,9 +416,11 @@ class SparclApi():
         self.validate_include(structure, include)
 
         verbose = verbose or self.verbose
+        if verbose:
+            print(f'retrieve(rtype={rtype})')
         lim = None if limit is None else (limit or self.limit or 13)
 
-        uparams =dict(include=','.join(include),
+        uparams =dict(include='None' if include is None else ','.join(include),
                       limit=lim,
                       dr=structure)
         if xfer is not None:
@@ -447,7 +465,8 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return( [AttrDict(tc.convert(r, rtype)) for r in records] )
+        return( [AttrDict(tc.convert(r, rtype, self, include))
+                 for r in records] )
         #!return( records )
 
     def sample_records(self, count, structure=None, **kwargs):

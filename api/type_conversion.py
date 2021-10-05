@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 import copy
+import numpy as np
+import astropy.units as u
+from specutils import Spectrum1D
+from astropy.nddata import InverseVariance
 
 
 class Convert(ABC):
@@ -44,18 +48,17 @@ class SdssDr16(Convert):
     def to_numpy(self, record):
         """Convert FitsFile record to a structure that uses Numpy"""
 
-        import numpy
-        coadd = record['spectra']['coadd']
+
         newrec = dict(
             ra = record.get('ra_center'),
             dec = record.get('dec_center'),
             red_shift = record.get('red_shift'),
-            coadd = numpy.array([
-                coadd['sky'],
-                coadd['flux'],
-                coadd['ivar'],
-                coadd['model'],
-                coadd['loglam'],
+            coadd = np.array([
+                record['sky'],
+                record['flux'],
+                record['ivar'],
+                record['model'],
+                record['loglam'],
                 ]),
             #! specobj = record['spectra']['specobj'],
         )
@@ -63,16 +66,14 @@ class SdssDr16(Convert):
 
     def to_spectrum1d(self, record):
         #! return(record)
-        import numpy as np
-        import astropy.units as u
-        from specutils import Spectrum1D
-        from astropy.nddata import InverseVariance
 
         coadd = record['spectra']['coadd']
         wavelength = (10**np.array(coadd['loglam']))*u.AA
         flux = np.array(coadd['flux'])*u.Jy
         ivar = InverseVariance(np.array(coadd['ivar']))
         z = record.get('red_shift')
+
+        lofl = []
 
         newrec = dict(
             ra = record.get('ra_center'),
@@ -97,20 +98,29 @@ class BossDr16(Convert):
         'red_shift',
         'spectra.coadd', # 5 columns
         ]
-    def to_numpy(self, record):
-        coadd = record['spectra']['coadd']
+    def to_numpy(self, record, o2nLUT, verbose=True):
+        if verbose:
+            print(f'DBG-1: BOSS-DR16.to_numpy record.keys={list(record.keys())}')
+
+
+        arflds = [
+            'spectra.coadd.AND_MASK',
+            'spectra.coadd.FLUX',
+            'spectra.coadd.IVAR',
+            'spectra.coadd.LOGLAM',
+            'spectra.coadd.MODEL',
+            'spectra.coadd.OR_MASK',
+            'spectra.coadd.SKY',
+            'spectra.coadd.WDISP',
+            ]
+        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
+
         newrec = dict(
             specid = record.get('specid'),
-            ra = record.get('ra_center'),
-            dec = record.get('dec_center'),
-            red_shift = record.get('red_shift'),
-            coadd = numpy.array([
-                coadd['SKY'],
-                coadd['FLUX'],
-                coadd['IVAR'],
-                coadd['MODEL'],
-                coadd['LOGLAM'],
-                ]),
+            #! ra = record.get('ra_center'),
+            #! dec = record.get('dec_center'),
+            #! red_shift = record.get('red_shift'),
+            coadd = numpy.array(lofl),
             #! specobj = record['spectra']['specobj'],
         )
         return(newrec)
@@ -137,19 +147,30 @@ diLUT = {
     'Unknown': NoopConvert(),
     }
 
-def convert(record, rtype):
+def convert(record, rtype, client, include, verbose=False):
+    if verbose:
+        print(f'convert(record={list(record.keys())}, rtype={rtype}')
+
     if rtype is None:
         return record
 
-    dr = record.get('data_release_id', 'Unknown')
+    dr = record['data_release']
     drin = diLUT.get(dr,NoopConvert())
 
+    o2nLUT = copy.copy(client.orig2newLUT[dr]) # orig2newLUT[dr][orig] = new
+    n2oLUT = client.new2origLUT[dr]
+    if include is not None:
+        nuke = set(n2oLUT.keys()).difference(include)
+        for new in nuke:
+            del o2nLUT[n2oLUT[new]]
+
+    print(f'o2nLUT={o2nLUT}, include={include}')
     if rtype == 'numpy':
-        return drin.to_numpy(record)
+        return drin.to_numpy(record, o2nLUT)
     elif rtype == 'spectrum1d':
-        return drin.to_spectrum1d(record)
+        return drin.to_spectrum1d(record, o2nLUT)
     elif rtype == 'pandas':
-        return drin.to_pandas(record)
+        return drin.to_pandas(record, o2nLUT)
     else:
         raise Exception(f'Unknown record type ({rtype})')
     return None
