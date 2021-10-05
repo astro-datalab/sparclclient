@@ -5,3 +5,4 @@ psutil    # for benchmarks
 # packaging   # for noaodatalab
 sphinx
 sphinx_rtd_theme
+specutils
