@@ -10,9 +10,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 with open("requirements.txt") as f:
     install_require = f.read().splitlines()
 
-setuptools.setup(
+    setuptools.setup(
     name="sparclclient",
-    version="0.0.29",
+    version="0.3.01",
     author="NOIRLab DataLab",
     author_email="datalab@noirlab.edu",
     description="A client for getting spectra data from NOIRLab.",
@@ -20,7 +20,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/noaodatalab/sparclclient",
     project_urls={
-        "Documentation":"https://sparclclient.readthedocs.io/en/pat/",
+        "Documentation":"https://sparclclient.readthedocs.io/en/latest/",
         },
     #! project_urls={
     #!     "Bug Tracker": "https://github.com/pypa/sampleproject/issues",

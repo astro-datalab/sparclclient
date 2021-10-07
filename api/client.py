@@ -3,7 +3,9 @@
 This module interfaces to the SPARC-Server to get spectra data.
 
 Todo:
-  * Add conversion from Server pickle (json) to Pandas.
+
+  * Handle errors Data Type conversion is not possible given a
+    restricted set of fields specified in INCLUDE parameter.
 
 """
 
@@ -75,141 +77,102 @@ class AttrDict(dict):
         for key in self.keys():
             self[key] = from_nested_dict(self[key])
 
-# A non-recursive version, which also works for numeric dictionary keys:
-#def set_value_at_path(obj, path, value):
-#    *parts, last = path.split('.')
-#
-#    for part in parts:
-#        if isinstance(obj, MutableMapping):
-#           obj = obj[part]
-#        else:
-#            obj = obj[int(part)]
-#
-#    if isinstance(obj, MutableMapping):
-#        obj[last] = value
-#    else:
-#        obj[int(last)] = value
-#
-#def get_value_at_path(obj, path):
-#    *parts, last = path.split('.')
-#
-#    for part in parts:
-#        if isinstance(obj, MutableMapping):
-#            obj = obj[part]
-#        else:
-#            obj = obj[int(part)]
-#
-#    return(obj[last])
 
-#! # tree :: [name, element1, element2, ...]  ALWAYS a list (CONS cell)
-#! def dict2tree_0(name, obj):
-#!     if isinstance(obj, dict):
-#!         tree = [name] + [dict2tree(k,v) for (k,v) in obj.items()]
-#!     #! elif isinstance(obj, list):
-#!     #!     tree = [name] + [dict2tree(str(n),v) for (n,v) in enumerate(obj)
-#!     #!                      if (isinstance(v, dict) or isinstance(v, list))]
-#!     elif isinstance(obj, list):
-#!         tree = [name] + [dict2tree('0',obj[0]),
-#!                          f'<{len(obj)-1} more>']
-#!     else:
-#!         tree = [name,type(obj)]
-#!     return(tree)
-
-def dict2tree(obj, name=None):
-    """Return abstracted nested tree. Terminals contain TYPE"""
-    if isinstance(obj, dict):
-        children = dict()
-        for (k,v) in obj.items():
-            if isinstance(v, dict) or isinstance(v, list):
-                val = dict2tree(v, name=k)
-            else:
-                val = {k: type(v)}
-                #!val = {k: '-'}
-            children.update(val)
-        tree = children if name is None else {name:  children}
-    elif isinstance(obj, list):
-        children = dict()
-        for n,v in enumerate(obj[:1]):
-            k = f'<list({len(obj)})[0]>'
-            if isinstance(v, dict) or isinstance(v, list):
-                val = dict2tree(v, name=k)
-            else:
-                val = {k: type(v)}
-                #!val = {k: '-'}
-            children.update(val)
-        tree = {name:  children}
-    else:
-        tree = {name,type(obj)}
-    return(tree)
-
-# RETURN: nested list of node names
-def tree_nodes(tree):
-    """e.g. [name, name-child1, name-child2, [name-child3, name-granchild]]"""
-    res = []
-    if not isinstance(tree, dict):
-        return tree
-    for k,v in tree.items():
-        if isinstance(v, dict):
-            if list(v.keys())[0].startswith('<list') :
-                res.append(k) # treat "type dict" as terminal
-            else:
-                res.append([k] + tree_nodes(v))
-        else: # v is not dict
-            res.append(k)
-    return res
-
-
-def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
-    """Recursively get the rough composition of a pure python object. Used in show_record_structure().
-
-        Args:
-           obj (AttrDict): pure python object.
-           seen (str, optional): (default: None) set of objects already visited. Avoid infinite loops!
-           indent (int, optional): (default: 0) level of indentation for printing the format of obj.
-           showid (boolean, optional): (default: False) OBSOLETE. # Code should be changed to remove use of this.
-           tab (int, optional): (default: 4) amount of spaces to use for one level of indentation.
-        Returns:
-           The rough composition of a pure python object.
-        Example:
-           >>> res = client.sample_records(1)[0]
-           >>> print(obj_format(res))
-        """
-    # Prevent following loops (self reference) in structures
-    if seen is None:
-        seen = set()
-    oid = id(obj)
-    if oid in seen:
-        return ''
-    seen.add(oid)
-    idstr = f'{oid:<16}: ' if showid else ''
-    s = ' '
-    idspc = f'{s:<16}: ' if showid else ''
-
-    spaces = ' ' * (indent * tab)
-    res = spaces
-    #!res = f'[{oid}] {spaces}'
-    indent += 1
-    spaces2 = ' ' * (indent * tab)
-    if isinstance(obj, dict):
-        res += f'{idstr}dict(\n'
-        for k,v in obj.items():
-            if v is None:
-                valstr = None
-            else:
-                valstr = obj_format(v, seen, indent, showid).strip()
-            #!res += f'{idstr}{spaces2}{k:16} = {valstr},\n'
-            res += f'{idstr}{spaces2}{k} = {valstr},\n'
-        res += f'{idspc}{spaces2})'
-    elif isinstance(obj, list):
-        if obj[0] is None:
-            valstr = None
-        else:
-            valstr = obj_format(obj[0],seen,indent, showid).strip()
-        res += f'<list {len(obj)}: obj[0]={valstr}> ...'
-    else:
-        res += f'type: {type(obj)}'
-
-    return(res)
+#!def dict2tree(obj, name=None):
+#!    """Return abstracted nested tree. Terminals contain TYPE"""
+#!    if isinstance(obj, dict):
+#!        children = dict()
+#!        for (k,v) in obj.items():
+#!            if isinstance(v, dict) or isinstance(v, list):
+#!                val = dict2tree(v, name=k)
+#!            else:
+#!                val = {k: type(v)}
+#!                #!val = {k: '-'}
+#!            children.update(val)
+#!        tree = children if name is None else {name:  children}
+#!    elif isinstance(obj, list):
+#!        children = dict()
+#!        for n,v in enumerate(obj[:1]):
+#!            k = f'<list({len(obj)})[0]>'
+#!            if isinstance(v, dict) or isinstance(v, list):
+#!                val = dict2tree(v, name=k)
+#!            else:
+#!                val = {k: type(v)}
+#!                #!val = {k: '-'}
+#!            children.update(val)
+#!        tree = {name:  children}
+#!    else:
+#!        tree = {name,type(obj)}
+#!    return(tree)
+#!
+#!# RETURN: nested list of node names
+#!def tree_nodes(tree):
+#!    """e.g. [name, name-child1, name-child2, [name-child3, name-granchild]]"""
+#!    res = []
+#!    if not isinstance(tree, dict):
+#!        return tree
+#!    for k,v in tree.items():
+#!        if isinstance(v, dict):
+#!            if list(v.keys())[0].startswith('<list') :
+#!                res.append(k) # treat "type dict" as terminal
+#!            else:
+#!                res.append([k] + tree_nodes(v))
+#!        else: # v is not dict
+#!            res.append(k)
+#!    return res
+#!
+#!
+#!def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
+#!    """Recursively get the rough composition of a pure python object. Used in show_record_structure().
+#!
+#!        Args:
+#!           obj (AttrDict): pure python object.
+#!           seen (str, optional): (default: None) set of objects already visited. Avoid infinite loops!
+#!           indent (int, optional): (default: 0) level of indentation for printing the format of obj.
+#!           showid (boolean, optional): (default: False) OBSOLETE. # Code should be changed to remove use of this.
+#!           tab (int, optional): (default: 4) amount of spaces to use for one level of indentation.
+#!        Returns:
+#!           The rough composition of a pure python object.
+#!        Example:
+#!           >>> res = client.sample_records(1)[0]
+#!           >>> print(obj_format(res))
+#!        """
+#!    # Prevent following loops (self reference) in structures
+#!    if seen is None:
+#!        seen = set()
+#!    oid = id(obj)
+#!    if oid in seen:
+#!        return ''
+#!    seen.add(oid)
+#!    idstr = f'{oid:<16}: ' if showid else ''
+#!    s = ' '
+#!    idspc = f'{s:<16}: ' if showid else ''
+#!
+#!    spaces = ' ' * (indent * tab)
+#!    res = spaces
+#!    #!res = f'[{oid}] {spaces}'
+#!    indent += 1
+#!    spaces2 = ' ' * (indent * tab)
+#!    if isinstance(obj, dict):
+#!        res += f'{idstr}dict(\n'
+#!        for k,v in obj.items():
+#!            if v is None:
+#!                valstr = None
+#!            else:
+#!                valstr = obj_format(v, seen, indent, showid).strip()
+#!            #!res += f'{idstr}{spaces2}{k:16} = {valstr},\n'
+#!            res += f'{idstr}{spaces2}{k} = {valstr},\n'
+#!        res += f'{idspc}{spaces2})'
+#!    elif isinstance(obj, list):
+#!        if obj[0] is None:
+#!            valstr = None
+#!        else:
+#!            valstr = obj_format(obj[0],seen,indent, showid).strip()
+#!        res += f'<list {len(obj)}: obj[0]={valstr}> ...'
+#!    else:
+#!        res += f'type: {type(obj)}'
+#!
+#!    return(res)
 
 
 # Using HTTPie (http://httpie.org):
@@ -226,13 +189,9 @@ def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
 _PROD = 'https://specserver.noirlab.edu'
-#_PAT = 'https://sparc1.datalab.noirlab.edu'
 _PAT = 'http://sparc1.datalab.noirlab.edu:8000'
 _PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
 _DEV = 'http://localhost:8030'
-
-
-allc = ['flux','loglam', 'ivar', 'and_mask', 'or_mask','wdisp', 'sky', 'model']
 
 class SparclApi():
     """Provides interface to SPARCL Server.
@@ -257,7 +216,8 @@ class SparclApi():
         #@@@ read timeout should be a function of the POST payload size
 
         # Get API Version
-        verstr = requests.get(f'{self.apiurl}/version/',timeout=self.timeout).content
+        verstr = requests.get(
+            f'{self.apiurl}/version/',timeout=self.timeout).content
         self.apiversion = float(verstr)
 
         if (int(self.apiversion) - int(SparclApi.KNOWN_GOOD_API_VERSION)) >= 1:
@@ -272,12 +232,11 @@ class SparclApi():
 
         self.clientversion = pkg_resources.require("sparclclient")[0].version
 
-        ##########
-        ### Convencience LookUp Tables derived one one query
+        #############################
+        ### Convenience LookUp Tables derived from one query
         ###
         # dfLUT[dr][origPath] => dict[new=newPath,required=bool]
         self.dfLUT = requests.get(f'{self.apiurl}/fields/').json()
-
 
         # required[dr] => newPath
         self.required = dict(
@@ -295,6 +254,8 @@ class SparclApi():
 
         # dict[drName] = [fieldName, ...]
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
+        ###
+        ###################
 
     def get_field_names(self, structure):
         """List field names available for retreive."""
@@ -383,7 +344,6 @@ class SparclApi():
             raise Exception(res)
         ret =  res.json()
         return ret
-
 
     def _specids2tuples(self, specids, structure):
         uparams =dict(dr=structure)
@@ -545,13 +505,6 @@ class SparclApi():
         """
         recs = self.sample_records(1, structure=structure, **kwargs)
         return ut.dict2tree(recs[0])
-
-
-    # rec = client.show_record_structure('SDSS-DR16',xfer='database')
-    # rec1 = api.client.AttrDict(rec)
-    # rec1.spectra.specobj.CZ => [0.6159544898118924]
-
-
 
 
 if __name__ == "__main__":
