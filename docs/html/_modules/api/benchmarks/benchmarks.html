@@ -1,0 +1,469 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>api.benchmarks.benchmarks &mdash; SPARCL 0.0a1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> SPARCL
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">api</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SPARCL</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>api.benchmarks.benchmarks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for api.benchmarks.benchmarks</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+<span class="sd">&#39;&#39;&#39;Benchmark speed of SPARC spectra retrieve with various parameters.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="c1"># EXAMPLES:</span>
+<span class="c1"># cd ~/sandbox/sparclclient</span>
+<span class="c1"># python3 -m api.benchmarks.benchmarks ~/data/sparc/sids5.list</span>
+<span class="c1"># python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list</span>
+
+<span class="c1"># Alice reported 22 minutes on 64K retrieved from specClient (rate=48 spec/sec)</span>
+<span class="c1">#   slack.spectro: 3/31/2021</span>
+
+<span class="c1">## Standard Python library</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">argparse</span><span class="o">,</span> <span class="nn">logging</span><span class="o">,</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span><span class="p">,</span><span class="n">pformat</span>
+<span class="c1">## External packages</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="c1">#!import speedtest</span>
+<span class="c1">## Local packages</span>
+<span class="kn">from</span> <span class="nn">..client</span> <span class="kn">import</span> <span class="n">SparclApi</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="kn">import</span> <span class="n">tic</span><span class="p">,</span><span class="n">toc</span><span class="p">,</span><span class="n">here_now</span>
+
+<span class="c1">#rooturl = &#39;http://localhost:8030/&#39; #@@@</span>
+<span class="n">rooturl</span> <span class="o">=</span> <span class="s1">&#39;http://sparc1.datalab.noirlab.edu:8000/&#39;</span>
+
+<div class="viewcode-block" id="human_size"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.human_size">[docs]</a><span class="k">def</span> <span class="nf">human_size</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="s1">&#39;KB&#39;</span><span class="p">,</span><span class="s1">&#39;MB&#39;</span><span class="p">,</span><span class="s1">&#39;GB&#39;</span><span class="p">,</span><span class="s1">&#39;TB&#39;</span><span class="p">,</span> <span class="s1">&#39;PB&#39;</span><span class="p">,</span> <span class="s1">&#39;EB&#39;</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a human readable string representation of NUM.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">num</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">units</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">if</span> <span class="n">num</span><span class="o">&lt;</span><span class="mi">1024</span> <span class="k">else</span> <span class="n">human_size</span><span class="p">(</span><span class="n">num</span><span class="o">/</span><span class="mi">1000</span><span class="p">,</span> <span class="n">units</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span></div>
+
+<span class="c1"># with open(&#39;/data/sparc/sids5.list&#39;) as f: sids = [int(line.strip()) for line in f if not line.startswith(&#39;#&#39;)]</span>
+<div class="viewcode-block" id="run_retrieve"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.run_retrieve">[docs]</a><span class="k">def</span> <span class="nf">run_retrieve</span><span class="p">(</span><span class="n">sids</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xfer</span><span class="o">=</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1">#!print(f&#39;Retrieving {len(sids):,} spectra&#39;)</span>
+    <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">()</span> <span class="c1"># begin interval</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">SparclApi</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">rooturl</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">numcols</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">),</span> <span class="n">numsids</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Experiment: </span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">tic</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">sids</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">xfer</span><span class="o">=</span><span class="n">xfer</span><span class="p">)</span>
+    <span class="n">elapsed</span> <span class="o">=</span> <span class="n">toc</span><span class="p">()</span>
+    <span class="n">cpu</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;len(sids)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">)</span><span class="si">}</span><span class="s1"> len(data)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>   <span class="c1"># @@@ but some of ingest may have failed</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;spectra__coadd__flux&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1000</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">elapsed</span><span class="o">=</span><span class="n">elapsed</span><span class="p">,</span>
+                  <span class="n">retrieved</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
+                  <span class="n">rate</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">/</span><span class="n">elapsed</span><span class="p">,</span>
+                  <span class="n">end_smrem</span><span class="o">=</span><span class="n">psutil</span><span class="o">.</span><span class="n">swap_memory</span><span class="p">()</span><span class="o">.</span><span class="n">free</span><span class="p">,</span>
+                  <span class="n">end_vmrem</span><span class="o">=</span><span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">available</span><span class="p">,</span>
+                  <span class="n">end_cpuload</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getloadavg</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span>
+                  <span class="n">end_cpuperc</span><span class="o">=</span><span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">()</span> <span class="c1"># end interval</span>
+                  <span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="run_paged_retrieve"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.run_paged_retrieve">[docs]</a><span class="k">def</span> <span class="nf">run_paged_retrieve</span><span class="p">(</span><span class="n">sids</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xfer</span><span class="o">=</span><span class="s1">&#39;p&#39;</span><span class="p">,</span>
+                       <span class="n">page</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">keepall</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Do 1 more more PAGE size retrieves to get data for all sids&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Paged Retrieve of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">)</span><span class="si">:</span><span class="s1">,</span><span class="si">}</span><span class="s1"> spectra&#39;</span><span class="p">)</span>
+    <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">()</span> <span class="c1"># begin interval</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">SparclApi</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">rooturl</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">numcols</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">),</span> <span class="n">numsids</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">),</span> <span class="n">xfer</span><span class="o">=</span><span class="n">xfer</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Experiment: </span><span class="si">{</span><span class="n">pformat</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">datacnt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">tic</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">cnt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">),</span><span class="n">page</span><span class="p">):</span>
+        <span class="n">pdata</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">sids</span><span class="p">[</span><span class="n">cnt</span><span class="p">:</span><span class="n">cnt</span><span class="o">+</span><span class="n">page</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">xfer</span><span class="o">=</span><span class="n">xfer</span><span class="p">)</span>
+        <span class="n">datacnt</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdata</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">keepall</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pdata</span><span class="p">)</span>
+    <span class="n">elapsed</span> <span class="o">=</span> <span class="n">toc</span><span class="p">()</span>
+
+    <span class="n">cpu</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;len(sids)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sids</span><span class="p">)</span><span class="si">}</span><span class="s1"> datacnt=</span><span class="si">{</span><span class="n">datacnt</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="c1">#assert len(sids) == len(data)   # @@@ but some of ingest may have failed</span>
+    <span class="c1">#!assert len(data[0][&#39;spectra__coadd__flux&#39;]) &gt; 1000 # @@@</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">elapsed</span><span class="o">=</span><span class="n">elapsed</span><span class="p">,</span>
+                  <span class="n">retrieved</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
+                  <span class="n">rate</span><span class="o">=</span><span class="n">datacnt</span><span class="o">/</span><span class="n">elapsed</span><span class="p">,</span>
+                  <span class="n">end_smrem</span><span class="o">=</span><span class="n">psutil</span><span class="o">.</span><span class="n">swap_memory</span><span class="p">()</span><span class="o">.</span><span class="n">free</span><span class="p">,</span>
+                  <span class="n">end_vmrem</span><span class="o">=</span><span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">available</span><span class="p">,</span>
+                  <span class="n">end_cpuload</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getloadavg</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span>
+                  <span class="n">end_cpuperc</span><span class="o">=</span><span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">()</span> <span class="c1"># end interval</span>
+                  <span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+
+<span class="c1"># flux,loglam,ivar,and_mask,or_mask,wdisp,sky,model</span>
+<span class="n">allcols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="s1">&#39;loglam&#39;</span><span class="p">,</span> <span class="s1">&#39;ivar&#39;</span><span class="p">,</span>  <span class="s1">&#39;and_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;or_mask&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;wdisp&#39;</span><span class="p">,</span> <span class="s1">&#39;sky&#39;</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">]</span>
+
+<span class="n">experiment_0</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">xfers</span>    <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">600</span><span class="p">,</span> <span class="mi">60</span><span class="p">],</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="n">experiment_1</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">xfers</span>    <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">30000</span><span class="p">],</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span>
+    <span class="c1">#numcols = range(1,len(allcols)+1),</span>
+    <span class="p">)</span>
+<span class="n">experiment_2</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">xfers</span>    <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">allcols</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="n">experiment_3</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">xfers</span>    <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">],</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="p">],</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">allcols</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)),</span>
+    <span class="p">)</span>
+
+<span class="n">experiment_8</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">xfers</span>    <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,],</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">65000</span><span class="p">,],</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">8</span><span class="p">]</span>
+    <span class="p">)</span>
+<span class="n">experiment_9</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">xfers</span>    <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span><span class="s1">&#39;j&#39;</span><span class="p">],</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="nb">min</span><span class="p">(</span><span class="mi">7</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="n">x</span><span class="p">,</span> <span class="mi">65000</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)])),</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">allcols</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="run_trials"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.run_trials">[docs]</a><span class="k">def</span> <span class="nf">run_trials</span><span class="p">(</span><span class="n">allsids</span><span class="p">,</span>  <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1">#ex = experiment_9 #@@@</span>
+    <span class="n">ex</span> <span class="o">=</span> <span class="n">experiment_8</span> <span class="c1">#@@@</span>
+
+    <span class="n">xfers</span> <span class="o">=</span> <span class="n">ex</span><span class="p">[</span><span class="s1">&#39;xfers&#39;</span><span class="p">]</span>
+    <span class="n">sidcnts</span> <span class="o">=</span> <span class="n">ex</span><span class="p">[</span><span class="s1">&#39;sidcnts&#39;</span><span class="p">]</span>
+    <span class="n">numcols</span> <span class="o">=</span> <span class="n">ex</span><span class="p">[</span><span class="s1">&#39;numcols&#39;</span><span class="p">]</span>
+
+    <span class="n">klist</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;elapsed&#39;</span><span class="p">,</span><span class="s1">&#39;numcols&#39;</span><span class="p">,</span><span class="s1">&#39;numsids&#39;</span><span class="p">,</span><span class="s1">&#39;page&#39;</span><span class="p">,</span><span class="s1">&#39;rate&#39;</span><span class="p">,</span><span class="s1">&#39;xfer&#39;</span><span class="p">]</span>
+
+    <span class="nb">all</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">xfer</span> <span class="ow">in</span> <span class="n">xfers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">numcols</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">allcols</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">sidcnt</span> <span class="ow">in</span> <span class="n">sidcnts</span><span class="p">:</span>
+                <span class="n">sids</span> <span class="o">=</span> <span class="n">allsids</span><span class="p">[:</span><span class="n">sidcnt</span><span class="p">]</span>
+                <span class="c1">#!result = run_retrieve(sids, columns=cols, xfer=&#39;p&#39;)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">run_paged_retrieve</span><span class="p">(</span><span class="n">sids</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span> <span class="n">xfer</span><span class="o">=</span><span class="s1">&#39;p&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="c1">#print(f&#39;Run-Result: {pformat(result)}&#39;)</span>
+                    <span class="n">reduced</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span><span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">klist</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Run-Result: </span><span class="si">{</span><span class="n">reduced</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="nb">all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">report</span><span class="p">(</span><span class="nb">all</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">allsids</span><span class="p">),</span> <span class="n">xfer</span><span class="o">=</span><span class="n">xfer</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="nb">all</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="report"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.report">[docs]</a><span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="n">results</span><span class="p">,</span><span class="n">sidcnt</span><span class="p">,</span> <span class="n">xfer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bandwidth</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">hostname</span><span class="p">,</span><span class="n">now</span> <span class="o">=</span> <span class="n">here_now</span><span class="p">()</span>
+    <span class="n">min1</span><span class="p">,</span><span class="n">min5</span><span class="p">,</span><span class="n">min15</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getloadavg</span><span class="p">()</span>
+    <span class="n">smrem</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">swap_memory</span><span class="p">()</span><span class="o">.</span><span class="n">free</span>
+    <span class="n">vmrem</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">available</span>
+    <span class="n">cpuperc</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">bandwidth</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">speedtest</span><span class="o">.</span><span class="n">Speedtest</span><span class="p">()</span>
+        <span class="n">ul_speed</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span><span class="n">threads</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dl_speed</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">threads</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ul_speed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">dl_speed</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1">#! Upload speed:    {human_size(ul_speed)}</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Benchmark run on </span><span class="si">{</span><span class="n">hostname</span><span class="si">}</span><span class="s1"> at </span><span class="si">{</span><span class="n">now</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="n">sidcnt</span><span class="si">}</span><span class="s1"> sids.&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">Transfer Method: </span><span class="si">{</span><span class="s2">&quot;Pickle&quot;</span> <span class="k">if</span> <span class="n">xfer</span><span class="o">==</span><span class="s1">&#39;p&#39;</span> <span class="k">else</span> <span class="s2">&quot;JSON&quot;</span><span class="si">}</span><span class="s1"></span>
+<span class="s1">Download speed:  </span><span class="si">{</span><span class="n">human_size</span><span class="p">(</span><span class="n">dl_speed</span><span class="p">)</span><span class="si">}</span><span class="s1"></span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="c1"># Load Avg:        {min5:.1f} (avg num processes running over last 5 minutes)</span>
+    <span class="c1"># CPU utilization: {cpuperc:.0f}%</span>
+    <span class="c1"># Swap Mem Avail:    {human_size(smrem)}</span>
+    <span class="c1"># Virtual Mem Avail: {human_size(vmrem)}</span>
+    <span class="c1"># (Above statistics are for CLIENT.)</span>
+
+    <span class="c1">#!print(f&#39;Column\tSID\tRate \tAvg \tCPU \tSwap\tVirt&#39;)</span>
+    <span class="c1">#!print(f&#39; Count\tCnt\ts/sec\tLoad\tUtil\t Mem\t Mem&#39;)</span>
+    <span class="c1">#!print(f&#39;------\t---\t-----\t----\t----&#39;)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Column</span><span class="se">\t</span><span class="s1">SID</span><span class="se">\t</span><span class="s1">Rate &#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39; Count</span><span class="se">\t</span><span class="s1">Cnt</span><span class="se">\t</span><span class="s1">s/sec&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;------</span><span class="se">\t</span><span class="s1">---</span><span class="se">\t</span><span class="s1">-----&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">((</span><span class="s2">&quot;</span><span class="si">{numcols}</span><span class="se">\t</span><span class="s2">&quot;</span>
+               <span class="s2">&quot;</span><span class="si">{numsids}</span><span class="se">\t</span><span class="s2">&quot;</span>
+               <span class="s2">&quot;</span><span class="si">{rate:.0f}</span><span class="se">\t</span><span class="s2">&quot;</span>
+               <span class="c1">#!&quot;{end_cpuload:.02f}\t&quot;</span>
+               <span class="c1">#!&quot;{end_cpuperc:.0f}%\t&quot;</span>
+               <span class="c1">#!&quot;{smrem}\t&quot;</span>
+               <span class="c1">#!&quot;{vmrem}\t&quot;</span>
+               <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="c1">#smrem=human_size(r[&#39;end_smrem&#39;]),</span>
+                        <span class="c1">#vmrem=human_size(r[&#39;end_vmrem&#39;]),</span>
+                        <span class="o">**</span><span class="n">r</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">LEGEND:</span>
+<span class="s1">  Rate:: spectra/second</span>
+<span class="s1">  Transfer method:: Pickle, Json</span>
+<span class="s1">  Load:: Number of processes in system run queue averaged over last 5 minutes.</span>
+<span class="s1">  &#39;&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">&#39;Done&#39;</span></div>
+
+<span class="c1">##############################################################################</span>
+
+<div class="viewcode-block" id="my_parser"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.my_parser">[docs]</a><span class="k">def</span> <span class="nf">my_parser</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="c1">#!version=&#39;1.0.1&#39;,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">&#39;My shiny new python program&#39;</span><span class="p">,</span>
+        <span class="n">epilog</span><span class="o">=</span><span class="s1">&#39;EXAMPLE: </span><span class="si">%(prog)s</span><span class="s1"> a b&quot;&#39;</span>
+        <span class="p">)</span>
+    <span class="n">allcols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;flux&#39;</span><span class="p">,</span> <span class="s1">&#39;loglam&#39;</span><span class="p">,</span> <span class="s1">&#39;ivar&#39;</span><span class="p">,</span>  <span class="s1">&#39;and_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;or_mask&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;wdisp&#39;</span><span class="p">,</span> <span class="s1">&#39;sky&#39;</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">]</span>
+    <span class="c1">#!dftcols = &#39;flux,loglam&#39;</span>
+    <span class="n">dftcols</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">allcols</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;sids&#39;</span><span class="p">,</span>  <span class="nb">type</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">FileType</span><span class="p">(</span><span class="s1">&#39;r&#39;</span><span class="p">),</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;File containing list of specobjids. One per line.&#39;</span>
+                        <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--cols&#39;</span><span class="p">,</span>
+                        <span class="c1">#choices=allcols,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="n">dftcols</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;List of comma seperated columns to get. &#39;</span>
+                              <span class="sa">f</span><span class="s1">&#39;Default=&quot;</span><span class="si">{</span><span class="n">dftcols</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+                        <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--xfer&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;p&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Mode to use to transfer from Server to Client.&#39;</span>
+                        <span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--loglevel&#39;</span><span class="p">,</span>      <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Kind of diagnostic output&#39;</span><span class="p">,</span>
+                        <span class="n">choices</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CRTICAL&#39;</span><span class="p">,</span><span class="s1">&#39;ERROR&#39;</span><span class="p">,</span><span class="s1">&#39;WARNING&#39;</span><span class="p">,</span><span class="s1">&#39;INFO&#39;</span><span class="p">,</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">],</span>
+                        <span class="n">default</span><span class="o">=</span><span class="s1">&#39;WARNING&#39;</span><span class="p">,</span>
+                        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span></div>
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../api.benchmarks.html#api.benchmarks.benchmarks.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">my_parser</span><span class="p">()</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">sids</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">sids</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">sids</span><span class="o">.</span><span class="n">name</span>
+
+
+    <span class="n">log_level</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">logging</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">loglevel</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">log_level</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Invalid log level: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">loglevel</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span> <span class="o">=</span> <span class="n">log_level</span><span class="p">,</span>
+                        <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                        <span class="n">datefmt</span><span class="o">=</span><span class="s1">&#39;%m-</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span>
+                        <span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Debug output is enabled!!!&#39;</span><span class="p">)</span>
+
+    <span class="n">sids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sids</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">fin</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">sids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">cols</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+    <span class="c1">#print(f&#39;sids count={len(sids)} columns={cols}&#39;)</span>
+
+    <span class="c1">#run_retrieve(sids, columns=cols, xfer=&#39;p&#39;)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Starting benchmark on </span><span class="si">{</span><span class="n">here_now</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="nb">all</span> <span class="o">=</span> <span class="n">run_trials</span><span class="p">(</span><span class="n">sids</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Finished benchmark on </span><span class="si">{</span><span class="n">here_now</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, S.Pothier.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

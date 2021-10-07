@@ -2,9 +2,9 @@
 '''Benchmark speed of SPARC spectra retrieve with various parameters.
 '''
 # EXAMPLES:
-# cd ~/sandbox/sparcclient
-# python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list
+# cd ~/sandbox/sparclclient
 # python3 -m api.benchmarks.benchmarks ~/data/sparc/sids5.list
+# python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list
 
 # Alice reported 22 minutes on 64K retrieved from specClient (rate=48 spec/sec)
 #   slack.spectro: 3/31/2021
@@ -14,9 +14,9 @@ import sys, argparse, logging, os
 from pprint import pprint,pformat
 ## External packages
 import psutil
-import speedtest
+#!import speedtest
 ## Local packages
-from ..api import SparcApi
+from ..client import SparclApi
 from ..utils import tic,toc,here_now
 
 #rooturl = 'http://localhost:8030/' #@@@
@@ -27,21 +27,21 @@ def human_size(num, units=['b','KB','MB','GB','TB', 'PB', 'EB']):
     return (f'{num:.1f} {units[0]}'
             if num<1024 else human_size(num/1000, units[1:]))
 
-# with open('/data/sparc/sids5.list') as f: sids = [int(line.strip()) for line in f if not line.startswith('#')]
-def run_retrieve(sids, columns=None, xfer='p', verbose=True):
-    #!print(f'Retrieving {len(sids):,} spectra')
+# with open('/data/sparc/sids5.list') as f: specids = [int(line.strip()) for line in f if not line.startswith('#')]
+def run_retrieve(specids, columns=None, xfer='p', verbose=True):
+    #!print(f'Retrieving {len(specids):,} spectra')
     psutil.cpu_percent() # begin interval
-    client = SparcApi(url=rooturl)
-    result = dict(numcols=len(columns), numsids=len(sids))
+    client = SparclApi(url=rooturl)
+    result = dict(numcols=len(columns), numspecids=len(specids))
     if verbose:
         print(f'Experiment: {pformat(result)}')
     tic()
-    data = client.retrieve(sids,columns=columns, xfer=xfer)
+    data = client.retrieve(specids,columns=columns, xfer=xfer)
     elapsed = toc()
     cpu = psutil.cpu_percent(interval=1)
     if verbose:
-        print(f'len(sids)={len(sids)} len(data)={len(data)}')
-    assert len(sids) == len(data)   # @@@ but some of ingest may have failed
+        print(f'len(specids)={len(specids)} len(data)={len(data)}')
+    assert len(specids) == len(data)   # @@@ but some of ingest may have failed
     assert len(data[0]['spectra__coadd__flux']) > 1000
     result.update(elapsed=elapsed,
                   retrieved=len(data),
@@ -53,32 +53,34 @@ def run_retrieve(sids, columns=None, xfer='p', verbose=True):
                   )
     return(result)
 
-def run_paged_retrieve(sids, columns=None, xfer='p', page=1000, verbose=True, keepall=False):
-    """Do 1 more more PAGE size retrieves to get data for all sids"""
-    print(f'Paged Retrieve of {len(sids):,} spectra')
+def run_paged_retrieve(specids, columns=None, xfer='p',
+                       page=5000, verbose=True, keepall=False):
+    """Do 1 more more PAGE size retrieves to get data for all specids"""
+    print(f'Paged Retrieve of {len(specids):,} spectra')
     psutil.cpu_percent() # begin interval
-    client = SparcApi(url=rooturl)
-    result = dict(numcols=len(columns), numsids=len(sids), xfer=xfer, page=page)
+    client = SparclApi(url=rooturl)
+    result = dict(numcols=len(columns), numspecids=len(specids), xfer=xfer, page=page)
     if verbose:
         print(f'Experiment: {pformat(result)}')
 
     data = []
+    datacnt = 0
     tic()
-    for cnt in range(0,len(sids),page):
+    for cnt in range(0,len(specids),page):
+        pdata = client.retrieve(specids[cnt:cnt+page], columns=columns, xfer=xfer)
+        datacnt += len(pdata)
         if keepall:
-            data.extend(client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer))
-        else:
-            client.retrieve(sids[cnt:cnt+page], columns=columns, xfer=xfer)
+            data.extend(pdata)
     elapsed = toc()
 
     cpu = psutil.cpu_percent(interval=1)
     if verbose:
-        print(f'len(sids)={len(sids)} len(data)={len(data)}')
-    #assert len(sids) == len(data)   # @@@ but some of ingest may have failed
+        print(f'len(specids)={len(specids)} datacnt={datacnt}')
+    #assert len(specids) == len(data)   # @@@ but some of ingest may have failed
     #!assert len(data[0]['spectra__coadd__flux']) > 1000 # @@@
     result.update(elapsed=elapsed,
                   retrieved=len(data),
-                  rate=len(data)/elapsed,
+                  rate=datacnt/elapsed,
                   end_smrem=psutil.swap_memory().free,
                   end_vmrem=psutil.virtual_memory().available,
                   end_cpuload=os.getloadavg()[1],
@@ -93,47 +95,64 @@ allcols = ['flux', 'loglam', 'ivar',  'and_mask', 'or_mask',
 
 experiment_0 = dict(
     xfers    = ['p'],
-    sidcnts = [600, 60],
+    specidcnts = [600, 60],
     numcols = range(1,3),
     )
 experiment_1 = dict(
     xfers    = ['p'],
-    sidcnts = [6, 60, 600, 6000, 30000],
+    specidcnts = [6, 60, 600, 6000, 30000],
     numcols = range(1,3),
     #numcols = range(1,len(allcols)+1),
     )
+experiment_2 = dict(
+    xfers    = ['p'],
+    specidcnts = [1000, 100, 10],
+    numcols = range(1,len(allcols)+1),
+    )
+experiment_3 = dict(
+    xfers    = ['p'],
+    specidcnts = [1000, ],
+    numcols = reversed(range(1,len(allcols)+1)),
+    )
+
+experiment_8 = dict(
+    xfers    = ['p',],
+    specidcnts = [65000,],
+    numcols = [1,2,8]
+    )
 experiment_9 = dict(
     xfers    = ['p','j'],
-    sidcnts = sorted(set([min(7*10**x, 65000) for x in range(6)])),
+    specidcnts = sorted(set([min(7*10**x, 65000) for x in range(6)])),
     numcols = range(1,len(allcols)+1),
     )
 
-def run_trials(allsids,  verbose=True):
-    ex = experiment_9 #@@@
+def run_trials(allspecids,  verbose=True):
+    #ex = experiment_9 #@@@
+    ex = experiment_8 #@@@
 
     xfers = ex['xfers']
-    sidcnts = ex['sidcnts']
+    specidcnts = ex['specidcnts']
     numcols = ex['numcols']
 
-    klist = ['elapsed','numcols','numsids','page','rate','xfer']
+    klist = ['elapsed','numcols','numspecids','page','rate','xfer']
 
     all = []
     for xfer in xfers:
         for n in numcols:
             cols = allcols[:n]
-            for sidcnt in sidcnts:
-                sids = allsids[:sidcnt]
-                #!result = run_retrieve(sids, columns=cols, xfer='p')
-                result = run_paged_retrieve(sids, columns=cols, xfer='p')
+            for specidcnt in specidcnts:
+                specids = allspecids[:specidcnt]
+                #!result = run_retrieve(specids, columns=cols, xfer='p')
+                result = run_paged_retrieve(specids, columns=cols, xfer='p')
                 if verbose:
                     #print(f'Run-Result: {pformat(result)}')
                     reduced = dict((k,result[k]) for k in result.keys() if k in klist)
                     print(f'Run-Result: {reduced}')
                 all.append(result)
-    report(all, len(allsids), xfer=xfer)
+    report(all, len(allspecids), xfer=xfer)
     return(all)
 
-def report(results,sidcnt, xfer=None, bandwidth=True):
+def report(results,specidcnt, xfer=None, bandwidth=False):
     hostname,now = here_now()
     min1,min5,min15 = os.getloadavg()
     smrem = psutil.swap_memory().free
@@ -149,7 +168,7 @@ def report(results,sidcnt, xfer=None, bandwidth=True):
         dl_speed = 0
 
     #! Upload speed:    {human_size(ul_speed)}
-    print(f'\nBenchmark run on {hostname} at {now} with {sidcnt} sids.')
+    print(f'\nBenchmark run on {hostname} at {now} with {specidcnt} specids.')
     print(f'''
 Transfer Method: {"Pickle" if xfer=='p' else "JSON"}
 Download speed:  {human_size(dl_speed)}
@@ -168,7 +187,7 @@ Download speed:  {human_size(dl_speed)}
     print(f'------\t---\t-----')
     for r in results:
         print(("{numcols}\t"
-               "{numsids}\t"
+               "{numspecids}\t"
                "{rate:.0f}\t"
                #!"{end_cpuload:.02f}\t"
                #!"{end_cpuperc:.0f}%\t"
@@ -198,7 +217,7 @@ def my_parser():
                'wdisp', 'sky', 'model']
     #!dftcols = 'flux,loglam'
     dftcols = ','.join(allcols)
-    parser.add_argument('sids',  type=argparse.FileType('r'),
+    parser.add_argument('specids',  type=argparse.FileType('r'),
                         help='File containing list of specobjids. One per line.'
                         )
     parser.add_argument('--cols',
@@ -220,8 +239,8 @@ def my_parser():
 def main():
     parser = my_parser()
     args = parser.parse_args()
-    args.sids.close()
-    args.sids = args.sids.name
+    args.specids.close()
+    args.specids = args.specids.name
 
 
     log_level = getattr(logging, args.loglevel.upper(), None)
@@ -233,18 +252,18 @@ def main():
                         )
     logging.debug('Debug output is enabled!!!')
 
-    sids = []
-    with open(args.sids,'r') as fin:
+    specids = []
+    with open(args.specids,'r') as fin:
         for line in fin:
             if line.startswith('#'):
                 continue
-            sids.append(int(line.strip()))
+            specids.append(int(line.strip()))
     cols = args.cols.split(',')
-    #print(f'sids count={len(sids)} columns={cols}')
+    #print(f'specids count={len(specids)} columns={cols}')
 
-    #run_retrieve(sids, columns=cols, xfer='p')
+    #run_retrieve(specids, columns=cols, xfer='p')
     print(f'Starting benchmark on {here_now()}')
-    all = run_trials(sids)
+    all = run_trials(specids)
     print(f'Finished benchmark on {here_now()}')
 
 if __name__ == '__main__':
