@@ -81,7 +81,7 @@ class SdssDr16(Convert):
             'spectra.coadd.wdisp',
             ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(coadd = numpy.array(lofl))
+        newrec = dict(coadd = np.array(lofl))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
@@ -152,7 +152,7 @@ class BossDr16(Convert):
             'spectra.coadd.WDISP',
             ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(coadd = numpy.array(lofl))
+        newrec = dict(coadd = np.array(lofl))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
@@ -225,7 +225,7 @@ class DesiDenali(Convert):
             'spectra.z_wavelength',
         ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(coadd = numpy.array(lofl))
+        newrec = dict(coadd = np.array(lofl))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue

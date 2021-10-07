@@ -16,6 +16,7 @@ from warnings import warn
 import json
 import pickle
 from collections.abc import MutableMapping
+import pkg_resources
 # Local Packages
 from api.utils import tic,toc
 import api.utils as ut
@@ -269,6 +270,8 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
+        self.clientversion = pkg_resources.require("sparclclient")[0].version
+
         ##########
         ### Convencience LookUp Tables derived one one query
         ###
@@ -293,8 +296,21 @@ class SparclApi():
         # dict[drName] = [fieldName, ...]
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
 
+    def get_field_names(self, structure):
+        """List field names available for retreive."""
+        dr = structure
+        if dr in self.dr_fields:
+            return list(self.dr_fields[dr].keys())
+        else:
+            print(f'That is not a currently support structure. '
+                  f'Available structures are: '
+                  f"{', '.join(self.dr_fields.keys())}"
+                  )
+            return None
+
     def __repr__(self):
-        return(f'({self.apiversion}, {self.apiurl})')
+        return(f'(sparclclient:{self.clientversion}, '
+               f'api:{self.apiversion}, {self.apiurl})')
 
     def sample_specids(self, samples=5, structure=None):
         """Return a small list of specids.
@@ -343,7 +359,6 @@ class SparclApi():
 
         Args:
            specid_list (list): List of specids.
-           countOnly (boolean, optional): (default: False) If true, only return the count of missing specids.
            verbose (boolean, optional): (default: False)
         Returns:
            The subset of the given specid list that is NOT stored in the database.
@@ -352,6 +367,9 @@ class SparclApi():
            >>> client.missing_specids(si)
            [1858907533188556800, 6171312851359387648]
         """
+        # Removed documentation
+        #! countOnly (boolean, optional): (default: False) If true, only return the count of missing specids.
+
 
         verbose = verbose or self.verbose
         uparams = dict()
@@ -367,19 +385,23 @@ class SparclApi():
         return ret
 
 
-    def specids2tuples(self, specids, structure):
+    def _specids2tuples(self, specids, structure):
         uparams =dict(dr=structure)
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/specids2tuples/?{qstr}'
         res = requests.post(url, json=specids, timeout=self.timeout)
 
-    def validate_include(self, dr, include_list):
+    def _validate_include(self, dr, include_list):
         if include_list is None:
             return True
         if not isinstance(include_list, list):
             raise Exception(
                 f'INCLUDE parameter must be a LIST of field names. '
                 f'Got: "{include_list}"')
+        if (include_list is not None) and (dr is None):
+            raise Exception(
+                'Currently we do not support using an include_list '
+                'when NOT specifying a structure')
 
         incSet = set(include_list)
         #!print(f'incSet={incSet} dr_fields={self.dr_fields[dr]}')
@@ -399,28 +421,32 @@ class SparclApi():
                  #!format=None,
                  rtype=None,
                  structure=None, # was 'SDSS-DR16'
-                 xfer='database',
-                 limit=False, verbose=False):
+                 #xfer='database',
+                 limit=False,
+                 verbose=False):
         """Get spectrum from specid list.
 
         Args:
            specid_list (list): List of specids.
-           include (dict, optional): (default: include ALL) List of paths
-              to include in each record. key=storedPath, val=alias.
-           structure (str): The data structure (DS) name associated with the specids.
+           include (list, optional): (default: None, means include ALL)
+              List of paths to include in each record.
+           structure (str): The data structure (DS) name associated with
+              the specids.
               Or None to retrieve from any DS that contains the specid.
-           xfer (str): (default='database') DEBUG.
-              Format to use to transfer from Server to Client.
            limit (int, optional): Maximum number of spectra records to return.
+           verbose (boolean, optional): (default: False)
         Returns:
-           List of record's data.
+           List of records. Each record is a dictionary of named fields.
         Example:
-           >>> ink = {'spectra.coadd.loglam': 'loglam'}
+           >>> ink = ['flux']
            >>> sdss_ids = [849044290804934656, 309718438815754240]
            >>> res_sdss = client.retrieve(sdss_ids, structure='SDSS-DR16', include=ink)
         """
+        # OLD doc string fragments
+        #!   xfer (str): (default='database') DEBUG.
+        #!      Format to use to transfer from Server to Client.
 
-        self.validate_include(structure, include)
+        self._validate_include(structure, include)
 
         verbose = verbose or self.verbose
         if verbose:
@@ -430,8 +456,8 @@ class SparclApi():
         uparams =dict(include='None' if include is None else ','.join(include),
                       limit=lim,
                       dr=structure)
-        if xfer is not None:
-            uparams['xfer'] = xfer
+        #! if xfer is not None:
+        #!     uparams['xfer'] = xfer
         qstr = urlencode(uparams)
 
         url = f'{self.apiurl}/retrieve/?{qstr}'
@@ -450,15 +476,16 @@ class SparclApi():
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(**res.json())
 
-        if xfer=='p':
-            ret = pickle.loads(res.content)
-        elif xfer=='database':
-            #!ret =  res.json()
-            meta,*records =  res.json()
-            #!print(f'DBG: meta={meta}')
-        else:
-            print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
-            ret =  res.json()
+        #!if xfer=='p':
+        #!    ret = pickle.loads(res.content)
+        #!elif xfer=='database':
+        #!    #!ret =  res.json()
+        #!    meta,*records =  res.json()
+        #!    #!print(f'DBG: meta={meta}')
+        #!else:
+        #!    print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
+        #!    ret =  res.json()
+        meta,*records = res.json()
         if verbose:
             count = len(records)
             print(f'Got {count} spectra in '
@@ -482,8 +509,8 @@ class SparclApi():
         Args:
            count (int): Number of sample records to get from database.
 
-           structure (str, optional): (default: None means ANY) The data structure from which to get sample records.
-
+           structure (str, optional): (default: None means ANY)
+               The data structure from which to get sample records.
 
         Returns:
            COUNT random records from given STRUCTURE.
@@ -493,11 +520,7 @@ class SparclApi():
            [{'data_release_id': 'BOSS-DR16',
              'dec_center': 47.193549,
              'dirpath': '/net/mss1/archive/hlsp/sdss/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/7399',
-             'fiberid': 376,
              'filename': 'spec-7399-57162-0376.fits',
-             'mjd': 57162,
-             'plateid': 7399,
-             'ra_center': 172.26905,
              'specid': 1429845755960551,
              'spectra': {...},
              'updated': '2021-04-28T20:16:20.399464Z'}]
@@ -511,15 +534,14 @@ class SparclApi():
     # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
     #
     def get_record_structure(self, structure, **kwargs):
-        """Get the structure of a record retrieved from STRUCTURE using
-        transfer method XFER.
+        """Get the structure of a record retrieved from STRUCTURE.
 
         Args:
            structure (str): The data structure.
         Returns:
-           String of the record structure for the specified data structure.
+           Dictionary of the record structure for the specified data structure.
         Example:
-           >>> d = client.show_record_structure('DESI-denali')
+           >>> d = client.get_record_structure('DESI-denali')
         """
         recs = self.sample_records(1, structure=structure, **kwargs)
         return ut.dict2tree(recs[0])
