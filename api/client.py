@@ -4,8 +4,12 @@ This module interfaces to the SPARC-Server to get spectra data.
 
 Todo:
 
-  * Handle errors Data Type conversion is not possible given a
-    restricted set of fields specified in INCLUDE parameter.
+  * Handle errors
+
+    Data Type conversion is not possible if the restricted set of
+    fields specified in INCLUDE parameter is insufficient for the
+    desired Data Type. For instance, the 'Spectrum1D' type requires 3
+    vector fields.  If they are not all INCLUDEd, fail gracefully.
 
 """
 
