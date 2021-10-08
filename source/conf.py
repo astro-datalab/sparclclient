@@ -12,7 +12,7 @@
 #
 import os
 import sys
-from api.client imoprt client_version
+from api.client import client_version
 sys.path.insert(0, os.path.abspath('..'))
 
 
