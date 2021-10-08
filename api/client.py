@@ -212,6 +212,8 @@ def foo(a,b):
     return a+b
 
 
+client_version = pkg_resources.require("sparclclient")[0].version
+
 class SparclApi():
     """Provides interface to SPARCL Server.
 
@@ -262,7 +264,7 @@ class SparclApi():
             raise Exception(msg)
         #self.session = requests.Session()
 
-        self.clientversion = pkg_resources.require("sparclclient")[0].version
+        self.clientversion = client_version
 
         #############################
         ### Convenience LookUp Tables derived from one query
