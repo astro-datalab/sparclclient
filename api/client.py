@@ -39,6 +39,9 @@ import requests
 
 # Use Google Style Python Docstrings so autogen of Sphinx doc works:
 #  https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google
+#
+# Use sphinx-doc emacs minor mode to insert docstring skeleton.
+# C-c M-d in function/method def
 
 #### Generate documentation:
 # cd ~/sandbox/sparclclient
@@ -197,6 +200,18 @@ _PAT = 'http://sparc1.datalab.noirlab.edu:8000'
 _PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
 _DEV = 'http://localhost:8030'
 
+def foo(a,b):
+    """FIXME! briefly describe function
+
+    :param a:
+    :param b:
+    :returns:
+    :rtype:
+
+    """
+    return a+b
+
+
 class SparclApi():
     """Provides interface to SPARCL Server.
 
@@ -214,12 +229,18 @@ class SparclApi():
     # version = 2.0;  <2021-07-04> retrieve return value includes status
     KNOWN_GOOD_API_VERSION = 2.0 #@@@ Change this when Server version increments
 
-    def __init__(self, url=_PAT, verbose=False, limit=None):
+
+    def __init__(self, url=_PAT, verbose=False):
+        """Create client instance.
+
+        :param url: Base URL of SPARC Server
+        :param verbose: (True,False) Default verbosity for all client methods.
+
+        """
         self.rooturl=url.rstrip("/")
         self.apiurl = f'{self.rooturl}/sparc'
         self.apiversion = None
         self.verbose = verbose
-        self.limit = limit
         # require response within this num seconds
         # https://docs.python-requests.org/en/master/user/advanced/#timeouts
         # (connect time, read time)
@@ -279,6 +300,29 @@ class SparclApi():
                   f"{', '.join(self.dr_fields.keys())}"
                   )
             return None
+
+    def orig_field(self, structure, client_name):
+        """Get original field name as provided in Data Release.
+
+        :param structure: Name of data set Structure
+        :param client_name: Field name used in Client methods.
+        :returns: Original field name
+        :rtype: string
+
+        """
+        return self.new2origLUT[structure][client_name]
+
+    def client_field(self, structure, orig_name):
+        """Get field name used in Client methods
+
+        :param structure: Name of data set Structure
+        :param orig_name: Original field name as provided in Data Release.
+        :returns: Client field name
+        :rtype: string
+
+        """
+        return self.orig2newLUT[structure][orig_name]
+
 
     def __repr__(self):
         return(f'(sparclclient:{self.clientversion}, '
@@ -393,7 +437,6 @@ class SparclApi():
                  rtype=None,
                  structure=None, # was 'SDSS-DR16'
                  #xfer='database',
-                 limit=False,
                  verbose=False):
         """Get spectrum from specid list.
 
@@ -404,7 +447,6 @@ class SparclApi():
            structure (str): The data structure (DS) name associated with
               the specids.
               Or None to retrieve from any DS that contains the specid.
-           limit (int, optional): Maximum number of spectra records to return.
            verbose (boolean, optional): (default: False)
         Returns:
            List of records. Each record is a dictionary of named fields.
@@ -422,10 +464,8 @@ class SparclApi():
         verbose = verbose or self.verbose
         if verbose:
             print(f'retrieve(rtype={rtype})')
-        lim = None if limit is None else (limit or self.limit or 13)
 
         uparams =dict(include='None' if include is None else ','.join(include),
-                      limit=lim,
                       dr=structure)
         #! if xfer is not None:
         #!     uparams['xfer'] = xfer
@@ -496,8 +536,11 @@ class SparclApi():
              'spectra': {...},
              'updated': '2021-04-28T20:16:20.399464Z'}]
         """
+        kverb = kwargs.pop('verbose',None)
+        verb = self.verbose if kverb is None else kverb
+
         sids = self.sample_specids(count, structure=structure)
-        return self.retrieve(sids, structure=structure, limit=None, **kwargs)
+        return self.retrieve(sids, structure=structure, verbose=verb, **kwargs)
 
     # EXAMPLES:
     # client.show_record_structure('DESI-denali',xfer='database')

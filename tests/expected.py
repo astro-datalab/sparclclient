@@ -19,3 +19,53 @@ boss_record_structure = {
     'specid': 'int',
     'spectra.coadd.OR_MASK': '<list(4589)[0]>:int',
     'wdisp': '<list(4589)[0]>:float'}
+
+boss_numpy = [
+    'aux.FIBERID',
+    'aux.MJD',
+    'aux.PLATEID',
+    'aux.RUN2D',
+    'coadd',
+    'data_release',
+    'dec_center',
+    'dirpath',
+    'filename',
+    'filesize',
+    'ra_center',
+    'redshift',
+    'specid']
+
+boss_pandas = [
+    'aux.FIBERID',
+    'aux.MJD',
+    'aux.PLATEID',
+    'aux.RUN2D',
+    'data_release',
+    'dec_center',
+    'df',
+    'dirpath',
+    'filename',
+    'filesize',
+    'ra_center',
+    'redshift',
+    'specid']
+
+boss_spectrum1d = [
+    'and_mask',
+    'aux.FIBERID',
+    'aux.MJD',
+    'aux.PLATEID',
+    'aux.RUN2D',
+    'data_release',
+    'dec_center',
+    'dirpath',
+    'filename',
+    'filesize',
+    'model',
+    'ra_center',
+    'redshift',
+    'sky',
+    'spec1d',
+    'specid',
+    'spectra.coadd.OR_MASK',
+    'wdisp']

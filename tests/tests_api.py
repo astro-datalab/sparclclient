@@ -127,6 +127,28 @@ class ApiTest(unittest.TestCase):
                                            include=inc2,
                                            structure='BOSS-DR16')
 
+    def test_retrieve_5(self):
+        """Convert to Numpy."""
+        recs = self.client.sample_records(1, structure='BOSS-DR16',
+                                          rtype='numpy')
+        actual = sorted(recs[0].keys())
+        self.assertEqual(actual, exp.boss_numpy, msg='Actual to Expected')
+
+    def test_retrieve_6(self):
+        """Convert to Pandas."""
+        recs = self.client.sample_records(1, structure='BOSS-DR16',
+                                          rtype='pandas')
+        actual = sorted(recs[0].keys())
+        self.assertEqual(actual, exp.boss_pandas, msg='Actual to Expected')
+
+    def test_retrieve_7(self):
+        """Convert to Spectrum1D."""
+        inc2 = ['flux']
+        recs = self.client.sample_records(1, structure='BOSS-DR16',
+                                          rtype='spectrum1d')
+        actual = sorted(recs[0].keys())
+        self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
+
     def test_get_record_structure(self):
         actual = self.client.get_record_structure('BOSS-DR16')
         #!print(f'actual={pformat(actual)}')
