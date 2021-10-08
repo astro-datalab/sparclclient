@@ -200,6 +200,13 @@ _DEV = 'http://localhost:8030'
 class SparclApi():
     """Provides interface to SPARCL Server.
 
+    When using this to report a bug, set verbose to True. Also print
+    your instance of this.  The results will include important info
+    about the Client and Server.
+    Example:
+      >>> client = SparclApi(verbose=True)
+      >>> print(client)
+
     Object creation compares the version from the Server
     against the one expected by the Client. Throws error if
     the Client is a major version or more behind.

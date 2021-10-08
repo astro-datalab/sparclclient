@@ -32,6 +32,7 @@ Questions abound for use-cases.
 
 from abc import ABC, abstractmethod
 import copy
+from pprint import pformat
 import numpy as np
 import pandas as pd
 from specutils import Spectrum1D
@@ -44,27 +45,27 @@ class Convert(ABC):
     """
 
     @abstractmethod
-    def to_numpy(self,record):
+    def to_numpy(self, record, o2nLUT):
         newrec = copy.deepcopy(record)
         return(newrec)
 
     @abstractmethod
-    def to_spectrum1d(self,record):
+    def to_spectrum1d(self, record, o2nLUT):
         newrec = copy.deepcopy(record)
         return(newrec)
 
     @abstractmethod
-    def to_pandas(self,record):
+    def to_pandas(self, record, o2nLUT):
         newrec = copy.deepcopy(record)
         return(newrec)
 
 
 class NoopConvert(Convert):
-    def to_numpy(self, record):
+    def to_numpy(self, record, o2nLUT):
         return(record)
-    def to_spectrum1d(self, record):
+    def to_spectrum1d(self, record, o2nLUT):
         return(record)
-    def to_pandas(self, record):
+    def to_pandas(self, record, o2nLUT):
         return(record)
 
 class SdssDr16(Convert):
@@ -238,25 +239,47 @@ class DesiDenali(Convert):
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
-            'spectra.b_wavelength',
+            'spectra.b_wavelength'
+            ,
             'spectra.r_flux',
             'spectra.r_ivar',
             'spectra.r_mask',
             'spectra.r_wavelength',
+
             'spectra.z_flux',
             'spectra.z_ivar',
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
 
+        z = record.get('red_shift')
+
+        # _b
         loglam_b = record[o2nLUT['spectra.b_wavelength']]
         flux_b = record[o2nLUT['spectra.b_flux']]
         ivar_b = record[o2nLUT['spectra.b_ivar']]
-
+        #
         wavelength_b = (10**np.array(loglam_b))*u.AA
         flux_b = np.array(flux_b)*u.Jy
         ivar_b = InverseVariance(np.array(ivar_b))
-        z = record.get('red_shift')
+
+        # _r
+        loglam_r = record[o2nLUT['spectra.r_wavelength']]
+        flux_r = record[o2nLUT['spectra.r_flux']]
+        ivar_r = record[o2nLUT['spectra.r_ivar']]
+        #
+        wavelength_r = (10**np.array(loglam_r))*u.AA
+        flux_r = np.array(flux_r)*u.Jy
+        ivar_r = InverseVariance(np.array(ivar_r))
+
+        # _z
+        loglam_z = record[o2nLUT['spectra.z_wavelength']]
+        flux_z = record[o2nLUT['spectra.z_flux']]
+        ivar_z = record[o2nLUT['spectra.z_ivar']]
+        #
+        wavelength_z = (10**np.array(loglam_z))*u.AA
+        flux_z = np.array(flux_z)*u.Jy
+        ivar_z = InverseVariance(np.array(ivar_z))
 
         newrec = dict(
             # flux, uncertainty, wavevelength, mask(or, and), redshift
@@ -314,9 +337,6 @@ diLUT = {
     }
 
 def convert(record, rtype, client, include, verbose=False):
-    if verbose:
-        print(f'convert(record={list(record.keys())}, rtype={rtype}')
-
     if rtype is None:
         return record
 
@@ -331,7 +351,9 @@ def convert(record, rtype, client, include, verbose=False):
         for new in nuke:
             del o2nLUT[n2oLUT[new]]
 
-    print(f'o2nLUT={o2nLUT}, include={include}')
+    if verbose:
+        print(f'DBG-convert: o2nLUT={pformat(o2nLUT)}')
+
     if rtype == 'numpy':
         return drin.to_numpy(record, o2nLUT)
     elif rtype == 'spectrum1d':
