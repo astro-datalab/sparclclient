@@ -200,17 +200,6 @@ _PAT = 'http://sparc1.datalab.noirlab.edu:8000'
 _PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
 _DEV = 'http://localhost:8030'
 
-def foo(a,b):
-    """FIXME! briefly describe function
-
-    :param a:
-    :param b:
-    :returns:
-    :rtype:
-
-    """
-    return a+b
-
 
 client_version = pkg_resources.require("sparclclient")[0].version
 
