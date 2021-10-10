@@ -131,8 +131,9 @@ class SdssDr16(Convert):
             'spectra.coadd.sky',
             'spectra.coadd.wdisp',
             ]
-        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(df = pd.DataFrame(lofl))
+        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+                      for f in arflds if f in o2nLUT)
+        newrec = dict(df = pd.DataFrame(dfdict))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
@@ -200,8 +201,9 @@ class BossDr16(Convert):
             'spectra.coadd.SKY',
             'spectra.coadd.WDISP',
             ]
-        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(df = pd.DataFrame(lofl))
+        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+                      for f in arflds if f in o2nLUT)
+        newrec = dict(df = pd.DataFrame(dfdict))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
@@ -318,8 +320,9 @@ class DesiDenali(Convert):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(df = pd.DataFrame(lofl))
+        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+                      for f in arflds if f in o2nLUT)
+        newrec = dict(df = pd.DataFrame(dfdict))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
@@ -356,10 +359,10 @@ def convert(record, rtype, client, include, verbose=False):
 
     if rtype == 'numpy':
         return drin.to_numpy(record, o2nLUT)
-    elif rtype == 'spectrum1d':
-        return drin.to_spectrum1d(record, o2nLUT)
     elif rtype == 'pandas':
         return drin.to_pandas(record, o2nLUT)
+    elif rtype == 'spectrum1d':
+        return drin.to_spectrum1d(record, o2nLUT)
     else:
         raise Exception(f'Unknown record type ({rtype})')
     return None

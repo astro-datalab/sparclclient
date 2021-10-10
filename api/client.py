@@ -217,8 +217,7 @@ class SparclApi():
     against the one expected by the Client. Throws error if
     the Client is a major version or more behind.
     """
-    # version = 2.0;  <2021-07-04> retrieve return value includes status
-    KNOWN_GOOD_API_VERSION = 2.0 #@@@ Change this when Server version increments
+    KNOWN_GOOD_API_VERSION = 3.0 #@@@ Change this when Server version increments
 
 
     def __init__(self, url=_PAT, verbose=False):
@@ -244,12 +243,12 @@ class SparclApi():
         self.apiversion = float(verstr)
 
         if (int(self.apiversion) - int(SparclApi.KNOWN_GOOD_API_VERSION)) >= 1:
-            msg = (f'The helpers.api module is expecting an older '
-                   f'version of the {self.rooturl} API services. '
-                   f'Please upgrade to latest "sparclclient".  '
-                   f'This Client expected version '
+            msg = (f'The SPARCL Client you are running expects an older '
+                   f'version of the API services. '
+                   f'Please upgrade to the latest "sparclclient".  '
+                   f'The Client you are using expected version '
                    f'{SparclApi.KNOWN_GOOD_API_VERSION} but got '
-                   f'{self.apiversion} from the API.')
+                   f'{self.apiversion} from the SPARCL Server at {self.apiurl}.')
             raise Exception(msg)
         #self.session = requests.Session()
 
