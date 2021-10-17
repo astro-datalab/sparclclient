@@ -21,11 +21,15 @@ import api.exceptions as ex
 # External Packages
 # <none>
 
-rooturl = 'http://localhost:8030/' #@@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://localhost:8030/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+
+showact = True
 
 class ApiTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
+
+    maxDiff = None # too see full values in DIFF on assert failure
 
     @classmethod
     def setUpClass(cls):
@@ -57,6 +61,12 @@ class ApiTest(unittest.TestCase):
         expected = 2.0 # only major version part matters. Minor=.0
         assert expected <= version < (1 + expected)
 
+    def test_get_record_structure(self):
+        actual = self.client.get_record_structure('BOSS-DR16')
+        if showact:
+            print(f'get_record_structure: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.boss_record_structure,
+                         msg = 'Actual to Expected')
 
     def test_sample(self):
         specids = self.client.sample_specids()
@@ -127,6 +137,7 @@ class ApiTest(unittest.TestCase):
                                            include=inc2,
                                            structure='BOSS-DR16')
 
+    # BOSS type conversion
     def test_retrieve_5(self):
         """Convert to Numpy."""
         recs = self.client.sample_records(1, structure='BOSS-DR16',
@@ -149,8 +160,29 @@ class ApiTest(unittest.TestCase):
         actual = sorted(recs[0].keys())
         self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
 
-    def test_get_record_structure(self):
-        actual = self.client.get_record_structure('BOSS-DR16')
-        #!print(f'actual={pformat(actual)}')
-        self.assertEqual(actual, exp.boss_record_structure,
-                         msg = 'Actual to Expected')
+    # EVEREST type conversion
+    def test_retrieve_8(self):
+        """Convert to Numpy."""
+        recs = self.client.sample_records(1, structure='DESI-everest',
+                                          rtype='numpy')
+        actual = sorted(recs[0].keys())
+        self.assertEqual(actual, exp.everest_numpy, msg='Actual to Expected')
+
+    def test_retrieve_9(self):
+        """Convert to Pandas."""
+        recs = self.client.sample_records(1, structure='DESI-everest',
+                                          rtype='pandas')
+        actual = sorted(recs[0].keys())
+        self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
+
+    def test_retrieve_10(self):
+        """Convert to Spectrum1D."""
+        inc2 = ['flux']
+        recs = self.client.sample_records(1, structure='DESI-everest',
+                                          rtype='spectrum1d')
+        actual = sorted(recs[0].keys())
+        if showact:
+            print(f'get_everest_spectrum1d: actual={pformat(actual)}')
+
+        self.assertEqual(actual, exp.everest_spectrum1d,
+                         msg='Actual to Expected')

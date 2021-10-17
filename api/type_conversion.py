@@ -38,7 +38,7 @@ import pandas as pd
 from specutils import Spectrum1D
 import astropy.units as u
 from astropy.nddata import InverseVariance
-
+import api.exceptions as ex
 
 class Convert(ABC):
     """Convert JSON record to mix of plain python and selected data record type.
@@ -211,7 +211,8 @@ class BossDr16(Convert):
         return(newrec)
 
 
-class DesiDenali(Convert):
+
+class Desi(Convert):
     def to_numpy(self, record, o2nLUT):
         arflds = [
             'spectra.b_flux',
@@ -261,7 +262,7 @@ class DesiDenali(Convert):
         flux_b = record[o2nLUT['spectra.b_flux']]
         ivar_b = record[o2nLUT['spectra.b_ivar']]
         #
-        wavelength_b = (10**np.array(loglam_b))*u.AA
+        #!wavelength_b = (10**np.array(loglam_b))*u.AA
         flux_b = np.array(flux_b)*u.Jy
         ivar_b = InverseVariance(np.array(ivar_b))
 
@@ -270,7 +271,7 @@ class DesiDenali(Convert):
         flux_r = record[o2nLUT['spectra.r_flux']]
         ivar_r = record[o2nLUT['spectra.r_ivar']]
         #
-        wavelength_r = (10**np.array(loglam_r))*u.AA
+        #!wavelength_r = (10**np.array(loglam_r))*u.AA
         flux_r = np.array(flux_r)*u.Jy
         ivar_r = InverseVariance(np.array(ivar_r))
 
@@ -279,21 +280,21 @@ class DesiDenali(Convert):
         flux_z = record[o2nLUT['spectra.z_flux']]
         ivar_z = record[o2nLUT['spectra.z_ivar']]
         #
-        wavelength_z = (10**np.array(loglam_z))*u.AA
+        #!wavelength_z = (10**np.array(loglam_z))*u.AA
         flux_z = np.array(flux_z)*u.Jy
         ivar_z = InverseVariance(np.array(ivar_z))
 
         newrec = dict(
             # flux, uncertainty, wavevelength, mask(or, and), redshift
-            b_spec1d = Spectrum1D(spectral_axis=wavelength_b,
+            b_spec1d = Spectrum1D(spectral_axis=np.array(loglam_b)*u.AA,
                                   flux=flux_b,
                                   uncertainty=ivar_b,
                                   redshift=z),
-            r_spec1d = Spectrum1D(spectral_axis=wavelength_r,
+            r_spec1d = Spectrum1D(spectral_axis=np.array(loglam_r)*u.AA,
                                   flux=flux_r,
                                   uncertainty=ivar_r,
                                   redshift=z),
-            z_spec1d = Spectrum1D(spectral_axis=wavelength_z,
+            z_spec1d = Spectrum1D(spectral_axis=np.array(loglam_z)*u.AA,
                                   flux=flux_z,
                                   uncertainty=ivar_z,
                                   redshift=z),
@@ -320,15 +321,33 @@ class DesiDenali(Convert):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
-                      for f in arflds if f in o2nLUT)
-        newrec = dict(df = pd.DataFrame(dfdict))
+        b_flds = [f for f in arflds if f.startswith('spectra.b_')]
+        r_flds = [f for f in arflds if f.startswith('spectra.r_')]
+        z_flds = [f for f in arflds if f.startswith('spectra.z_')]
+
+        #! dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+        #!               for f in arflds if f in o2nLUT)
+        #! newrec = dict(df = pd.DataFrame(dfdict))
+        newrec = dict(
+            b_df = {o2nLUT[f]: record[o2nLUT[f]] for f in b_flds},
+            r_df = {o2nLUT[f]: record[o2nLUT[f]] for f in r_flds},
+            z_df = {o2nLUT[f]: record[o2nLUT[f]] for f in z_flds},)
+
+        # Copy all the rest of the fields
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
             newrec[new] = record[new]
+
+
         return(newrec)
 
+
+class DesiDenali(Desi):
+    pass
+
+class DesiEverest(Desi):
+    pass
 
 
 # DR Instance LookUp Table
@@ -336,7 +355,8 @@ diLUT = {
     'SDSS-DR16': SdssDr16(),
     'BOSS-DR16': BossDr16(),
     'DESI-denali': DesiDenali(),
-    'Unknown': NoopConvert(),
+    'DESI-everest': DesiEverest(),
+    #'Unknown': NoopConvert(),
     }
 
 def convert(record, rtype, client, include, verbose=False):
@@ -344,6 +364,15 @@ def convert(record, rtype, client, include, verbose=False):
         return record
 
     dr = record['data_release']
+
+    # Validate parameters
+    if not dr in diLUT:
+        allowed = ', '.join(list(diLUT.keys()))
+        msg = (f'The Data Set associated with a records, "{dr}",'
+               f' is not supported for Type Conversion.'
+               f' Available Data Sets are: {allowed}.')
+        raise ex.UnkDr(msg)
+
     drin = diLUT.get(dr,NoopConvert())
 
     o2nLUT = copy.copy(client.orig2newLUT[dr]) # orig2newLUT[dr][orig] = new

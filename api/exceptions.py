@@ -46,3 +46,7 @@ class UnknownServerError(BaseSparclException):
     """Client got a status response from the SPARC Server that we do not
     know how to decode."""
     error_code = 'UNKNOWN'
+
+class UnkDr(BaseSparclException):
+    """The Data Release is not known or not supported."""
+    error_code = 'UNKDR'

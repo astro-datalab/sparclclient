@@ -69,3 +69,48 @@ boss_spectrum1d = [
     'specid',
     'spectra.coadd.OR_MASK',
     'wdisp']
+
+everest_numpy = [
+    'aux.FIBERID',
+    'aux.MJD',
+    'aux.PLATEID',
+    'aux.RUN2D',
+    'coadd',
+    'data_release',
+    'dec_center',
+    'dirpath',
+    'filename',
+    'filesize',
+    'ra_center',
+    'redshift',
+    'specid']
+
+everest_pandas = [
+    'aux.FIBERID',
+    'aux.MJD',
+    'aux.PLATEID',
+    'aux.RUN2D',
+    'data_release',
+    'dec_center',
+    'df',
+    'dirpath',
+    'filename',
+    'filesize',
+    'ra_center',
+    'redshift',
+    'specid']
+
+everest_spectrum1d = ['aux.TARGETID',
+ 'aux.TILEID',
+ 'b_spec1d',
+ 'data_release',
+ 'dec_center',
+ 'dirpath',
+ 'extra_files',
+ 'filename',
+ 'filesize',
+ 'r_spec1d',
+ 'ra_center',
+ 'redshift',
+ 'specid',
+ 'z_spec1d']
