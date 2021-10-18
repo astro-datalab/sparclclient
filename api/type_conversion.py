@@ -329,9 +329,10 @@ class Desi(Convert):
         #!               for f in arflds if f in o2nLUT)
         #! newrec = dict(df = pd.DataFrame(dfdict))
         newrec = dict(
-            b_df = {o2nLUT[f]: record[o2nLUT[f]] for f in b_flds},
-            r_df = {o2nLUT[f]: record[o2nLUT[f]] for f in r_flds},
-            z_df = {o2nLUT[f]: record[o2nLUT[f]] for f in z_flds},)
+            b_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in b_flds}),
+            r_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in r_flds}),
+            z_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in z_flds}),
+        )
 
         # Copy all the rest of the fields
         for orig,new in o2nLUT.items():
