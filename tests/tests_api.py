@@ -54,9 +54,12 @@ class ApiTest(unittest.TestCase):
     def test_version(self):
         """Get version of the NOIRLab SPARC server API"""
         version = self.client.version
-        expected = 2.0 # only major version part matters. Minor=.0
-        assert expected <= version < (1 + expected)
-
+        expected = 3.0 # only major version part matters. Minor=.0
+        assert expected <= version < (1 + expected),(
+            f'Client/Server mismatch. '
+            f'Must be: expected({expected}) <= version({version}) '
+            f'< (1 + expected)'
+            )
 
     def test_sample(self):
         specids = self.client.sample_specids()
@@ -106,17 +109,18 @@ class ApiTest(unittest.TestCase):
                                            include=inc2,
                                            structure='BOSS-DR16')
 
-    @skip('Cannot find an example of this edge case occuring')
-    def test_retrieve_2(self):
-        """Issue warning when a Path has no value."""
-        inc2 = ['flux', 'spectra.coadd.OR_MASK']
+    #! @skip('Cannot find an example of this edge case occuring')
+    #! def test_retrieve_2(self):
+    #!     """Issue warning when a Path has no value."""
+    #!     inc2 = ['flux', 'spectra.coadd.OR_MASK']
+    #!
+    #!     specids = sorted(self.client.sample_specids(samples=1,
+    #!                                           structure='BOSS-DR16'))
+    #!     with self.assertWarns(Warning):
+    #!         records = self.client.retrieve(specids,
+    #!                                        include=inc2,
+    #!                                        structure='BOSS-DR16')
 
-        specids = sorted(self.client.sample_specids(samples=1,
-                                              structure='BOSS-DR16'))
-        with self.assertWarns(Warning):
-            records = self.client.retrieve(specids,
-                                           include=inc2,
-                                           structure='BOSS-DR16')
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
         inc2 = ['flux']
