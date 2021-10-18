@@ -64,7 +64,7 @@ class ApiTest(unittest.TestCase):
     def test_get_record_structure(self):
         actual = self.client.get_record_structure('BOSS-DR16')
         if showact:
-            print(f'get_record_structure: actual={pformat(actual)}')
+            print(f'boss_record_structure: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_record_structure,
                          msg = 'Actual to Expected')
 
@@ -143,6 +143,8 @@ class ApiTest(unittest.TestCase):
         recs = self.client.sample_records(1, structure='BOSS-DR16',
                                           rtype='numpy')
         actual = sorted(recs[0].keys())
+        if showact:
+            print(f'boss_numpy: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_numpy, msg='Actual to Expected')
 
     def test_retrieve_6(self):
@@ -150,6 +152,8 @@ class ApiTest(unittest.TestCase):
         recs = self.client.sample_records(1, structure='BOSS-DR16',
                                           rtype='pandas')
         actual = sorted(recs[0].keys())
+        if showact:
+            print(f'boss_pandas: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_pandas, msg='Actual to Expected')
 
     def test_retrieve_7(self):
@@ -158,6 +162,8 @@ class ApiTest(unittest.TestCase):
         recs = self.client.sample_records(1, structure='BOSS-DR16',
                                           rtype='spectrum1d')
         actual = sorted(recs[0].keys())
+        if showact:
+            print(f'boss_spectrum1d: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
 
     # EVEREST type conversion
@@ -166,6 +172,8 @@ class ApiTest(unittest.TestCase):
         recs = self.client.sample_records(1, structure='DESI-everest',
                                           rtype='numpy')
         actual = sorted(recs[0].keys())
+        if showact:
+            print(f'everest_numpy: actual={pformat(actual)}')
         self.assertEqual(actual, exp.everest_numpy, msg='Actual to Expected')
 
     def test_retrieve_9(self):
@@ -173,7 +181,10 @@ class ApiTest(unittest.TestCase):
         recs = self.client.sample_records(1, structure='DESI-everest',
                                           rtype='pandas')
         actual = sorted(recs[0].keys())
+        if showact:
+            print(f'everest_pandas: actual={pformat(actual)}')
         self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
+
 
     def test_retrieve_10(self):
         """Convert to Spectrum1D."""
@@ -182,7 +193,7 @@ class ApiTest(unittest.TestCase):
                                           rtype='spectrum1d')
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'get_everest_spectrum1d: actual={pformat(actual)}')
+            print(f'everest_spectrum1d: actual={pformat(actual)}')
 
         self.assertEqual(actual, exp.everest_spectrum1d,
                          msg='Actual to Expected')
