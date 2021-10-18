@@ -1,5 +1,5 @@
 # Unit tests for the NOIRLab SPARC API Client
-# EXAMPLES:
+# EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
 #   python -m unittest  -v tests.tests_api    # VERBOSE
 #   python -m unittest tests.tests_api.ApiTest

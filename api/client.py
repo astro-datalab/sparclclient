@@ -232,7 +232,7 @@ class SparclApi():
         self.apiversion = None
         self.verbose = verbose
         # require response within this num seconds
-        # https://docs.python-requests.org/en/master/user/advanced/#timeouts
+        # https://2.python-requests.org/en/master/user/advanced/#timeouts
         # (connect time, read time)
         self.timeout = (1.1, 90*60) #(connect timeout, read timeout) seconds
         #@@@ read timeout should be a function of the POST payload size
@@ -316,7 +316,7 @@ class SparclApi():
 
     def __repr__(self):
         return(f'(sparclclient:{self.clientversion}, '
-               f'api:{self.apiversion}, {self.apiurl})')
+               f'api:{self.apiversion}, {self.apiurl}, verbose={self.verbose})')
 
     def sample_specids(self, samples=5, structure=None):
         """Return a small list of specids.
@@ -475,7 +475,8 @@ class SparclApi():
             if verbose and ('traceback' in res.json()):
                 #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
-            raise ex.genSparclException(**res.json())
+            #!raise ex.genSparclException(**res.json())
+            raise ex.genSparclException(res, verbose=verbose)
 
         #!if xfer=='p':
         #!    ret = pickle.loads(res.content)
