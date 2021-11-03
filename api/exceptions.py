@@ -1,6 +1,11 @@
-def genSparclException(**status):
+def genSparclException(response, verbose=False):
     """Given status from Server response.json(), which is a dict, generate
     a native SPARCL exception suitable for Science programs."""
+
+    content = response.content
+    if verbose:
+        print(f'Exception: response content={content}')
+    status = response.json()
 
     # As of Python 3.10.0.alpha6, python "match" statement could be used
     # instead of if-elif-else.
@@ -8,7 +13,7 @@ def genSparclException(**status):
     if status.get('errorCode') == 'BADPATH':
         return BadPath(status.get('errorMessage'))
     else:
-        return BadPath(status.get('errorMessage'))
+        return UnknownServerError(status.get('errorMessage'))
 
 
 class BaseSparclException(Exception):

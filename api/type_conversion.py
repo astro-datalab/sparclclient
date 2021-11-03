@@ -82,13 +82,14 @@ class SdssDr16(Convert):
             'spectra.coadd.wdisp',
             ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(coadd = np.array(lofl))
+        newrec = dict(nparr = np.array(lofl))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
             newrec[new] = record[new]
         return(newrec)
 
+    # Sdss
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
             'spectra.coadd.flux',
@@ -100,7 +101,7 @@ class SdssDr16(Convert):
         flux = record[o2nLUT['spectra.coadd.flux']]
         ivar = record[o2nLUT['spectra.coadd.ivar']]
 
-        wavelength = (10**np.array(loglam))*u.AA
+        owavelength = (10**np.array(loglam))*u.AA
         flux = np.array(flux)*u.Jy
         ivar = InverseVariance(np.array(ivar))
         z = record.get('red_shift')
@@ -154,13 +155,14 @@ class BossDr16(Convert):
             'spectra.coadd.WDISP',
             ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(coadd = np.array(lofl))
+        newrec = dict(nparr = np.array(lofl))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
             newrec[new] = record[new]
         return(newrec)
 
+    # BOSS
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
             'spectra.coadd.FLUX',
@@ -229,7 +231,7 @@ class Desi(Convert):
             'spectra.z_wavelength',
         ]
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
-        newrec = dict(coadd = np.array(lofl))
+        newrec = dict(nparr = np.array(lofl))
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
@@ -237,6 +239,7 @@ class Desi(Convert):
         return(newrec)
 
 
+    # Desi
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
             'spectra.b_flux',
@@ -387,7 +390,9 @@ def convert(record, rtype, client, include, verbose=False):
     if verbose:
         print(f'DBG-convert: o2nLUT={pformat(o2nLUT)}')
 
-    if rtype == 'numpy':
+    if rtype == 'json':
+        return record
+    elif rtype == 'numpy':
         return drin.to_numpy(record, o2nLUT)
     elif rtype == 'pandas':
         return drin.to_pandas(record, o2nLUT)

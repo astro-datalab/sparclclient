@@ -22,6 +22,7 @@ from warnings import warn
 import json
 import pickle
 from collections.abc import MutableMapping
+from collections import OrderedDict
 import pkg_resources
 # Local Packages
 from api.utils import tic,toc
@@ -85,103 +86,6 @@ class AttrDict(dict):
             self[key] = from_nested_dict(self[key])
 
 
-#!def dict2tree(obj, name=None):
-#!    """Return abstracted nested tree. Terminals contain TYPE"""
-#!    if isinstance(obj, dict):
-#!        children = dict()
-#!        for (k,v) in obj.items():
-#!            if isinstance(v, dict) or isinstance(v, list):
-#!                val = dict2tree(v, name=k)
-#!            else:
-#!                val = {k: type(v)}
-#!                #!val = {k: '-'}
-#!            children.update(val)
-#!        tree = children if name is None else {name:  children}
-#!    elif isinstance(obj, list):
-#!        children = dict()
-#!        for n,v in enumerate(obj[:1]):
-#!            k = f'<list({len(obj)})[0]>'
-#!            if isinstance(v, dict) or isinstance(v, list):
-#!                val = dict2tree(v, name=k)
-#!            else:
-#!                val = {k: type(v)}
-#!                #!val = {k: '-'}
-#!            children.update(val)
-#!        tree = {name:  children}
-#!    else:
-#!        tree = {name,type(obj)}
-#!    return(tree)
-#!
-#!# RETURN: nested list of node names
-#!def tree_nodes(tree):
-#!    """e.g. [name, name-child1, name-child2, [name-child3, name-granchild]]"""
-#!    res = []
-#!    if not isinstance(tree, dict):
-#!        return tree
-#!    for k,v in tree.items():
-#!        if isinstance(v, dict):
-#!            if list(v.keys())[0].startswith('<list') :
-#!                res.append(k) # treat "type dict" as terminal
-#!            else:
-#!                res.append([k] + tree_nodes(v))
-#!        else: # v is not dict
-#!            res.append(k)
-#!    return res
-#!
-#!
-#!def obj_format(obj, seen=None, indent=0, showid=False, tab=4):
-#!    """Recursively get the rough composition of a pure python object. Used in show_record_structure().
-#!
-#!        Args:
-#!           obj (AttrDict): pure python object.
-#!           seen (str, optional): (default: None) set of objects already visited. Avoid infinite loops!
-#!           indent (int, optional): (default: 0) level of indentation for printing the format of obj.
-#!           showid (boolean, optional): (default: False) OBSOLETE. # Code should be changed to remove use of this.
-#!           tab (int, optional): (default: 4) amount of spaces to use for one level of indentation.
-#!        Returns:
-#!           The rough composition of a pure python object.
-#!        Example:
-#!           >>> res = client.sample_records(1)[0]
-#!           >>> print(obj_format(res))
-#!        """
-#!    # Prevent following loops (self reference) in structures
-#!    if seen is None:
-#!        seen = set()
-#!    oid = id(obj)
-#!    if oid in seen:
-#!        return ''
-#!    seen.add(oid)
-#!    idstr = f'{oid:<16}: ' if showid else ''
-#!    s = ' '
-#!    idspc = f'{s:<16}: ' if showid else ''
-#!
-#!    spaces = ' ' * (indent * tab)
-#!    res = spaces
-#!    #!res = f'[{oid}] {spaces}'
-#!    indent += 1
-#!    spaces2 = ' ' * (indent * tab)
-#!    if isinstance(obj, dict):
-#!        res += f'{idstr}dict(\n'
-#!        for k,v in obj.items():
-#!            if v is None:
-#!                valstr = None
-#!            else:
-#!                valstr = obj_format(v, seen, indent, showid).strip()
-#!            #!res += f'{idstr}{spaces2}{k:16} = {valstr},\n'
-#!            res += f'{idstr}{spaces2}{k} = {valstr},\n'
-#!        res += f'{idspc}{spaces2})'
-#!    elif isinstance(obj, list):
-#!        if obj[0] is None:
-#!            valstr = None
-#!        else:
-#!            valstr = obj_format(obj[0],seen,indent, showid).strip()
-#!        res += f'<list {len(obj)}: obj[0]={valstr}> ...'
-#!    else:
-#!        res += f'type: {type(obj)}'
-#!
-#!    return(res)
-
-
 # Using HTTPie (http://httpie.org):
 # http :8030/sparc/version
 
@@ -203,6 +107,42 @@ _DEV = 'http://localhost:8030'
 
 client_version = pkg_resources.require("sparclclient")[0].version
 
+###########################
+### Convenience Functions
+
+def fields_available(records):
+    """Get list of fields used in records.
+
+    :param records: List of records (each is a dictionary)
+    :returns: dict[Structure] = [field_name1, ...]
+    :rtype: dict
+
+    """
+    fields = {r.data_release: sorted(r.keys()) for r in records}
+    return fields
+
+def record_examples(records):
+    """Copy one record for each Structure type.
+
+    :param records: List of records (each is a dictionary)
+    :returns: dict[Structure] = rec
+    :rtype: dict
+
+    """
+    examples = {r.data_release: r for r in records}
+    return examples
+
+def get_metadata(records):
+    md_fields = [k for k,v in records[0].items()
+                 if isinstance(v,Number) or isinstance(v,str)]
+    md_fields = [r for r in records
+                 if isinstance(rv,Number) or isinstance(v,str)]
+    return md
+
+
+###########################
+### The Client class
+
 class SparclApi():
     """Provides interface to SPARCL Server.
 
@@ -217,7 +157,7 @@ class SparclApi():
     against the one expected by the Client. Throws error if
     the Client is a major version or more behind.
     """
-    KNOWN_GOOD_API_VERSION = 3.0 #@@@ Change this when Server version increments
+    KNOWN_GOOD_API_VERSION = 3.0 #@@@Change this when Server version increments
 
 
     def __init__(self, url=_PAT, verbose=False):
@@ -232,7 +172,7 @@ class SparclApi():
         self.apiversion = None
         self.verbose = verbose
         # require response within this num seconds
-        # https://docs.python-requests.org/en/master/user/advanced/#timeouts
+        # https://2.python-requests.org/en/master/user/advanced/#timeouts
         # (connect time, read time)
         self.timeout = (1.1, 90*60) #(connect timeout, read timeout) seconds
         #@@@ read timeout should be a function of the POST payload size
@@ -248,17 +188,20 @@ class SparclApi():
                    f'Please upgrade to the latest "sparclclient".  '
                    f'The Client you are using expected version '
                    f'{SparclApi.KNOWN_GOOD_API_VERSION} but got '
-                   f'{self.apiversion} from the SPARCL Server at {self.apiurl}.')
+                   f'{self.apiversion} from the SPARCL Server '
+                   f'at {self.apiurl}.')
             raise Exception(msg)
-        #self.session = requests.Session()
+        #self.session = requests.Session() #@@@
 
         self.clientversion = client_version
 
-        #############################
+        ####################################################
         ### Convenience LookUp Tables derived from one query
         ###
         # dfLUT[dr][origPath] => dict[new=newPath,required=bool]
-        self.dfLUT = requests.get(f'{self.apiurl}/fields/').json()
+        lut0 = requests.get(f'{self.apiurl}/fields/').json()
+        lut1 = OrderedDict(sorted(lut0.items()))
+        self.dfLUT = {k:OrderedDict(sorted(d.items())) for k,d in lut1.items()}
 
         # required[dr] => newPath
         self.required = dict(
@@ -277,7 +220,8 @@ class SparclApi():
         # dict[drName] = [fieldName, ...]
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
         ###
-        ###################
+        ####################################################
+
 
     def get_field_names(self, structure):
         """List field names available for retreive."""
@@ -316,27 +260,38 @@ class SparclApi():
 
     def __repr__(self):
         return(f'(sparclclient:{self.clientversion}, '
-               f'api:{self.apiversion}, {self.apiurl})')
+               f'api:{self.apiversion}, {self.apiurl}, verbose={self.verbose})')
 
-    def sample_specids(self, samples=5, structure=None):
+
+    def sample_specids(self, samples=5, structure=None, random=True, **kwargs):
         """Return a small list of specids.
 
         This is intended to make it easy to get just a few specids to use
         for experimenting with the rest of the API.
 
-        Args:
-           samples (int, optional): (default: 5) The number of sample specids to get.
-           structure (str, optional): (default: None means ANY) The data structure from which to get specids.
-        Returns:
-           List of specids.
+        :param samples (int, optional): (default: 5) The number of sample
+           specids to get.
+        :param structure  (str, optional): (default: None means ANY) The data
+           structure from which to get specids.
+        :param random (True,False,None)
+        :returns: List of specids.
+        :rtype: list
+
         Example:
            >>> client.sample_specids(samples=3, structure='DESI-denali')
            [616088561849992155, 39633331515559899, 39633328084618293]
         """
-        url = f'{self.apiurl}/sample/?samples={samples}&dr={structure}'
+        uparams = dict(random=random,
+                       samples=samples,
+                       dr=structure)
+        qstr = urlencode(uparams)
+        url = f'{self.apiurl}/sample/?{qstr}'
         if self.verbose:
             print(f'Using url="{url}"')
-        response = requests.get(url, timeout=self.timeout)
+            print(f'Sample_specids(samples={samples}, structure={structure}, '
+                  f'verbose={self.verbose}, random={random})')
+
+        response = requests.get(url,  timeout=self.timeout)
         return response.json()
 
     @property
@@ -375,7 +330,6 @@ class SparclApi():
         """
         # Removed documentation
         #! countOnly (boolean, optional): (default: False) If true, only return the count of missing specids.
-
 
         verbose = verbose or self.verbose
         uparams = dict()
@@ -421,7 +375,8 @@ class SparclApi():
             raise ex.BadInclude(msg)
         return True
 
-    def retrieve(self, specid_list,
+    def retrieve(self,
+                 specid_list,
                  include=None,  # None means include ALL
                  #!format=None,
                  rtype=None,
@@ -434,6 +389,8 @@ class SparclApi():
            specid_list (list): List of specids.
            include (list, optional): (default: None, means include ALL)
               List of paths to include in each record.
+           rtype (str): Data-yype to use for spectra data. One of:
+              json, numpy, pandas, spectrum1d
            structure (str): The data structure (DS) name associated with
               the specids.
               Or None to retrieve from any DS that contains the specid.
@@ -475,7 +432,8 @@ class SparclApi():
             if verbose and ('traceback' in res.json()):
                 #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
-            raise ex.genSparclException(**res.json())
+            #!raise ex.genSparclException(**res.json())
+            raise ex.genSparclException(res, verbose=verbose)
 
         #!if xfer=='p':
         #!    ret = pickle.loads(res.content)
@@ -520,24 +478,41 @@ class SparclApi():
            >>> pprint.pprint(samrec,depth=2)
            [{'data_release_id': 'BOSS-DR16',
              'dec_center': 47.193549,
-             'dirpath': '/net/mss1/archive/hlsp/sdss/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/7399',
+            'dirpath': '/net/mss1/archive/hlsp/sdss/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/7399',
              'filename': 'spec-7399-57162-0376.fits',
              'specid': 1429845755960551,
              'spectra': {...},
              'updated': '2021-04-28T20:16:20.399464Z'}]
         """
         kverb = kwargs.pop('verbose',None)
+        random = kwargs.pop('random',True)
         verb = self.verbose if kverb is None else kverb
-
-        sids = self.sample_specids(count, structure=structure)
+        if verb:
+            print(f'Sample_records(count={count}, structure={structure}, '
+                  f'verbose={verb}, random={random})')
+        sids = self.sample_specids(count,
+                                   structure=structure, random=random,
+                                   **kwargs)
         return self.retrieve(sids, structure=structure, verbose=verb, **kwargs)
+
+    def normalize_field_names(self, recs):
+        """Return copy of records with all field names converted to the names
+        used by the data set provider.
+
+        :param recs: List of dictionaries representing spectra records
+        :returns: new list of dicts of spectra records (with diff field names)
+        :rtype: list
+
+        """
+        return [{self.orig_field(r['data_release'],k):v for k,v in r.items()}
+                for r in recs]
 
     # EXAMPLES:
     # client.show_record_structure('DESI-denali',xfer='database')
     # client.show_record_structure('SDSS-DR16')
     # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
     #
-    def get_record_structure(self, structure, **kwargs):
+    def get_record_structure(self, structure, specid=None, **kwargs):
         """Get the structure of a record retrieved from STRUCTURE.
 
         Args:
@@ -547,7 +522,16 @@ class SparclApi():
         Example:
            >>> d = client.get_record_structure('DESI-denali')
         """
-        recs = self.sample_records(1, structure=structure, **kwargs)
+        kverb = kwargs.pop('verbose',None)
+        verb = self.verbose if kverb is None else kverb
+        if specid is None:
+            sids = self.sample_specids(1, structure=structure, **kwargs)
+        else:
+            sids = [specid]
+        if verb:
+            print(f'Getting record structure for {structure}, '
+                  f'specid={sids[0]}')
+        recs = self.retrieve(sids, structure=structure)
         return ut.dict2tree(recs[0])
 
 
