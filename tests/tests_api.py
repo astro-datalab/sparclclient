@@ -167,6 +167,27 @@ class ApiTest(unittest.TestCase):
                                            include=inc2,
                                            structure='BOSS-DR16')
 
+    def test_retrieve_4(self):
+        """Get records with their internal (original) field names."""
+        dr='BOSS-DR16'
+        specids = sorted(self.client.sample_specids(samples=1, structure=dr,
+                                                    random=False))
+        records = self.client.retrieve(specids,structure=dr,internal_names=True)
+        actual = sorted(records[0].keys())
+        if showact:
+            print(f'retrieve_4: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.retrieve_4, msg='Actual to Expected')
+
+    def test_retrieve_5(self):
+        """Get record samples with their internal (original) field names."""
+        dr='BOSS-DR16'
+        records = self.client.sample_records(1, structure=dr,
+                                             internal_names=True,
+                                             random=False)
+        actual = sorted(records[0].keys())
+        if showact:
+            print(f'retrieve_5: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')
 
     #############################
     ## BOSS type conversions

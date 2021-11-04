@@ -378,9 +378,10 @@ class SparclApi():
     def retrieve(self,
                  specid_list,
                  include=None,  # None means include ALL
-                 #!format=None,
                  rtype=None,
-                 structure=None, # was 'SDSS-DR16'
+                 structure=None,
+                 internal_names=False, # No field rename
+                 #!format=None,
                  #xfer='database',
                  verbose=False):
         """Get spectrum from specid list.
@@ -394,6 +395,8 @@ class SparclApi():
            structure (str): The data structure (DS) name associated with
               the specids.
               Or None to retrieve from any DS that contains the specid.
+           internal_names (boolean, optional): (default: False)
+              If True, do not rename fields.
            verbose (boolean, optional): (default: False)
         Returns:
            List of records. Each record is a dictionary of named fields.
@@ -413,6 +416,7 @@ class SparclApi():
             print(f'retrieve(rtype={rtype})')
 
         uparams =dict(include='None' if include is None else ','.join(include),
+                      internal_names=internal_names,
                       dr=structure)
         #! if xfer is not None:
         #!     uparams['xfer'] = xfer
