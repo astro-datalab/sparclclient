@@ -224,7 +224,16 @@ class SparclApi():
 
 
     def get_field_names(self, structure):
-        """List field names available for retreive."""
+        """List field names available for retrieve from a Data Structure.
+
+        Args:
+           structure (str): Name of Data Structure.
+        Returns:
+           List of field names available for retrieve from a Data Structure.
+        Example:
+           >>> client.get_field_names('DESI-everest')
+        """
+
         dr = structure
         if dr in self.dr_fields:
             return list(self.dr_fields[dr].keys())
@@ -278,8 +287,8 @@ class SparclApi():
         :rtype: list
 
         Example:
-           >>> client.sample_specids(samples=3, structure='DESI-denali')
-           [616088561849992155, 39633331515559899, 39633328084618293]
+           >>> client.sample_specids(samples=3, structure='DESI-everest')
+           [11046158779586, 43516691565322, 275450037242]
         """
         uparams = dict(random=random,
                        samples=samples,
@@ -512,7 +521,6 @@ class SparclApi():
                 for r in recs]
 
     # EXAMPLES:
-    # client.show_record_structure('DESI-denali',xfer='database')
     # client.show_record_structure('SDSS-DR16')
     # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
     #
@@ -524,7 +532,7 @@ class SparclApi():
         Returns:
            Dictionary of the record structure for the specified data structure.
         Example:
-           >>> d = client.get_record_structure('DESI-denali')
+           >>> d = client.get_record_structure('DESI-everest')
         """
         kverb = kwargs.pop('verbose',None)
         verb = self.verbose if kverb is None else kverb
