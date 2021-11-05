@@ -32,6 +32,7 @@ class ApiTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
 
     maxDiff = None # too see full values in DIFF on assert failure
+    #assert_equal.__self__.maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -54,6 +55,17 @@ class ApiTest(unittest.TestCase):
             print(f'##   {k}: elapsed={v:.1f} secs;'
                   f'\t{cls.count.get(k)}'
                   f'\t{cls.doc.get(k)}')
+
+    # Full records are big.  Get the gist of them.
+    def records_expected(self, recs, expd, jdata=None, show=False):
+        actual = sorted(recs[0].keys())
+        expected = sorted(eval(expd))  # e.g. 'ep.retrieve_01'
+        if show:
+            print(f'{expd}: '
+                  f'\nEXPECTED={expected}'
+                  f'\n ACTUAL={actual}')
+        self.assertEqual(actual, expected, 'Actual to Expected')
+        return(actual)
 
     def test_version(self):
         """Get version of the NOIRLab SPARC server API"""
@@ -78,6 +90,68 @@ class ApiTest(unittest.TestCase):
                              exp.df_lut,
                              msg = 'Actual to Expected')
 
+    #################################
+    ### Convenience Functions
+    ###
+
+    def test_fields_available(self):
+        records = self.client.sample_records(1,
+                                             structure='BOSS-DR16', random=False)
+        actual = api.client.fields_available(records)
+        if showact:
+            print(f'fields_available: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.fields_available,msg = 'Actual to Expected')
+
+    def test_record_examples(self):
+        records = self.client.sample_records(1,
+                                             structure='BOSS-DR16', random=False)
+        examples = api.client.record_examples(records)
+        # Just the gist of the records (key names)
+        actual = {k: sorted(v.keys()) for k,v in examples.items()}
+        if showact:
+            print(f'record_examples: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
+
+    def test_get_metadata(self):
+        records = self.client.sample_records(1,
+                                             structure='BOSS-DR16', random=False)
+        actual = api.client.get_metadata(records)
+        if showact:
+            print(f'get_metadata: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
+
+    def test_rename_fields(self):
+        records = self.client.sample_records(1,
+                                             structure='BOSS-DR16', random=False)
+        rdict = dict(dec_center='y', ra_center='x', redshift='z')
+        actual = api.client.rename_fields(rdict, records)
+        self.records_expected(actual,"exp.rename_fields", show=showact)
+
+    ###
+    #################################
+
+    #################################
+    ### Convenience client Methods
+    ###
+
+    def test_get_field_names(self):
+        actual = self.client.get_field_names('BOSS-DR16')
+        if showact:
+            print(f'get_field_names: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.get_field_names, msg='Actual to Expected')
+
+    def test_orig_field(self):
+        actual = self.client.orig_field('BOSS-DR16', 'flux')
+        if showact:
+            print(f'orig_field: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.orig_field, msg='Actual to Expected')
+
+    def test_client_field(self):
+        actual = self.client.client_field('BOSS-DR16','spectra.coadd.FLUX')
+        if showact:
+            print(f'client_field: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
+
     def test_normalize_field_names(self):
         sids = self.client.sample_specids(1,structure='BOSS-DR16', random=False)
         recs = self.client.retrieve(sids, structure='BOSS-DR16')
@@ -95,6 +169,10 @@ class ApiTest(unittest.TestCase):
             print(f'boss_record_structure: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_record_structure,
                          msg = 'Actual to Expected')
+
+    ###
+    #################################
+
 
     def test_sample(self):
         specids = self.client.sample_specids()

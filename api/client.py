@@ -24,6 +24,7 @@ import pickle
 from collections.abc import MutableMapping
 from collections import OrderedDict
 import pkg_resources
+from numbers import Number
 # Local Packages
 from api.utils import tic,toc
 import api.utils as ut
@@ -66,7 +67,7 @@ import requests
 ##
 ## data1 = AttrDict(data)
 ## print(data1.b.b1.b2a.b3b)  # -> b3bval
-class AttrDict(dict):
+class _AttrDict(dict):
     """ Dictionary subclass whose entries can be accessed by attributes
     (as well as normally).
     """
@@ -76,10 +77,10 @@ class AttrDict(dict):
             if not isinstance(data, dict):
                 return data
             else:
-                return AttrDict({key: from_nested_dict(data[key])
+                return _AttrDict({key: from_nested_dict(data[key])
                                  for key in data})
 
-        super(AttrDict, self).__init__(*args, **kwargs)
+        super(_AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
         for key in self.keys():
@@ -111,7 +112,7 @@ client_version = pkg_resources.require("sparclclient")[0].version
 ### Convenience Functions
 
 def fields_available(records):
-    """Get list of fields used in records.
+    """Get list of fields used in records. One list per Structure.
 
     :param records: List of records (each is a dictionary)
     :returns: dict[Structure] = [field_name1, ...]
@@ -133,12 +134,31 @@ def record_examples(records):
     return examples
 
 def get_metadata(records):
+    """Get records of just metadata used in records.
+
+    Metadata is considered to be any field whose type is a Number or String.
+    Therefore, this will include vectors, lists, tuples, etc.
+
+    :param records: List of records (dictionaries)
+    :returns: new list of dictionaries. Each dict contains only metadata fields.
+    :rtype: list(dict)
+
+    """
     md_fields = [k for k,v in records[0].items()
                  if isinstance(v,Number) or isinstance(v,str)]
-    md_fields = [r for r in records
-                 if isinstance(rv,Number) or isinstance(v,str)]
-    return md
+    return [{k:v for k,v in r.items() if k in md_fields} for r in records]
 
+def rename_fields(rename_dict, records):
+    """Rename some field names in all given records.
+
+    :param rename_dict (dict): The key is current field name, value is new.
+    :param records: List of records (dictionaries) to transform
+    :returns: new_records
+    :rtype: list
+
+    """
+    return [{rename_dict.get(k,k):v for k,v in r.items()}
+            for r in records]
 
 ###########################
 ### The Client class
@@ -148,7 +168,8 @@ class SparclApi():
 
     When using this to report a bug, set verbose to True. Also print
     your instance of this.  The results will include important info
-    about the Client and Server.
+    about the Client and Server that is usefule to Developers
+.
     Example:
       >>> client = SparclApi(verbose=True)
       >>> print(client)
@@ -158,6 +179,7 @@ class SparclApi():
     the Client is a major version or more behind.
     """
     KNOWN_GOOD_API_VERSION = 3.0 #@@@Change this when Server version increments
+
 
 
     def __init__(self, url=_PAT, verbose=False):
@@ -224,7 +246,14 @@ class SparclApi():
 
 
     def get_field_names(self, structure):
-        """List field names available for retreive."""
+        """List field names available for retreive.
+
+        :param structure: List field names of this Data Set.
+        :returns: list of field names
+        :rtype: list
+
+        """
+
         dr = structure
         if dr in self.dr_fields:
             return list(self.dr_fields[dr].keys())
@@ -462,7 +491,7 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return( [AttrDict(tc.convert(r, rtype, self, include))
+        return( [_AttrDict(tc.convert(r, rtype, self, include))
                  for r in records] )
         #!return( records )
 
