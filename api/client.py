@@ -177,10 +177,10 @@ class SparclApi():
     Object creation compares the version from the Server
     against the one expected by the Client. Throws error if
     the Client is a major version or more behind.
+
     """
+
     KNOWN_GOOD_API_VERSION = 3.0 #@@@Change this when Server version increments
-
-
 
     def __init__(self, url=_PAT, verbose=False):
         """Create client instance.
@@ -303,12 +303,13 @@ class SparclApi():
         :param structure  (str, optional): (default: None means ANY) The data
            structure from which to get specids.
         :param random (True,False,None)
-        :returns: List of specids.
+        :returns: List of specids
         :rtype: list
 
         Example:
            >>> client.sample_specids(samples=3, structure='DESI-denali')
            [616088561849992155, 39633331515559899, 39633328084618293]
+
         """
         uparams = dict(random=random,
                        samples=samples,
