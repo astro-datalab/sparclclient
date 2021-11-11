@@ -179,21 +179,31 @@ class SparclApi():
 
     KNOWN_GOOD_API_VERSION = 3.0 #@@@Change this when Server version increments
 
-    def __init__(self, url=_PAT, verbose=False):
+    def __init__(self, url=_PAT, verbose=False,
+                 connect_timeout=1.1, # seconds
+                 read_timeout=90*60, # seconds
+    ):
         """Create client instance.
 
         :param url: Base URL of SPARC Server
         :param verbose: (True,False) Default verbosity for all client methods.
+        :param connect_timeout: Number of seconds to wait to establish
+               connection with server.
+        :param read_timeout: Number of seconds to wait for server to send
+               a response. (generally time to wait for first byte)
 
         """
         self.rooturl=url.rstrip("/")
         self.apiurl = f'{self.rooturl}/sparc'
         self.apiversion = None
         self.verbose = verbose
+        self.c_timeout = float(connect_timeout)  # seconds
+        self.r_timeout = float(read_timeout)     # seconds
+
         # require response within this num seconds
         # https://2.python-requests.org/en/master/user/advanced/#timeouts
-        # (connect time, read time)
-        self.timeout = (1.1, 90*60) #(connect timeout, read timeout) seconds
+        # (connect timeout, read timeout) in seconds
+        self.timeout = (self.c_timeout, self.r_timeout)
         #@@@ read timeout should be a function of the POST payload size
 
         # Get API Version
@@ -240,7 +250,14 @@ class SparclApi():
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
         ###
         ####################################################
+        # END __init__()
 
+    def __repr__(self):
+        return(f'(sparclclient:{self.clientversion}, '
+               f'api:{self.apiversion}, {self.apiurl}, verbose={self.verbose}, '
+               f'connect_timeout={self.c_timeout}, '
+               f'read_timeout={self.r_timeout})'
+        )
 
     def get_field_names(self, structure):
         """List field names available for retreive.
@@ -284,9 +301,6 @@ class SparclApi():
         return self.orig2newLUT[structure][orig_name]
 
 
-    def __repr__(self):
-        return(f'(sparclclient:{self.clientversion}, '
-               f'api:{self.apiversion}, {self.apiurl}, verbose={self.verbose})')
 
 
     def sample_specids(self, samples=5, structure=None, random=True, **kwargs):
@@ -308,8 +322,8 @@ class SparclApi():
            [616088561849992155, 39633331515559899, 39633328084618293]
 
         """
-        uparams = dict(random=random,
-                       samples=samples,
+        uparams = dict(random=bool(random),
+                       samples=int(samples),
                        dr=structure)
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/sample/?{qstr}'
@@ -319,6 +333,8 @@ class SparclApi():
                   f'verbose={self.verbose}, random={random})')
 
         response = requests.get(url,  timeout=self.timeout)
+        #! if self.verbose:
+        #!     print(f'Using response.content="{response.content}"')
         return response.json()
 
     @property
@@ -336,7 +352,7 @@ class SparclApi():
         """
         if self.apiversion is None:
             response = requests.get(f'{self.apiurl}/version',
-                                    timeout=self.TIMEOUT,
+                                    timeout=self.timeout,
                                     cache=True)
             self.apiversion = float(response.content)
         return self.apiversion
@@ -454,7 +470,30 @@ class SparclApi():
             print(f'Using url="{url}"')
             tic()
 
-        res = requests.post(url, json=specid_list, timeout=self.timeout)
+        try:
+            res = requests.post(url, json=specid_list, timeout=self.timeout)
+        except requests.exceptions.ConnectTimeout as reCT:
+            raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
+        except requests.exceptions.ReadTimeout as reRT:
+            msg = (f'Try increasing the value of the "read_timeout" parameter'
+                   f' to "SparclApi()".'
+                   f' The current values is: {self.r_timeout} (seconds)'
+                   #f'; {str(reRT)}'
+            )
+            raise ex.ReadTimeout(msg) from None
+        except requests.exceptions.ConnectionError as reCE:
+            raise ex.UnknownSparcl(f'ConnectionError: {reCE}')
+        except requests.exceptions.TooManyRedirects as reTMR:
+            raise ex.UnknownSparcl(f'TooManyRedirects: {reTMR}')
+        except requests.exceptions.HTTPError as reHTTP:
+            raise ex.UnknownSparcl(f'HTTPError: {reHTTP}')
+        except requests.exceptions.URLRequired as reUR:
+            raise ex.UnknownSparcl(f'URLRequired: {reUR}')
+        except requests.exceptions.RequestException as reRE:
+            raise ex.UnknownSparcl(f'RequestException: {reRE}')
+        except Exception as err:  # fall through
+            raise ex.UnknownSparcl(err)
+
         if verbose:
             elapsed = toc()
             print(f'Got response to post in {elapsed} seconds')
@@ -525,6 +564,7 @@ class SparclApi():
                                    structure=structure, random=random,
                                    **kwargs)
         return self.retrieve(sids, structure=structure, verbose=verb, **kwargs)
+        # END sample_records()
 
     def normalize_field_names(self, recs):
         """Return copy of records with all field names converted to the names

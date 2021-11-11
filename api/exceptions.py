@@ -55,3 +55,15 @@ class UnknownServerError(BaseSparclException):
 class UnkDr(BaseSparclException):
     """The Data Release is not known or not supported."""
     error_code = 'UNKDR'
+
+class ReadTimeout(BaseSparclException):
+    """The server did not send any data in the allotted amount of time."""
+    error_code = 'RTIMEOUT'
+
+
+class UnknownSparcl(BaseSparclException):
+    """Unknown SPARCL error.  If this is ever raised (seen in a log)
+    create and use a new BaseSparcException exception that is more specific."""
+    error_code = 'UNKSPARC'
+
+# error_code values should be no bigger than 8 characters 12345678
