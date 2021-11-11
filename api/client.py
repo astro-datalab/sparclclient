@@ -386,6 +386,7 @@ class SparclApi():
             raise Exception(res)
         ret =  res.json()
         return ret
+        # END missing_specids()
 
     def _specids2tuples(self, specids, structure):
         uparams =dict(dr=structure)

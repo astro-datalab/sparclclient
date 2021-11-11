@@ -20,6 +20,7 @@ class BaseSparclException(Exception):
     """Base Class for all SPARCL exceptions. """
     error_code = 'UNKNOWN'
     error_message = '<NA>'
+    traceback = None
 
     def get_subclass_name(self):
         return self.__class__.__name__
@@ -29,6 +30,7 @@ class BaseSparclException(Exception):
         self.error_message = error_message
         if error_code:
             self.error_code = error_code
+        self.traceback = traceback.format_exc()
 
     def __str__(self):
         return f'[{self.error_code}] {self.error_message}'
@@ -37,6 +39,8 @@ class BaseSparclException(Exception):
         """Convert a SPARCL exception to a python dictionary"""
         dd = dict(errorMessage = self.error_message,
                   errorCode = self.error_code)
+        if settings.DEBUG and (self.traceback is not None):
+            dd['traceback'] = self.traceback
         return dd
 
 class BadPath(BaseSparclException):
