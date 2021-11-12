@@ -27,6 +27,7 @@ from api.utils import tic,toc
 import api.utils as ut
 import api.exceptions as ex
 import api.type_conversion as tc
+from api import __version__
 # External Packages
 import requests
 
@@ -103,7 +104,8 @@ _PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
 _DEV = 'http://localhost:8030'
 
 
-client_version = pkg_resources.require("sparclclient")[0].version
+#client_version = pkg_resources.require("sparclclient")[0].version
+client_version=__version__
 
 ###########################
 ### Convenience Functions
@@ -148,7 +150,7 @@ def get_metadata(records):
 def rename_fields(rename_dict, records):
     """Rename some field names in all given records.
 
-    :param rename_dict (dict): The key is current field name, value is new.
+    :param rename_dict: The key is current field name, value is new.
     :param records: List of records (dictionaries) to transform
     :returns: new_records
     :rtype: list
@@ -309,13 +311,16 @@ class SparclApi():
         This is intended to make it easy to get just a few specids to use
         for experimenting with the rest of the API.
 
-        :param samples (int, optional): (default: 5) The number of sample
-           specids to get.
-        :param structure  (str, optional): (default: None means ANY) The data
-           structure from which to get specids.
-        :param random (True,False,None)
-        :returns: List of specids
-        :rtype: list
+        Args:
+           samples (int, optional): (default: 5) The number of sample
+              specids to get.
+           structure  (str, optional): (default: None means ANY) The data
+              structure from which to get specids.
+           random (True,False,None): Randomize sample
+
+        Returns:
+           List of specids
+        Rtype: list
 
         Example:
            >>> client.sample_specids(samples=3, structure='DESI-denali')

@@ -2,6 +2,9 @@
 # python3 -m build --wheel; twine upload dist/*
 
 import setuptools
+import sys
+sys.path.append(".")
+from api import __version__
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -9,9 +12,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 with open("requirements.txt") as f:
     install_require = f.read().splitlines()
 
-    setuptools.setup(
+setuptools.setup(
     name="sparclclient",
-    version="0.3.18",
+    #version="0.3.19",
+    version=__version__, # see api/__init__.py
     author="NOIRLab DataLab",
     author_email="datalab@noirlab.edu",
     description="A client for getting spectra data from NOIRLab.",

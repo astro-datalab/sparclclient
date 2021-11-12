@@ -1,3 +1,5 @@
+import traceback
+
 def genSparclException(response, verbose=False):
     """Given status from Server response.json(), which is a dict, generate
     a native SPARCL exception suitable for Science programs."""

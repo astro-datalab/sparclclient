@@ -1,3 +1,14 @@
+from abc import ABC, abstractmethod
+import copy
+from pprint import pformat
+import numpy as np
+import pandas as pd
+from specutils import Spectrum1D
+import astropy.units as u
+from astropy.nddata import InverseVariance
+import api.exceptions as ex
+
+
 """It would be much better if this were abstracted and easier to
 update with new Data Types and new DataReleases.  Perhaps use
 something like the Server "Personalities".  I've rejected abstracting
@@ -6,7 +17,7 @@ feature and how it interacts with other features (especially global
 Rename and retrieve(INCLUDE).
 
 DataType conversion should be done completely within the Client, not
-the on the Server.  The obvious reason is Clients are language
+on the Server.  The obvious reason is Clients are language
 dependent, the Server API is not.  But for Client to be able to know
 all about fields names (mapping from original to new names, which ones
 are required) it needs info from the Server.  The Client gets such
@@ -25,20 +36,9 @@ Questions abound for use-cases.
    so, how do we avoid hard coding the distinction for every
    DataRelease?
 
-3. There
-
 """
 
 
-from abc import ABC, abstractmethod
-import copy
-from pprint import pformat
-import numpy as np
-import pandas as pd
-from specutils import Spectrum1D
-import astropy.units as u
-from astropy.nddata import InverseVariance
-import api.exceptions as ex
 
 class Convert(ABC):
     """Convert JSON record to mix of plain python and selected data record type.

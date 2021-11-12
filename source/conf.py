@@ -16,7 +16,8 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 
-from api.client import client_version
+#!from api.client import client_version
+from api import __version__
 
 
 # -- Project information -----------------------------------------------------
@@ -25,10 +26,10 @@ project = 'SPARCL'
 copyright = '2021, S.Pothier, A.Jacques'
 author = 'S.Pothier, A.Jacques'
 
-version = client_version
+#!version = client_version
+release = __version__
+version = '.'.join(release.split('.')[:-1])
 # The full version, including alpha/beta/rc tags
-#!release = 'Alpha-3'
-release = client_version
 
 
 # -- General configuration ---------------------------------------------------
