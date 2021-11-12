@@ -35,5 +35,5 @@
 #__version__ = '0.3.21'
 #__version__ = '0.1a3.dev22'
 #__version__ = '0.3.0-alpha3.23'
-__version__ = '0.3.0-a3.dev24'
+__version__ = '0.4.0-a3.dev24'
 #__version__ = '0.3.22'
