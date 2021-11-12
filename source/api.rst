@@ -1,16 +1,16 @@
 api package
 ===========
 
+..
+  Subpackages
+  -----------
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
+  .. toctree::
+     :maxdepth: 4
 
 
-Submodules
-----------
+  Submodules
+  ----------
 
 api.client module
 -----------------
@@ -20,13 +20,14 @@ api.client module
    :undoc-members:
    :show-inheritance:
 
-api.conf module
----------------
+..
+  api.conf module
+  ---------------
 
-.. automodule:: api.conf
-   :members:
-   :undoc-members:
-   :show-inheritance:
+  .. automodule:: api.conf
+     :members:
+     :undoc-members:
+     :show-inheritance:
 
 api.exceptions module
 ---------------------
@@ -36,13 +37,14 @@ api.exceptions module
    :undoc-members:
    :show-inheritance:
 
-api.specids module
-------------------
+..
+  api.specids module
+  ------------------
 
-.. automodule:: api.specids
-   :members:
-   :undoc-members:
-   :show-inheritance:
+  .. automodule:: api.specids
+     :members:
+     :undoc-members:
+     :show-inheritance:
 
 api.type\_conversion module
 ---------------------------

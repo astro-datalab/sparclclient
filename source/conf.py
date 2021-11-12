@@ -12,6 +12,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 import os
+import re
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -27,8 +28,10 @@ copyright = '2021, S.Pothier, A.Jacques'
 author = 'S.Pothier, A.Jacques'
 
 #!version = client_version
-release = __version__
-version = '.'.join(release.split('.')[:-1])
+sver = __version__
+mo = re.match('^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$',sver)
+release = sver
+version = mo.group('major') + '.' + mo.group('minor')
 # The full version, including alpha/beta/rc tags
 
 
