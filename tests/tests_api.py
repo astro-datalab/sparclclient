@@ -40,8 +40,8 @@ class ApiTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
-        cls.client = api.client.SparclApi(url=rooturl)
-        #! cls.client = create_autospec(api.client.SparclApi(url=rooturl))
+        cls.client = api.client.SparclApi(url=rooturl, internal_names=True)
+        cls.client1 = api.client.SparclApi(url=rooturl)
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -83,11 +83,24 @@ class ApiTest(unittest.TestCase):
         was changed accidentally, reset it. Otherwise, change tests to
         accomodate the new DataFields.
         """
-        actual = self.client.dfLUT
+        actual = self.client1.dfLUT
         if showact:
             print(f"df_lut actual={pformat(actual['BOSS-DR16'])}")
         self.assertDictEqual(actual['BOSS-DR16'],
                              exp.df_lut,
+                             msg = 'Actual to Expected')
+
+    def test_df_lut_internal(self):
+        """Make sure the Data Field LookUp Table is as we expected.
+        Many tests depend on this.  If the underlying DataField SPARC table
+        was changed accidentally, reset it. Otherwise, change tests to
+        accomodate the new DataFields.
+        """
+        actual = self.client.dfLUT
+        if showact:
+            print(f"df_lut_internal actual={pformat(actual['BOSS-DR16'])}")
+        self.assertDictEqual(actual['BOSS-DR16'],
+                             exp.df_lut_internal,
                              msg = 'Actual to Expected')
 
     #################################
@@ -104,7 +117,8 @@ class ApiTest(unittest.TestCase):
 
     def test_record_examples(self):
         records = self.client.sample_records(1,
-                                             structure='BOSS-DR16', random=False)
+                                             structure='BOSS-DR16',
+                                             random=False)
         examples = api.client.record_examples(records)
         # Just the gist of the records (key names)
         actual = {k: sorted(v.keys()) for k,v in examples.items()}
@@ -121,11 +135,18 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
 
     def test_rename_fields(self):
-        records = self.client.sample_records(1,
+        records = self.client1.sample_records(1,
                                              structure='BOSS-DR16', random=False)
         rdict = dict(dec_center='y', ra_center='x', redshift='z')
         actual = api.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields", show=showact)
+
+    def test_rename_fields_internal(self):
+        records = self.client.sample_records(1,
+                                             structure='BOSS-DR16', random=False)
+        rdict = dict(dec_center='y', ra_center='x', redshift='z')
+        actual = api.client.rename_fields(rdict, records)
+        self.records_expected(actual,"exp.rename_fields_internal", show=showact)
 
     ###
     #################################
@@ -135,19 +156,25 @@ class ApiTest(unittest.TestCase):
     ###
 
     def test_get_field_names(self):
-        actual = self.client.get_field_names('BOSS-DR16')
+        actual = self.client1.get_field_names('BOSS-DR16')
         if showact:
             print(f'get_field_names: actual={pformat(actual)}')
         self.assertEqual(actual, exp.get_field_names, msg='Actual to Expected')
 
+    def test_get_field_names_internal(self):
+        actual = self.client.get_field_names('BOSS-DR16')
+        if showact:
+            print(f'get_field_names_internal: actual={pformat(actual)}')
+        self.assertEqual(actual, exp.get_field_names_internal, msg='Actual to Expected')
+
     def test_orig_field(self):
-        actual = self.client.orig_field('BOSS-DR16', 'flux')
+        actual = self.client1.orig_field('BOSS-DR16', 'flux')
         if showact:
             print(f'orig_field: actual={pformat(actual)}')
         self.assertEqual(actual, exp.orig_field, msg='Actual to Expected')
 
     def test_client_field(self):
-        actual = self.client.client_field('BOSS-DR16','spectra.coadd.FLUX')
+        actual = self.client1.client_field('BOSS-DR16','spectra.coadd.FLUX')
         if showact:
             print(f'client_field: actual={pformat(actual)}')
         self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
@@ -236,13 +263,19 @@ class ApiTest(unittest.TestCase):
 
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
-        inc2 = ['flux']
-        sids = sorted(self.client.sample_specids(samples=1,
-                                                 random=False,
+        inc = ['flux']
+        sids = sorted(self.client1.sample_specids(samples=1, random=False,
                                                  structure='BOSS-DR16'))
         with self.assertWarns(Warning):
-            records = self.client.retrieve(sids+[999],
-                                           include=inc2,
+            records = self.client1.retrieve(sids+[999], include=inc,
+                                            structure='BOSS-DR16')
+    def test_retrieve_3_internal(self):
+        """Issue warning when some sids do not exist."""
+        inc = ['spectra.coadd.FLUX']
+        sids = sorted(self.client.sample_specids(samples=1, random=False,
+                                                 structure='BOSS-DR16'))
+        with self.assertWarns(Warning):
+            records = self.client.retrieve(sids+[999], include=inc,
                                            structure='BOSS-DR16')
 
     def test_retrieve_4(self):
@@ -250,8 +283,9 @@ class ApiTest(unittest.TestCase):
         dr='BOSS-DR16'
         specids = sorted(self.client.sample_specids(samples=1, structure=dr,
                                                     random=False))
-        records = self.client.retrieve(specids,structure=dr,internal_names=True)
+        records = self.client.retrieve(specids,structure=dr)
         actual = sorted(records[0].keys())
+        actual.remove('_dr')
         if showact:
             print(f'retrieve_4: actual={pformat(actual)}')
         self.assertEqual(actual, exp.retrieve_4, msg='Actual to Expected')
@@ -259,10 +293,9 @@ class ApiTest(unittest.TestCase):
     def test_retrieve_5(self):
         """Get record samples with their internal (original) field names."""
         dr='BOSS-DR16'
-        records = self.client.sample_records(1, structure=dr,
-                                             internal_names=True,
-                                             random=False)
+        records = self.client.sample_records(1, structure=dr, random=False)
         actual = sorted(records[0].keys())
+        actual.remove('_dr')
         if showact:
             print(f'retrieve_5: actual={pformat(actual)}')
         self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')

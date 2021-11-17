@@ -28,6 +28,7 @@ import api.utils as ut
 import api.exceptions as ex
 import api.type_conversion as tc
 from api import __version__
+
 # External Packages
 import requests
 
@@ -49,40 +50,6 @@ import requests
 # make html
 # firefox -new-tab "`pwd`/build/html/index.html"
 
-
-## data = {
-##     "a": "aval",
-##     "b": {
-##         "b1": {
-##             "b2b": "b2bval",
-##             "b2a": {
-##                 "b3a": "b3aval",
-##                 "b3b": "b3bval"
-##             }
-##         }
-##     }
-## }
-##
-## data1 = AttrDict(data)
-## print(data1.b.b1.b2a.b3b)  # -> b3bval
-class _AttrDict(dict):
-    """ Dictionary subclass whose entries can be accessed by attributes
-    (as well as normally).
-    """
-    def __init__(self, *args, **kwargs):
-        def from_nested_dict(data):
-            """ Construct nested AttrDicts from nested dictionaries. """
-            if not isinstance(data, dict):
-                return data
-            else:
-                return _AttrDict({key: from_nested_dict(data[key])
-                                 for key in data})
-
-        super(_AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-
-        for key in self.keys():
-            self[key] = from_nested_dict(self[key])
 
 
 # Using HTTPie (http://httpie.org):
@@ -118,7 +85,7 @@ def fields_available(records):
     :rtype: dict
 
     """
-    fields = {r.data_release: sorted(r.keys()) for r in records}
+    fields = {r._dr: sorted(r.keys()) for r in records}
     return fields
 
 def record_examples(records):
@@ -181,17 +148,20 @@ class SparclApi():
 
     KNOWN_GOOD_API_VERSION = 3.0 #@@@Change this when Server version increments
 
-    def __init__(self, url=_PAT, verbose=False,
-                 connect_timeout=1.1, # seconds
-                 read_timeout=90*60, # seconds
+    def __init__(self, url=_PAT,
+                 verbose=False,
+                 internal_names=False, # override field renaming
+                 connect_timeout=1.1,  # seconds
+                 read_timeout=90*60,   # seconds
     ):
         """Create client instance.
 
         :param url: Base URL of SPARC Server
-        :param verbose: (True,False) Default verbosity for all client methods.
-        :param connect_timeout: Number of seconds to wait to establish
+        :param verbose: (True,[False]) Default verbosity for all client methods.
+        :param verbose: (True,[False]) True:: override field renaming
+        :param connect_timeout [1.1]: Number of seconds to wait to establish
                connection with server.
-        :param read_timeout: Number of seconds to wait for server to send
+        :param read_timeout [5400]: Number of seconds to wait for server to send
                a response. (generally time to wait for first byte)
 
         """
@@ -199,6 +169,7 @@ class SparclApi():
         self.apiurl = f'{self.rooturl}/sparc'
         self.apiversion = None
         self.verbose = verbose
+        self.internal_names = internal_names
         self.c_timeout = float(connect_timeout)  # seconds
         self.r_timeout = float(read_timeout)     # seconds
 
@@ -234,31 +205,50 @@ class SparclApi():
         lut1 = OrderedDict(sorted(lut0.items()))
         self.dfLUT = {k:OrderedDict(sorted(d.items())) for k,d in lut1.items()}
 
-        # required[dr] => newPath
-        self.required = dict(
-            (dr, [d['new'] for orig,d in v.items() if d['required']])
-            for dr,v in self.dfLUT.items())
+        if internal_names:
+            # required[dr] => origFieldName
+            self.required = dict(
+                (dr, [orig for orig,d in v.items() if d['required']])
+                for dr,v in self.dfLUT.items())
 
-        # orig2newLUT[dr][orig] = new
-        self.orig2newLUT = dict((dr,dict((orig,d['new'])
-                                         for orig,d in v.items()))
-                                for dr,v in self.dfLUT.items())
-        # new2origLUT[dr][new] = orig
-        self.new2origLUT = dict((dr,dict((d['new'],orig)
-                                         for orig,d in v.items()))
-                                for dr,v in self.dfLUT.items())
+            # orig2newLUT[dr][orig] = new
+            self.orig2newLUT = dict((dr,dict((orig,orig)
+                                             for orig,d in v.items()))
+                                    for dr,v in self.dfLUT.items())
+            # new2origLUT[dr][new] = orig
+            self.new2origLUT = dict((dr,dict((orig,orig)
+                                             for orig,d in v.items()))
+                                    for dr,v in self.dfLUT.items())
+        else:  # use field renaming
+            # required[dr] => newFieldName
+            self.required = dict(
+                (dr, [d['new'] for orig,d in v.items() if d['required']])
+                for dr,v in self.dfLUT.items())
+
+            # orig2newLUT[dr][orig] = new
+            self.orig2newLUT = dict((dr,dict((orig,d['new'])
+                                             for orig,d in v.items()))
+                                    for dr,v in self.dfLUT.items())
+            # new2origLUT[dr][new] = orig
+            self.new2origLUT = dict((dr,dict((d['new'],orig)
+                                             for orig,d in v.items()))
+                                    for dr,v in self.dfLUT.items())
 
         # dict[drName] = [fieldName, ...]
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
+
         ###
         ####################################################
         # END __init__()
 
     def __repr__(self):
-        return(f'(sparclclient:{self.clientversion}, '
-               f'api:{self.apiversion}, {self.apiurl}, verbose={self.verbose}, '
-               f'connect_timeout={self.c_timeout}, '
-               f'read_timeout={self.r_timeout})'
+        return(f'(sparclclient:{self.clientversion},'
+               f' api:{self.apiversion},'
+               f' {self.apiurl},'
+               f' verbose={self.verbose},'
+               f' internal_names={self.internal_names},'
+               f' connect_timeout={self.c_timeout},'
+               f' read_timeout={self.r_timeout})'
         )
 
     def get_field_names(self, structure):
@@ -429,7 +419,7 @@ class SparclApi():
                  include=None,  # None means include ALL
                  rtype=None,
                  structure=None,
-                 internal_names=False, # No field rename
+                 #internal_names=False, # No field rename ## Client INIT only
                  #!format=None,
                  #xfer='database',
                  verbose=False):
@@ -444,8 +434,6 @@ class SparclApi():
            structure (str): The data structure (DS) name associated with
               the specids.
               Or None to retrieve from any DS that contains the specid.
-           internal_names (boolean, optional): (default: False)
-              If True, do not rename fields.
            verbose (boolean, optional): (default: False)
         Returns:
            List of records. Each record is a dictionary of named fields.
@@ -454,9 +442,8 @@ class SparclApi():
            >>> sdss_ids = [849044290804934656, 309718438815754240]
            >>> res_sdss = client.retrieve(sdss_ids, structure='SDSS-DR16', include=ink)
         """
-        # OLD doc string fragments
-        #!   xfer (str): (default='database') DEBUG.
-        #!      Format to use to transfer from Server to Client.
+        #!   internal_names (boolean, optional): (default: False)
+        #!      If True, do not rename fields.
 
         self._validate_include(structure, include)
 
@@ -465,10 +452,8 @@ class SparclApi():
             print(f'retrieve(rtype={rtype})')
 
         uparams =dict(include='None' if include is None else ','.join(include),
-                      internal_names=internal_names,
+                      internal_names=self.internal_names,
                       dr=structure)
-        #! if xfer is not None:
-        #!     uparams['xfer'] = xfer
         qstr = urlencode(uparams)
 
         url = f'{self.apiurl}/retrieve/?{qstr}'
@@ -505,21 +490,13 @@ class SparclApi():
             print(f'Got response to post in {elapsed} seconds')
 
         if res.status_code != 200:
+            print(f'DBG: res.content={res.content}') #@@@
             if verbose and ('traceback' in res.json()):
                 #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             #!raise ex.genSparclException(**res.json())
             raise ex.genSparclException(res, verbose=verbose)
 
-        #!if xfer=='p':
-        #!    ret = pickle.loads(res.content)
-        #!elif xfer=='database':
-        #!    #!ret =  res.json()
-        #!    meta,*records =  res.json()
-        #!    #!print(f'DBG: meta={meta}')
-        #!else:
-        #!    print(f'Unknown xfer parameter value "{xfer}". Defaulting to json')
-        #!    ret =  res.json()
         meta,*records = res.json()
         if verbose:
             count = len(records)
@@ -534,7 +511,7 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return( [_AttrDict(tc.convert(r, rtype, self, include))
+        return( [ut._AttrDict(tc.convert(r, rtype, self, include))
                  for r in records] )
         #!return( records )
 
@@ -581,7 +558,9 @@ class SparclApi():
         :rtype: list
 
         """
-        return [{self.orig_field(r['data_release'],k):v for k,v in r.items()}
+        if self.internal_names:
+            return recs
+        return [{self.orig_field(r['_dr'],k):v for k,v in r.items()}
                 for r in recs]
 
     # EXAMPLES:

@@ -367,7 +367,7 @@ def convert(record, rtype, client, include, verbose=False):
     if rtype is None:
         return record
 
-    dr = record['data_release']
+    dr = record['_dr']
 
     # Validate parameters
     if not dr in diLUT:
@@ -380,6 +380,7 @@ def convert(record, rtype, client, include, verbose=False):
     drin = diLUT.get(dr,NoopConvert())
 
     o2nLUT = copy.copy(client.orig2newLUT[dr]) # orig2newLUT[dr][orig] = new
+    o2nLUT['_dr'] = '_dr'
     n2oLUT = client.new2origLUT[dr]
     required = set(client.required[dr])
     if include is not None:
