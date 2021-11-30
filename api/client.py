@@ -22,15 +22,15 @@ from collections.abc import MutableMapping
 from collections import OrderedDict
 import pkg_resources
 from numbers import Number
+# External Packages
+import requests
 # Local Packages
-from api.utils import tic,toc
 import api.utils as ut
 import api.exceptions as ex
 import api.type_conversion as tc
 from api import __version__
 
-# External Packages
-import requests
+
 
 #23456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.
 
@@ -73,6 +73,13 @@ _DEV = 'http://localhost:8030'
 
 #client_version = pkg_resources.require("sparclclient")[0].version
 client_version=__version__
+
+class Inc(Enum):
+    DEFAULT = auto()
+    ALL = auto()
+
+DEFAULT=Inc.DEFAULT
+ALL=Inc.ALL
 
 ###########################
 ### Convenience Functions
@@ -146,7 +153,7 @@ class SparclApi():
 
     """
 
-    KNOWN_GOOD_API_VERSION = 3.0 #@@@Change this when Server version increments
+    KNOWN_GOOD_API_VERSION = 4.0 #@@@ Change this when Server version increments
 
     def __init__(self, url=_PAT,
                  verbose=False,
@@ -293,8 +300,6 @@ class SparclApi():
         return self.orig2newLUT[structure][orig_name]
 
 
-
-
     def sample_specids(self, samples=5, structure=None, random=True, **kwargs):
         """Return a small list of specids.
 
@@ -390,13 +395,10 @@ class SparclApi():
         res = requests.post(url, json=specids, timeout=self.timeout)
 
     def _validate_include(self, dr, include_list):
-        if include_list is None:
+        #!print(f'DBG _validate_include: dr={dr} include_list={include_list}')
+        if (not isinstance(include_list, list)) and (include_list in Inc):
             return True
-        if not isinstance(include_list, list):
-            raise Exception(
-                f'INCLUDE parameter must be a LIST of field names. '
-                f'Got: "{include_list}"')
-        if (include_list is not None) and (dr is None):
+        if dr is None: # and include_list is not DEFAULT or ALL
             raise Exception(
                 'Currently we do not support using an include_list '
                 'when NOT specifying a structure')
@@ -416,7 +418,7 @@ class SparclApi():
 
     def retrieve(self,
                  specid_list,
-                 include=None,  # None means include ALL
+                 include=Inc.DEFAULT,
                  rtype=None,
                  structure=None,
                  #internal_names=False, # No field rename ## Client INIT only
@@ -427,9 +429,9 @@ class SparclApi():
 
         Args:
            specid_list (list): List of specids.
-           include (list, optional): (default: None, means include ALL)
+           include (list, Inc.DEFAULT, Inc.ALL):
               List of paths to include in each record.
-           rtype (str): Data-yype to use for spectra data. One of:
+           rtype (str): Data-type to use for spectra data. One of:
               json, numpy, pandas, spectrum1d
            structure (str): The data structure (DS) name associated with
               the specids.
@@ -451,7 +453,13 @@ class SparclApi():
         if verbose:
             print(f'retrieve(rtype={rtype})')
 
-        uparams =dict(include='None' if include is None else ','.join(include),
+        if include == Inc.DEFAULT:
+            inc = '_DEFAULT'
+        elif include == Inc.ALL:
+            inc = '_ALL'
+        else:
+            inc = ','.join(include)
+        uparams =dict(include=inc,
                       internal_names=self.internal_names,
                       dr=structure)
         qstr = urlencode(uparams)
@@ -459,19 +467,17 @@ class SparclApi():
         url = f'{self.apiurl}/retrieve/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
-            tic()
+            ut.tic()
 
         try:
             res = requests.post(url, json=specid_list, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
         except requests.exceptions.ReadTimeout as reRT:
-            msg = (f'Try increasing the value of the "read_timeout" parameter'
+           msg = (f'Try increasing the value of the "read_timeout" parameter'
                    f' to "SparclApi()".'
-                   f' The current values is: {self.r_timeout} (seconds)'
-                   #f'; {str(reRT)}'
-            )
-            raise ex.ReadTimeout(msg) from None
+                   f' The current values is: {self.r_timeout} (seconds)' )
+           raise ex.ReadTimeout(msg) from None
         except requests.exceptions.ConnectionError as reCE:
             raise ex.UnknownSparcl(f'ConnectionError: {reCE}')
         except requests.exceptions.TooManyRedirects as reTMR:
@@ -486,7 +492,7 @@ class SparclApi():
             raise ex.UnknownSparcl(err)
 
         if verbose:
-            elapsed = toc()
+            elapsed = ut.toc()
             print(f'Got response to post in {elapsed} seconds')
 
         if res.status_code != 200:
@@ -513,7 +519,8 @@ class SparclApi():
 
         return( [ut._AttrDict(tc.convert(r, rtype, self, include))
                  for r in records] )
-        #!return( records )
+        #! return( records )
+        # END retrieve()
 
     def sample_records(self, count, structure=None, **kwargs):
         """Return COUNT random records from given STRUCTURE.
@@ -568,27 +575,28 @@ class SparclApi():
     # client.show_record_structure('SDSS-DR16')
     # client.show_record_structure('SDSS-DR16',columns=['flux', 'loglam', 'ivar',  'and_mask', 'or_mask', 'wdisp', 'sky', 'model'])
     #
-    def get_record_structure(self, structure, specid=None, **kwargs):
-        """Get the structure of a record retrieved from STRUCTURE.
-
-        Args:
-           structure (str): The data structure.
-        Returns:
-           Dictionary of the record structure for the specified data structure.
-        Example:
-           >>> d = client.get_record_structure('DESI-denali')
-        """
-        kverb = kwargs.pop('verbose',None)
-        verb = self.verbose if kverb is None else kverb
-        if specid is None:
-            sids = self.sample_specids(1, structure=structure, **kwargs)
-        else:
-            sids = [specid]
-        if verb:
-            print(f'Getting record structure for {structure}, '
-                  f'specid={sids[0]}')
-        recs = self.retrieve(sids, structure=structure)
-        return ut.dict2tree(recs[0])
+    #! @skip('Deprecate functions to return Record Structure.  Use Server site instead.')
+    #! def get_record_structure(self, structure, specid=None, **kwargs):
+    #!     """Get the structure of a record retrieved from STRUCTURE.
+    #!
+    #!     Args:
+    #!        structure (str): The data structure.
+    #!     Returns:
+    #!        Dictionary of the record structure for the specified data structure.
+    #!     Example:
+    #!        >>> d = client.get_record_structure('DESI-denali')
+    #!     """
+    #!     kverb = kwargs.pop('verbose',None)
+    #!     verb = self.verbose if kverb is None else kverb
+    #!     if specid is None:
+    #!         sids = self.sample_specids(1, structure=structure, **kwargs)
+    #!     else:
+    #!         sids = [specid]
+    #!     if verb:
+    #!         print(f'Getting record structure for {structure}, '
+    #!               f'specid={sids[0]}')
+    #!     recs = self.retrieve(sids, structure=structure)
+    #!     return ut.dict2tree(recs[0])
 
 
 if __name__ == "__main__":

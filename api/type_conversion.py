@@ -1,11 +1,15 @@
+# Python Standard Library
 from abc import ABC, abstractmethod
 import copy
 from pprint import pformat
+from enum import Enum,auto
+# External Packages
 import numpy as np
 import pandas as pd
 from specutils import Spectrum1D
 import astropy.units as u
 from astropy.nddata import InverseVariance
+# Local Packages
 import api.exceptions as ex
 
 
@@ -38,6 +42,13 @@ Questions abound for use-cases.
 
 """
 
+
+# Replace all uses of string rtype with enum @@@
+class Rtype(Enum):
+    JSON = auto()
+    NUMPY = auto()
+    PANDAS = auto()
+    SPECTRUM1D = auto()
 
 
 class Convert(ABC):
@@ -86,7 +97,8 @@ class SdssDr16(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
     # Sdss
@@ -116,7 +128,8 @@ class SdssDr16(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
 
         return(newrec)
 
@@ -138,7 +151,8 @@ class SdssDr16(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
 
@@ -159,12 +173,15 @@ class BossDr16(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
     # BOSS
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
+            'red_shift',
+
             'spectra.coadd.FLUX',
             'spectra.coadd.IVAR',
             'spectra.coadd.LOGLAM',
@@ -189,10 +206,11 @@ class BossDr16(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
-    def to_pandas(self, record, o2nLUT):
+    def to_pandas(self, record, o2nLUT): # BOSS
         arflds = [
             'spectra.coadd.AND_MASK',
             'spectra.coadd.FLUX',
@@ -209,7 +227,8 @@ class BossDr16(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
 
@@ -235,13 +254,16 @@ class Desi(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
 
     # Desi
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
+            'red_shift',
+
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
@@ -305,7 +327,8 @@ class Desi(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
         return(newrec)
 
 
@@ -341,7 +364,8 @@ class Desi(Convert):
         for orig,new in o2nLUT.items():
             if orig in arflds:
                 continue
-            newrec[new] = record[new]
+            if new in record:
+                newrec[new] = record[new]
 
 
         return(newrec)
@@ -382,11 +406,11 @@ def convert(record, rtype, client, include, verbose=False):
     o2nLUT = copy.copy(client.orig2newLUT[dr]) # orig2newLUT[dr][orig] = new
     o2nLUT['_dr'] = '_dr'
     n2oLUT = client.new2origLUT[dr]
-    required = set(client.required[dr])
-    if include is not None:
-        nuke = set(n2oLUT.keys()).difference(required.union(include))
-        for new in nuke:
-            del o2nLUT[n2oLUT[new]]
+    #!required = set(client.required[dr])
+    #!if include is not None:
+    #!    nuke = set(n2oLUT.keys()).difference(required.union(include))
+    #!    for new in nuke:
+    #!        del o2nLUT[n2oLUT[new]]
 
     if verbose:
         print(f'DBG-convert: o2nLUT={pformat(o2nLUT)}')
