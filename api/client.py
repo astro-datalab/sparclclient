@@ -74,12 +74,15 @@ _DEV = 'http://localhost:8030'
 #client_version = pkg_resources.require("sparclclient")[0].version
 client_version=__version__
 
-class Inc(Enum):
-    DEFAULT = auto()
-    ALL = auto()
-
-DEFAULT=Inc.DEFAULT
-ALL=Inc.ALL
+#! class Inc(Enum):
+#!     DEFAULT = auto()
+#!     ALL = auto()
+#!
+#! DEFAULT=Inc.DEFAULT
+#! ALL=Inc.ALL
+DEFAULT='DEFAULT'
+ALL='ALL'
+RESERVED=set([DEFAULT, ALL])
 
 ###########################
 ### Convenience Functions
@@ -329,8 +332,8 @@ class SparclApi():
         url = f'{self.apiurl}/sample/?{qstr}'
         if self.verbose:
             print(f'Using url="{url}"')
-            print(f'Sample_specids(samples={samples}, structure={structure}, '
-                  f'verbose={self.verbose}, random={random})')
+            print(f'sample_specids(samples={samples}, structure={structure}, '
+                  f'random={random}, kwargs={kwargs})')
 
         response = requests.get(url,  timeout=self.timeout)
         #! if self.verbose:
@@ -396,7 +399,7 @@ class SparclApi():
 
     def _validate_include(self, dr, include_list):
         #!print(f'DBG _validate_include: dr={dr} include_list={include_list}')
-        if (not isinstance(include_list, list)) and (include_list in Inc):
+        if (not isinstance(include_list, list)) and (include_list in RESERVED):
             return True
         if dr is None: # and include_list is not DEFAULT or ALL
             raise Exception(
@@ -418,7 +421,7 @@ class SparclApi():
 
     def retrieve(self,
                  specid_list,
-                 include=Inc.DEFAULT,
+                 include=DEFAULT,
                  rtype=None,
                  structure=None,
                  #internal_names=False, # No field rename ## Client INIT only
@@ -429,8 +432,9 @@ class SparclApi():
 
         Args:
            specid_list (list): List of specids.
-           include (list, Inc.DEFAULT, Inc.ALL):
+           include (list, DEFAULT, ALL):
               List of paths to include in each record.
+              from api.client import Inc
            rtype (str): Data-type to use for spectra data. One of:
               json, numpy, pandas, spectrum1d
            structure (str): The data structure (DS) name associated with
@@ -453,9 +457,9 @@ class SparclApi():
         if verbose:
             print(f'retrieve(rtype={rtype})')
 
-        if include == Inc.DEFAULT:
+        if include == DEFAULT:
             inc = '_DEFAULT'
-        elif include == Inc.ALL:
+        elif include == ALL:
             inc = '_ALL'
         else:
             inc = ','.join(include)
@@ -522,7 +526,7 @@ class SparclApi():
         #! return( records )
         # END retrieve()
 
-    def sample_records(self, count, structure=None, **kwargs):
+    def sample_records(self, count, structure=None, include=DEFAULT, **kwargs):
         """Return COUNT random records from given STRUCTURE.
 
         Args:
@@ -548,12 +552,12 @@ class SparclApi():
         random = kwargs.pop('random',True)
         verb = self.verbose if kverb is None else kverb
         if verb:
-            print(f'Sample_records(count={count}, structure={structure}, '
-                  f'verbose={verb}, random={random})')
-        sids = self.sample_specids(count,
-                                   structure=structure, random=random,
+            print(f'sample_records(count={count}, structure={structure}, '
+                  f'include={include}, kwargs={kwargs})')
+        sids = self.sample_specids(count, structure=structure,
                                    **kwargs)
-        return self.retrieve(sids, structure=structure, verbose=verb, **kwargs)
+        return self.retrieve(sids, structure=structure, include=include,
+                             verbose=verb, **kwargs)
         # END sample_records()
 
     def normalize_field_names(self, recs):

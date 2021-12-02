@@ -15,15 +15,18 @@ from unittest.mock import MagicMock
 from unittest.mock import create_autospec
 # Local Packages
 import api.client
-from api.client import DEFAULT, ALL
+#from api.client import DEFAULT, ALL
 from tests.utils import tic,toc
 import tests.expected as exp
 import api.exceptions as ex
 # External Packages
 # <none>
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+DEFAULT='DEFAULT'
+ALL='ALL'
+
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -41,8 +44,8 @@ class ApiTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
-        cls.client = api.client.SparclApi(url=rooturl, internal_names=True)
-        cls.client1 = api.client.SparclApi(url=rooturl)
+        cls.clienti = api.client.SparclApi(url=rooturl, internal_names=True)
+        cls.client2 = api.client.SparclApi(url=rooturl) # renamed fields
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -85,7 +88,7 @@ class ApiTest(unittest.TestCase):
         was changed accidentally, reset it. Otherwise, change tests to
         accomodate the new DataFields.
         """
-        actual = self.client1.dfLUT
+        actual = self.client2.dfLUT
         if showact:
             print(f"df_lut actual={pformat(actual['BOSS-DR16'])}")
         self.assertDictEqual(actual['BOSS-DR16'],
@@ -98,7 +101,7 @@ class ApiTest(unittest.TestCase):
         was changed accidentally, reset it. Otherwise, change tests to
         accomodate the new DataFields.
         """
-        actual = self.client.dfLUT
+        actual = self.clienti.dfLUT
         if showact:
             print(f"df_lut_internal actual={pformat(actual['BOSS-DR16'])}")
         self.assertDictEqual(actual['BOSS-DR16'],
@@ -111,7 +114,7 @@ class ApiTest(unittest.TestCase):
 
     def test_fields_available(self):
         """Fields available in a specific record set."""
-        records = self.client.sample_records(1,
+        records = self.clienti.sample_records(1,
                                              structure='BOSS-DR16', random=False)
         actual = api.client.fields_available(records)
         if showact:
@@ -119,8 +122,8 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.fields_available,msg = 'Actual to Expected')
 
     def test_record_examples(self):
-        """Copy one record for each Structure type."""
-        records = self.client.sample_records(1,
+        """Get one record for each Structure type. DEFAULT set."""
+        records = self.clienti.sample_records(1,
                                              structure='BOSS-DR16',
                                              random=False)
         examples = api.client.record_examples(records)
@@ -131,26 +134,43 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
 
     def test_get_metadata(self):
-        records = self.client.sample_records(1,
-                                             include=ALL,
-                                             structure='BOSS-DR16', random=False)
-        [r.pop('dirpath') for r in records]
+        sids = [1429933274376612]
+        records = self.clienti.retrieve(sids, include=ALL, structure='BOSS-DR16')
+        [r.pop('dirpath',None) for r in records]
         actual = api.client.get_metadata(records)
         if showact:
             print(f'get_metadata: actual={pformat(actual)}')
         self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
 
     def test_rename_fields(self):
-        records = self.client1.sample_records(1,
-                                             structure='BOSS-DR16', random=False)
-        rdict = dict(dec_center='y', ra_center='x', redshift='z')
+        """Local rename fields in records (referenced by standard names)"""
+        flds = ['data_release', 'specid',
+                'dec_center', 'ra_center','redshift',
+                'flux', 'ivar', 'loglam']
+
+        records = self.client2.sample_records(1,
+                                              include=flds,
+                                              structure='BOSS-DR16',
+                                              random=False)
+        rdict = dict(dec_center='y', ra_center='x', redshift='z', flux='f')
         actual = api.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields", show=showact)
 
     def test_rename_fields_internal(self):
-        records = self.client.sample_records(1,
-                                             structure='BOSS-DR16', random=False)
-        rdict = dict(dec_center='y', ra_center='x', redshift='z')
+        """Local rename fields in records (referenced by stored names)"""
+        flds = ['data_release', 'specid',
+                'dec_center', 'ra_center','red_shift',
+                'spectra.coadd.FLUX',
+                'spectra.coadd.IVAR',
+                'spectra.coadd.LOGLAM']
+        records = self.clienti.sample_records(1,
+                                              include=flds,
+                                              structure='BOSS-DR16',
+                                              random=False)
+        rdict = {'dec_center': 'y',
+                 'ra_center': 'x',
+                 'redshift':'z',
+                 'spectra.coadd.FLUX': 'f2'}
         actual = api.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields_internal", show=showact)
 
@@ -162,34 +182,35 @@ class ApiTest(unittest.TestCase):
     ###
 
     def test_get_field_names(self):
-        actual = self.client1.get_field_names('BOSS-DR16')
+        actual = self.client2.get_field_names('BOSS-DR16')
         if showact:
             print(f'get_field_names: actual={pformat(actual)}')
         self.assertEqual(actual, exp.get_field_names, msg='Actual to Expected')
 
     def test_get_field_names_internal(self):
-        actual = self.client.get_field_names('BOSS-DR16')
+        actual = self.clienti.get_field_names('BOSS-DR16')
         if showact:
             print(f'get_field_names_internal: actual={pformat(actual)}')
         self.assertEqual(actual, exp.get_field_names_internal, msg='Actual to Expected')
 
     def test_orig_field(self):
-        actual = self.client1.orig_field('BOSS-DR16', 'flux')
+        actual = self.client2.orig_field('BOSS-DR16', 'flux')
         if showact:
             print(f'orig_field: actual={pformat(actual)}')
         self.assertEqual(actual, exp.orig_field, msg='Actual to Expected')
 
     def test_client_field(self):
-        actual = self.client1.client_field('BOSS-DR16','spectra.coadd.FLUX')
+        actual = self.client2.client_field('BOSS-DR16','spectra.coadd.FLUX')
         if showact:
             print(f'client_field: actual={pformat(actual)}')
         self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
 
     def test_normalize_field_names(self):
-        """Convert all included (default) field names internal names"""
-        sids = self.client.sample_specids(1,structure='BOSS-DR16', random=False)
-        recs = self.client.retrieve(sids, structure='BOSS-DR16')
-        recs_b = self.client.normalize_field_names(recs)
+        """Convert all included  field names to internal names"""
+        sids = self.client2.sample_specids(1,structure='BOSS-DR16',random=False)
+        recs = self.client2.retrieve(sids, structure='BOSS-DR16',
+                                     include=['flux','ivar'])
+        recs_b = self.client2.normalize_field_names(recs)
         actual = [sorted(r.keys()) for r in recs_b]
         if showact:
             print(f'normalize_field_names: actual={pformat(actual)}')
@@ -198,8 +219,8 @@ class ApiTest(unittest.TestCase):
 
     #!@skip('Deprecate functions to return Record Structure.  Use Server site instead.')
     #!def test_boss_record_structure(self):
-    #!    sids = self.client.sample_specids(1,structure='BOSS-DR16', random=False)
-    #!    actual = self.client.get_record_structure('BOSS-DR16',specid=sids[0])
+    #!    sids = self.clienti.sample_specids(1,structure='BOSS-DR16', random=False)
+    #!    actual = self.clienti.get_record_structure('BOSS-DR16',specid=sids[0])
     #!    if showact:
     #!        print(f'boss_record_structure: actual={pformat(actual)}')
     #!    self.assertEqual(actual, exp.boss_record_structure,
@@ -210,20 +231,20 @@ class ApiTest(unittest.TestCase):
 
 
     def test_sample(self):
-        specids = self.client.sample_specids()
+        specids = self.clienti.sample_specids()
         #print(f'DBG: specids={specids}')
         assert len(specids) == 5
 
     def test_missing_0(self):
         """Known missing"""
         specids= [99,88]
-        missing = self.client.missing_specids(specids)
+        missing = self.clienti.missing_specids(specids)
         assert sorted(missing) == sorted(specids)
 
     def test_missing_1(self):
         """None missing"""
-        specids = self.client.sample_specids()
-        missing = self.client.missing_specids(specids)
+        specids = self.clienti.sample_specids()
+        missing = self.clienti.missing_specids(specids)
         assert missing == []
 
     def test_retrieve_0(self):
@@ -232,9 +253,9 @@ class ApiTest(unittest.TestCase):
         this = self.test_retrieve_0
         getcnt = 3
         dr='SDSS-DR16'
-        specids = sorted(self.client.sample_specids(samples=getcnt,structure=dr))
+        specids = sorted(self.clienti.sample_specids(samples=getcnt,structure=dr))
         tic()
-        records = self.client.retrieve(specids, structure=dr)
+        records = self.clienti.retrieve(specids, structure=dr)
         #! status = ret['status']
         #! records = ret['records']
         gotspecids = sorted(r['specid'] for r in records)
@@ -250,10 +271,10 @@ class ApiTest(unittest.TestCase):
         """Raise exception when unknown field referenced in include"""
         inc2 = ['bad_field_name', 'flux', 'spectra.coadd.OR_MASK']
 
-        specids = sorted(self.client.sample_specids(samples=1,
+        specids = sorted(self.clienti.sample_specids(samples=1,
                                                     structure='BOSS-DR16'))
         with self.assertRaises(ex.BadInclude):
-            records = self.client.retrieve(specids,
+            records = self.clienti.retrieve(specids,
                                            include=inc2,
                                            structure='BOSS-DR16')
 
@@ -262,35 +283,35 @@ class ApiTest(unittest.TestCase):
     #!     """Issue warning when a Path has no value."""
     #!     inc2 = ['flux', 'spectra.coadd.OR_MASK']
     #!
-    #!     specids = sorted(self.client.sample_specids(samples=1,
+    #!     specids = sorted(self.clienti.sample_specids(samples=1,
     #!                                           structure='BOSS-DR16'))
     #!     with self.assertWarns(Warning):
-    #!         records = self.client.retrieve(specids,
+    #!         records = self.clienti.retrieve(specids,
     #!                                        include=inc2,
     #!                                        structure='BOSS-DR16')
 
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
         inc = ['specid']
-        sids = sorted(self.client1.sample_specids(samples=1, random=False,
+        sids = sorted(self.client2.sample_specids(samples=1, random=False,
                                                  structure='BOSS-DR16'))
         with self.assertWarns(Warning):
-            records = self.client1.retrieve(sids+[999], include=inc,
+            records = self.client2.retrieve(sids+[999], include=inc,
                                             structure='BOSS-DR16')
     def test_retrieve_3_internal(self):
         """Issue warning when some sids do not exist."""
-        sids = sorted(self.client.sample_specids(samples=1, random=False,
+        sids = sorted(self.clienti.sample_specids(samples=1, random=False,
                                                  structure='BOSS-DR16'))
         with self.assertWarns(Warning):
-            records = self.client.retrieve(sids+[999], structure='BOSS-DR16')
+            records = self.clienti.retrieve(sids+[999], structure='BOSS-DR16')
 
     def test_retrieve_4(self):
         """Get ALL records with their internal (original) field names."""
         dr='BOSS-DR16'
-        specids = sorted(self.client.sample_specids(samples=1, structure=dr,
+        specids = sorted(self.clienti.sample_specids(samples=1, structure=dr,
                                                     random=False))
         #print(f'DBG retrieve_4: specids={specids}')
-        records = self.client.retrieve(specids,structure=dr,
+        records = self.clienti.retrieve(specids,structure=dr,
                                        include=ALL,
                                        verbose=True)
         actual = sorted(records[0].keys())
@@ -302,7 +323,7 @@ class ApiTest(unittest.TestCase):
     def test_retrieve_5(self):
         """Get record samples with their internal (original) field names."""
         dr='BOSS-DR16'
-        records = self.client.sample_records(1,
+        records = self.clienti.sample_records(1,
                                              include=ALL,
                                              structure=dr,
                                              random=False)
@@ -316,10 +337,17 @@ class ApiTest(unittest.TestCase):
     ## BOSS type conversions
     def test_retrieve_boss_json(self):
         """(non)Convert to JSON."""
-        recs = self.client.sample_records(1,
-                                          random=False,
-                                          structure='BOSS-DR16',
-                                          rtype='json')
+        flds = ['dec_center',
+                'ra_center',
+                'red_shift',
+                'specid',
+                'spectra.coadd.FLUX',
+                'spectra.coadd.IVAR']
+        recs = self.clienti.sample_records(1,
+                                           random=False,
+                                           include=flds,
+                                           structure='BOSS-DR16',
+                                           rtype='json')
         actual = sorted(recs[0].keys())
         if showact:
             print(f'boss_json: actual={pformat(actual)}')
@@ -337,8 +365,10 @@ class ApiTest(unittest.TestCase):
             'spectra.coadd.SKY',
             'spectra.coadd.WDISP',
             ]
-        recs = self.client.sample_records(1, structure='BOSS-DR16', rtype='numpy',
-                                          include=arflds, random=False)
+        print(f'clienti={self.clienti}')
+        recs = self.clienti.sample_records(1,
+                                           structure='BOSS-DR16', rtype='numpy',
+                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'boss_numpy: actual={pformat(actual)}')
@@ -356,8 +386,9 @@ class ApiTest(unittest.TestCase):
             'spectra.coadd.SKY',
             'spectra.coadd.WDISP',
             ]
-        recs = self.client.sample_records(1, structure='BOSS-DR16', rtype='pandas',
-                                          include=arflds, random=False)
+        recs = self.clienti.sample_records(1,
+                                           structure='BOSS-DR16',rtype='pandas',
+                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'boss_pandas: actual={pformat(actual)}')
@@ -371,7 +402,8 @@ class ApiTest(unittest.TestCase):
             'spectra.coadd.LOGLAM',
             'red_shift'
         ]
-        recs = self.client.sample_records(1, structure='BOSS-DR16', rtype='spectrum1d',
+        recs = self.clienti.sample_records(1, structure='BOSS-DR16',
+                                           rtype='spectrum1d',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
@@ -382,10 +414,25 @@ class ApiTest(unittest.TestCase):
     ## EVEREST type conversions
     def test_retrieve_everest_numpy(self):
         """Convert to Numpy."""
-        recs = self.client.sample_records(1,
-                                          random=False,
-                                          structure='DESI-everest',
-                                          rtype='numpy')
+        arflds = [
+            'specid', 'ra_center','dec_center',
+            'spectra.b_flux',
+            'spectra.b_ivar',
+            'spectra.b_mask',
+            'spectra.b_wavelength',
+            'spectra.r_flux',
+            'spectra.r_ivar',
+            'spectra.r_mask',
+            'spectra.r_wavelength',
+            'spectra.z_flux',
+            'spectra.z_ivar',
+            'spectra.z_mask',
+            'spectra.z_wavelength',
+        ]
+        recs = self.clienti.sample_records(1, structure='DESI-everest',
+                                           rtype='numpy',
+                                           include=arflds,
+                                           random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'everest_numpy: actual={pformat(actual)}')
@@ -407,7 +454,7 @@ class ApiTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, structure='DESI-everest', rtype='pandas',
+        recs = self.clienti.sample_records(1, structure='DESI-everest', rtype='pandas',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
@@ -435,7 +482,7 @@ class ApiTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, structure='DESI-everest', rtype='spectrum1d',
+        recs = self.clienti.sample_records(1, structure='DESI-everest', rtype='spectrum1d',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:

@@ -171,8 +171,11 @@ class BossDr16(Convert):
         lofl = [record[o2nLUT[f]] for f in arflds if f in o2nLUT]
         newrec = dict(nparr = np.array(lofl))
         for orig,new in o2nLUT.items():
+            # Don't carry over the fields used to build the new datatype.
+            # This would be duplication since their content is already
+            # in the new datatype.
             if orig in arflds:
-                continue
+                 continue
             if new in record:
                 newrec[new] = record[new]
         return(newrec)
@@ -181,12 +184,10 @@ class BossDr16(Convert):
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
             'red_shift',
-
             'spectra.coadd.FLUX',
             'spectra.coadd.IVAR',
             'spectra.coadd.LOGLAM',
             ]
-
         loglam = record[o2nLUT['spectra.coadd.LOGLAM']]
         flux = record[o2nLUT['spectra.coadd.FLUX']]
         ivar = record[o2nLUT['spectra.coadd.IVAR']]
@@ -411,9 +412,6 @@ def convert(record, rtype, client, include, verbose=False):
     #!    nuke = set(n2oLUT.keys()).difference(required.union(include))
     #!    for new in nuke:
     #!        del o2nLUT[n2oLUT[new]]
-
-    if verbose:
-        print(f'DBG-convert: o2nLUT={pformat(o2nLUT)}')
 
     if rtype == 'json':
         return record
