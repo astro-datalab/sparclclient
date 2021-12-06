@@ -312,15 +312,16 @@ class SparclApi():
             return None
 
     def orig_field(self, structure, client_name):
-        """Get original field name as provided in Data Release.
+        """Get original field name as provided in Data Set.
 
-        :param structure: Name of data set Structure
+        :param structure: Name of Data Set
         :param client_name: Field name used in Client methods.
         :returns: Original field name
         :rtype: string
         
         Example:
             >>> client.orig_field('BOSS-DR16', 'flux')
+            'spectra.coadd.FLUX'
 
         """
         return self.new2origLUT[structure][client_name]
@@ -328,13 +329,14 @@ class SparclApi():
     def client_field(self, structure, orig_name):
         """Get field name used in Client methods
 
-        :param structure: Name of data set Structure
-        :param orig_name: Original field name as provided in Data Release.
+        :param structure: Name of Data Set
+        :param orig_name: Original field name as provided in Data Set.
         :returns: Client field name
         :rtype: string
         
         Example:
-            >>> client.orig_field('BOSS-DR16', 'spectra.coadd.FLUX')
+            >>> client.client_field('BOSS-DR16', 'spectra.coadd.FLUX')
+            'flux'
 
         """
         return self.orig2newLUT[structure][orig_name]
@@ -472,7 +474,7 @@ class SparclApi():
               List of paths to include in each record. (default: 'DEFAULT')
            rtype (str, optional): Data-type to use for spectra data. One of:
               json, numpy, pandas, spectrum1d. (default: None)
-           structure (str): The data structure (DS) name associated with
+           structure (str): The Data Set (DS) name associated with
               the specids. Or None to retrieve from any DS that contains the
               specid. (default: None)
            verbose (boolean, optional): (default: False)
