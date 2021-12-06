@@ -25,8 +25,8 @@ import api.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -142,9 +142,8 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
 
     def test_rename_fields(self):
-        """Local rename fields in records (referenced by standard names)"""
-        flds = ['data_release_id', 'specid',
-                'dec_center', 'ra_center','redshift',
+        """Local rename fields in records (referenced by new names)"""
+        flds = ['data_set', 'specid', 'dec', 'ra','redshift',
                 'flux', 'ivar', 'loglam']
 
         records = self.client2.sample_records(1,

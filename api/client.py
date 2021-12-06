@@ -210,12 +210,20 @@ class SparclApi():
         ####################################################
         ### Convenience LookUp Tables derived from one query
         ###
-        # dfLUT[dr][origPath] => dict[new=newPath,default=bool]
+        # dfLUT[dr][origPath] => dict[new=newPath,default=bool,store=bool]
         lut0 = requests.get(f'{self.apiurl}/fields/').json()
         lut1 = OrderedDict(sorted(lut0.items()))
-        self.dfLUT = {k:OrderedDict(sorted(d.items())) for k,d in lut1.items()}
+        self.dfLUT = {k:OrderedDict(sorted(d.items()))
+                      for k,d in lut1.items()}
+
 
         if internal_names:
+            # Change newPath to value of origPath in all dfLUT
+            # fields[orig] = dict[new=newPath,default=bool,store=bool]
+            for fields in self.dfLUT.values():
+                for k,d in fields.items():
+                    d['new'] = k
+
             # default[dr] => origFieldName
             self.default = dict(
                 (dr, [orig for orig,d in v.items() if d['default']])
@@ -556,10 +564,14 @@ class SparclApi():
                   f'include={include}, kwargs={kwargs})')
         sids = self.sample_specids(count, structure=structure,
                                    **kwargs)
-        recs = []
-        for dr in self.dfLUT.keys():
-            recs.extend(self.retrieve(sids, structure=dr, include=include,
-                                      verbose=verb, **kwargs))
+        if structure is None:
+            recs = []
+            for dr in self.dfLUT.keys():
+                recs.extend(self.retrieve(sids, structure=dr, include=include,
+                                          verbose=verb, **kwargs))
+        else:
+            recs = self.retrieve(sids, structure=structure, include=include,
+                                 verbose=verb, **kwargs)
         return recs
 
         # END sample_records()
