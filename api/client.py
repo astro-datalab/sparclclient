@@ -556,8 +556,12 @@ class SparclApi():
                   f'include={include}, kwargs={kwargs})')
         sids = self.sample_specids(count, structure=structure,
                                    **kwargs)
-        return self.retrieve(sids, structure=structure, include=include,
-                             verbose=verb, **kwargs)
+        recs = []
+        for dr in self.dfLUT.keys():
+            recs.extend(self.retrieve(sids, structure=dr, include=include,
+                                      verbose=verb, **kwargs))
+        return recs
+
         # END sample_records()
 
     def normalize_field_names(self, recs):
