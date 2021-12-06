@@ -88,22 +88,32 @@ RESERVED=set([DEFAULT, ALL])
 ### Convenience Functions
 
 def fields_available(records):
-    """Get list of fields used in records. One list per Structure.
+    """Get list of fields used in records. One list per Data Set.
 
     :param records: List of records (each is a dictionary)
     :returns: dict[Structure] = [field_name1, ...]
     :rtype: dict
+    
+    Example:
+      >>> from api.client import fields_available
+      >>> recs = client.sample_records(3)
+      >>> flds = fields_available(recs)
 
     """
     fields = {r._dr: sorted(r.keys()) for r in records}
     return fields
 
 def record_examples(records):
-    """Copy one record for each Structure type.
+    """Copy one record for each Data Set type.
 
     :param records: List of records (each is a dictionary)
     :returns: dict[Structure] = rec
     :rtype: dict
+    
+    Example:
+      >>> from api.client import record_examples
+      >>> recs = client.sample_records(3)
+      >>> rex = record_examples(recs)
 
     """
     examples = {r.data_release_id: r for r in records}
@@ -113,11 +123,16 @@ def get_metadata(records):
     """Get records of just metadata used in records.
 
     Metadata is considered to be any field whose type is a Number or String.
-    Therefore, this will include vectors, lists, tuples, etc.
+    Therefore, this will not include vectors, lists, tuples, etc.
 
     :param records: List of records (dictionaries)
     :returns: new list of dictionaries. Each dict contains only metadata fields.
     :rtype: list(dict)
+    
+    Example:
+      >>> from api.client import get_metadata
+      >>> recs = client.sample_records(3)
+      >>> metadata = get_metadata(recs)
 
     """
     md_fields = [k for k,v in records[0].items()
@@ -131,6 +146,11 @@ def rename_fields(rename_dict, records):
     :param records: List of records (dictionaries) to transform
     :returns: new_records
     :rtype: list
+    
+    Example:
+      >>> from api.client import rename_fields
+      >>> recs = client.sample_records(1)
+      >>> renamed = rename_fields({'ra':'Right_Ascension'},recs)
 
     """
     return [{rename_dict.get(k,k):v for k,v in r.items()}
@@ -145,6 +165,14 @@ class SparclApi():
     When using this to report a bug, set verbose to True. Also print
     your instance of this.  The results will include important info
     about the Client and Server that is usefule to Developers.
+    
+    :param url: Base URL of SPARC Server
+    :param verbose: (True,[False]) Default verbosity for all client methods.
+    :param verbose: (True,[False]) True:: override field renaming
+    :param connect_timeout [1.1]: Number of seconds to wait to establish
+               connection with server.
+    :param read_timeout [5400]: Number of seconds to wait for server to send
+               a response. (generally time to wait for first byte)
 
     Example:
       >>> client = SparclApi(verbose=True)
@@ -165,14 +193,6 @@ class SparclApi():
                  read_timeout=90*60,   # seconds
     ):
         """Create client instance.
-
-        :param url: Base URL of SPARC Server
-        :param verbose: (True,[False]) Default verbosity for all client methods.
-        :param verbose: (True,[False]) True:: override field renaming
-        :param connect_timeout [1.1]: Number of seconds to wait to establish
-               connection with server.
-        :param read_timeout [5400]: Number of seconds to wait for server to send
-               a response. (generally time to wait for first byte)
 
         """
         self.rooturl=url.rstrip("/")
@@ -267,6 +287,9 @@ class SparclApi():
         :param structure: List field names of this Data Set.
         :returns: list of field names
         :rtype: list
+        
+        Example:
+            >>> client.get_field_names('DESI-everest')
 
         """
 
@@ -287,6 +310,9 @@ class SparclApi():
         :param client_name: Field name used in Client methods.
         :returns: Original field name
         :rtype: string
+        
+        Example:
+            >>> client.orig_field('BOSS-DR16', 'flux')
 
         """
         return self.new2origLUT[structure][client_name]
@@ -298,6 +324,9 @@ class SparclApi():
         :param orig_name: Original field name as provided in Data Release.
         :returns: Client field name
         :rtype: string
+        
+        Example:
+            >>> client.orig_field('BOSS-DR16', 'spectra.coadd.FLUX')
 
         """
         return self.orig2newLUT[structure][orig_name]
@@ -312,8 +341,8 @@ class SparclApi():
         Args:
            samples (int, optional): (default: 5) The number of sample
               specids to get.
-           structure  (str, optional): (default: None means ANY) The data
-              structure from which to get specids.
+           structure  (str, optional): (default: None means ANY) The Data
+              Set from which to get specids.
            random (True,False,None): Randomize sample
 
         Returns:
@@ -321,8 +350,7 @@ class SparclApi():
         Rtype: list
 
         Example:
-           >>> client.sample_specids(samples=3, structure='DESI-denali')
-           [616088561849992155, 39633331515559899, 39633328084618293]
+           >>> client.sample_specids(samples=3, structure='DESI-everest')
 
         """
         uparams = dict(random=bool(random),
@@ -421,7 +449,7 @@ class SparclApi():
 
     def retrieve(self,
                  specid_list,
-                 include=DEFAULT,
+                 include='DEFAULT',
                  rtype=None,
                  structure=None,
                  #internal_names=False, # No field rename ## Client INIT only
@@ -432,14 +460,13 @@ class SparclApi():
 
         Args:
            specid_list (list): List of specids.
-           include (list, DEFAULT, ALL):
-              List of paths to include in each record.
-              from api.client import Inc
-           rtype (str): Data-type to use for spectra data. One of:
-              json, numpy, pandas, spectrum1d
+           include (list, 'DEFAULT', 'ALL'):
+              List of paths to include in each record. (default: 'DEFAULT')
+           rtype (str, optional): Data-type to use for spectra data. One of:
+              json, numpy, pandas, spectrum1d. (default: None)
            structure (str): The data structure (DS) name associated with
-              the specids.
-              Or None to retrieve from any DS that contains the specid.
+              the specids. Or None to retrieve from any DS that contains the
+              specid. (default: None)
            verbose (boolean, optional): (default: False)
         Returns:
            List of records. Each record is a dictionary of named fields.
@@ -526,17 +553,21 @@ class SparclApi():
         #! return( records )
         # END retrieve()
 
-    def sample_records(self, count, structure=None, include=DEFAULT, **kwargs):
-        """Return COUNT random records from given STRUCTURE.
+    def sample_records(self, count, structure=None, include='DEFAULT', **kwargs):
+        """Return list of random records from given STRUCTURE (Data Set).
 
         Args:
            count (int): Number of sample records to get from database.
 
            structure (str, optional): (default: None means ANY)
-               The data structure from which to get sample records.
+               The Data Set from which to get sample records.
+            
+           include (list, 'DEFAULT', 'ALL'):
+              List of paths to include in each record. (default: 'DEFAULT')
+         
 
         Returns:
-           COUNT random records from given STRUCTURE.
+           List of random records from given STRUCTURE (Data Set).
         Example:
            >>> samrec = client.sample_records(1, structure='BOSS-DR16')
            >>> pprint.pprint(samrec,depth=2)
@@ -562,11 +593,15 @@ class SparclApi():
 
     def normalize_field_names(self, recs):
         """Return copy of records with all field names converted to the names
-        used by the data set provider.
+        used by the Data Set provider.
 
         :param recs: List of dictionaries representing spectra records
         :returns: new list of dicts of spectra records (with diff field names)
         :rtype: list
+        
+        Example:
+           >>> recs = client.sample_records(1)
+           >>> client.normalize_field_names(recs)
 
         """
         if self.internal_names:
@@ -606,3 +641,4 @@ class SparclApi():
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
