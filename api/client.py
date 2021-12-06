@@ -106,7 +106,7 @@ def record_examples(records):
     :rtype: dict
 
     """
-    examples = {r.data_release: r for r in records}
+    examples = {r.data_release_id: r for r in records}
     return examples
 
 def get_metadata(records):
@@ -210,15 +210,15 @@ class SparclApi():
         ####################################################
         ### Convenience LookUp Tables derived from one query
         ###
-        # dfLUT[dr][origPath] => dict[new=newPath,required=bool]
+        # dfLUT[dr][origPath] => dict[new=newPath,default=bool]
         lut0 = requests.get(f'{self.apiurl}/fields/').json()
         lut1 = OrderedDict(sorted(lut0.items()))
         self.dfLUT = {k:OrderedDict(sorted(d.items())) for k,d in lut1.items()}
 
         if internal_names:
-            # required[dr] => origFieldName
-            self.required = dict(
-                (dr, [orig for orig,d in v.items() if d['required']])
+            # default[dr] => origFieldName
+            self.default = dict(
+                (dr, [orig for orig,d in v.items() if d['default']])
                 for dr,v in self.dfLUT.items())
 
             # orig2newLUT[dr][orig] = new
@@ -230,9 +230,9 @@ class SparclApi():
                                              for orig,d in v.items()))
                                     for dr,v in self.dfLUT.items())
         else:  # use field renaming
-            # required[dr] => newFieldName
-            self.required = dict(
-                (dr, [d['new'] for orig,d in v.items() if d['required']])
+            # default[dr] => newFieldName
+            self.default = dict(
+                (dr, [d['new'] for orig,d in v.items() if d['default']])
                 for dr,v in self.dfLUT.items())
 
             # orig2newLUT[dr][orig] = new
@@ -407,7 +407,7 @@ class SparclApi():
                 'when NOT specifying a structure')
 
         incSet = set(include_list)
-        #!print(f'incSet={incSet} dr_fields={self.dr_fields[dr]}')
+        #!print(f'DBG incSet={incSet} dr_fields={self.dr_fields[dr]}')
         unknown = incSet.difference(self.dr_fields[dr])
         if len(unknown) > 0:
             msg = (f'The INCLUDE list contains invalid data field names '

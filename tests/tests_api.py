@@ -25,8 +25,8 @@ import api.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -65,9 +65,8 @@ class ApiTest(unittest.TestCase):
         actual = sorted(recs[0].keys())
         expected = sorted(eval(expd))  # e.g. 'ep.retrieve_1'
         if show:
-            print(f'{expd}: '
-                  f'\nEXPECTED={expected}'
-                  f'\n ACTUAL={actual}')
+            #!f'\nEXPECTED={expected}'
+            print(f'{expd}: ACTUAL={actual}')
         self.assertEqual(actual, expected, 'Actual to Expected')
         return(actual)
 
@@ -144,7 +143,7 @@ class ApiTest(unittest.TestCase):
 
     def test_rename_fields(self):
         """Local rename fields in records (referenced by standard names)"""
-        flds = ['data_release', 'specid',
+        flds = ['data_release_id', 'specid',
                 'dec_center', 'ra_center','redshift',
                 'flux', 'ivar', 'loglam']
 
@@ -158,7 +157,7 @@ class ApiTest(unittest.TestCase):
 
     def test_rename_fields_internal(self):
         """Local rename fields in records (referenced by stored names)"""
-        flds = ['data_release', 'specid',
+        flds = ['data_release_id', 'specid',
                 'dec_center', 'ra_center','red_shift',
                 'spectra.coadd.FLUX',
                 'spectra.coadd.IVAR',
