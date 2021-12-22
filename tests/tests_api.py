@@ -25,8 +25,8 @@ import api.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-rooturl = 'http://localhost:8030/' #@@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://localhost:8030/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -398,6 +398,7 @@ class ApiTest(unittest.TestCase):
             'spectra.coadd.FLUX',
             'spectra.coadd.IVAR',
             'spectra.coadd.LOGLAM',
+            'spectra.coadd.AND_MASK',
             'red_shift'
         ]
         recs = self.clienti.sample_records(1, structure='BOSS-DR16',
@@ -407,6 +408,23 @@ class ApiTest(unittest.TestCase):
         if showact:
             print(f'boss_spectrum1d: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
+
+    def test_retrieve_boss_spectrum1d_2(self):
+        """Convert to Spectrum1D, check values."""
+        arflds = [
+            'spectra.coadd.FLUX',
+            'spectra.coadd.IVAR',
+            'spectra.coadd.LOGLAM',
+            'spectra.coadd.AND_MASK',
+            'red_shift'
+        ]
+        sids = [1429860048953377]
+        records = self.clienti.retrieve(sids, structure='BOSS-DR16',
+                                        rtype='spectrum1d', include=arflds)
+        actual = records[0].spec1d.redshift
+        if showact:
+            print(f'boss_spectrum1d.redshift: actual={pformat(actual)}')
+        self.assertEqual(float(actual), exp.boss_spectrum1d_redshift, msg='Actual to Expected')
 
     #############################
     ## EVEREST type conversions

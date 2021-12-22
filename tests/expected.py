@@ -361,6 +361,8 @@ boss_pandas = ['_dr', 'df']
 
 boss_spectrum1d = ['_dr', 'spec1d']
 
+boss_spectrum1d_redshift = 0.570779085159302
+
 everest_numpy = ['_dr', 'dec_center', 'nparr', 'ra_center', 'specid']
 
 everest_pandas = ['_dr', 'b_df', 'r_df', 'z_df']
@@ -388,31 +390,31 @@ record_examples = {'BOSS-DR16': ['_dr',
                'spectra.coadd.LOGLAM']}
 
 get_metadata  = [{'_dr': 'BOSS-DR16',
-  'aux.FIBERID': 892,
-  'aux.MJD': 58466,
-  'aux.PLATEID': 10660,
-  'aux.RUN2D': 'v5_13_0',
   'data_release_id': 'BOSS-DR16',
-  'datasetid': 'SDSS_BOSS',
-  'dateobs_center': '2021-11-29 15:09:26.364312+00:00',
-  'dec_center': 28.751204,
-  'exptime': 1.2,
-  'filename': 'spec-10660-58466-0892.fits',
-  'filesize': 218880,
-  'id': 'f2f5259a-4654-434d-afc1-19e42465a3a3',
-  'instrument_id': 'Instrument-foo',
   'ra_center': 133.46096,
+  'aux.RUN2D': 'v5_13_0',
+  'exptime': 1.2,
+  'instrument_id': 'Instrument-foo',
+  'wavemin': 3601.63745117188,
+  'dec_center': 28.751204,
   'red_shift': -0.00413607759401202,
+  'datasetid': 'SDSS_BOSS',
+  'specprimary': True,
+  'wavemax': 10356.189453125,
+  'aux.FIBERID': 892,
+  'targetid': 1638208522,
+  'id': '4fe46b4f-01b4-41aa-a030-1ccea72815e8',
+  'spectype_id': 'STAR',
+  'site_id': 'Site-foo',
   'redshift_err': -1.0,
   'redshift_warning': 5,
-  'site_id': 'Site-foo',
+  'aux.PLATEID': 10660,
+  'filename': 'spec-10660-58466-0892.fits',
+  'dateobs_center': '2021-11-29 15:09:26.364312+00:00',
   'specid': 1429933274376612,
-  'specprimary': True,
-  'spectype_id': 'STAR',
-  'targetid': 1638200022,
-  'telescope_id': 'Telescope0',
-  'wavemax': 10356.189453125,
-  'wavemin': 3601.63745117188}]
+  'aux.MJD': 58466,
+  'filesize': 218880,
+  'telescope_id': 'Telescope0'}]
 
 rename_fields = ['_dr', 'data_set', 'dec', 'f', 'ivar', 'loglam', 'ra', 'specid', 'z']
 
