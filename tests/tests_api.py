@@ -482,17 +482,14 @@ class ApiTest(unittest.TestCase):
         """Convert to Spectrum1D."""
         arflds = [
             'red_shift',
-
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
-            'spectra.b_wavelength'
-            ,
+            'spectra.b_wavelength',
             'spectra.r_flux',
             'spectra.r_ivar',
             'spectra.r_mask',
             'spectra.r_wavelength',
-
             'spectra.z_flux',
             'spectra.z_ivar',
             'spectra.z_mask',
@@ -503,6 +500,30 @@ class ApiTest(unittest.TestCase):
         actual = sorted(recs[0].keys())
         if showact:
             print(f'everest_spectrum1d: actual={pformat(actual)}')
-
         self.assertEqual(actual, exp.everest_spectrum1d,
                          msg='Actual to Expected')
+
+    def test_retrieve_everest_spectrum1d_2(self):
+        """Convert to Spectrum1D, check values."""
+        arflds = [
+            'red_shift',
+            'spectra.b_flux',
+            'spectra.b_ivar',
+            'spectra.b_mask',
+            'spectra.b_wavelength',
+            'spectra.r_flux',
+            'spectra.r_ivar',
+            'spectra.r_mask',
+            'spectra.r_wavelength',
+            'spectra.z_flux',
+            'spectra.z_ivar',
+            'spectra.z_mask',
+            'spectra.z_wavelength',
+        ]
+        sids = [283084050856]
+        recs = self.clienti.retrieve(sids, structure='DESI-everest', rtype='spectrum1d',
+                                     include=arflds)
+        actual = recs[0].b_spec1d.redshift
+        if showact:
+            print(f'everest_b_spectrum1d.redshift: actual={pformat(actual)}')
+        self.assertEqual(float(actual), exp.everest_b_spectrum1d_redshift, msg='Actual to Expected')

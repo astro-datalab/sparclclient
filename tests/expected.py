@@ -369,6 +369,8 @@ everest_pandas = ['_dr', 'b_df', 'r_df', 'z_df']
 
 everest_spectrum1d = ['_dr', 'b_spec1d', 'r_spec1d', 'z_spec1d']
 
+everest_b_spectrum1d_redshift = 0.17526327367673789
+
 fields_available = {'BOSS-DR16': ['_dr',
                'data_release_id',
                'dec_center',
