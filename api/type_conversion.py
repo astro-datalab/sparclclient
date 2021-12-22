@@ -104,26 +104,30 @@ class SdssDr16(Convert):
     # Sdss
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
+            'red_shift',
             'spectra.coadd.flux',
             'spectra.coadd.ivar',
             'spectra.coadd.loglam',
+            'spectra.coadd.and_mask',
             ]
 
         loglam = record[o2nLUT['spectra.coadd.loglam']]
         flux = record[o2nLUT['spectra.coadd.flux']]
         ivar = record[o2nLUT['spectra.coadd.ivar']]
+        and_mask = record[o2nLUT['spectra.coadd.and_mask']]
 
-        owavelength = (10**np.array(loglam))*u.AA
-        flux = np.array(flux)*u.Jy
+        wavelength = (10**np.array(loglam))*u.AA
+        flux = np.array(flux)* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
         ivar = InverseVariance(np.array(ivar))
         z = record.get('red_shift')
 
         newrec = dict(
-            # flux, uncertainty, wavevelength, mask(or, and), redshift
+            # flux, uncertainty, wavevelength, mask(and), redshift
             spec1d = Spectrum1D(spectral_axis=wavelength,
                                 flux=flux,
                                 uncertainty=ivar,
-                                redshift=z),
+                                redshift=z,
+                                mask=and_mask),
             )
         for orig,new in o2nLUT.items():
             if orig in arflds:
@@ -187,22 +191,25 @@ class BossDr16(Convert):
             'spectra.coadd.FLUX',
             'spectra.coadd.IVAR',
             'spectra.coadd.LOGLAM',
+            'spectra.coadd.AND_MASK',
             ]
         loglam = record[o2nLUT['spectra.coadd.LOGLAM']]
         flux = record[o2nLUT['spectra.coadd.FLUX']]
         ivar = record[o2nLUT['spectra.coadd.IVAR']]
+        and_mask = record[o2nLUT['spectra.coadd.AND_MASK']]
 
         wavelength = (10**np.array(loglam))*u.AA
-        flux = np.array(flux)*u.Jy
+        flux = np.array(flux)* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
         ivar = InverseVariance(np.array(ivar))
         z = record.get('red_shift')
 
         newrec = dict(
-            # flux, uncertainty, wavevelength, mask(or, and), redshift
+            # flux, uncertainty, wavelength, mask(and), redshift
             spec1d = Spectrum1D(spectral_axis=wavelength,
                                 flux=flux,
                                 uncertainty=ivar,
-                                redshift=z),
+                                redshift=z,
+                                mask=and_mask),
             )
         for orig,new in o2nLUT.items():
             if orig in arflds:
@@ -264,17 +271,14 @@ class Desi(Convert):
     def to_spectrum1d(self, record, o2nLUT):
         arflds = [
             'red_shift',
-
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
-            'spectra.b_wavelength'
-            ,
+            'spectra.b_wavelength',
             'spectra.r_flux',
             'spectra.r_ivar',
             'spectra.r_mask',
             'spectra.r_wavelength',
-
             'spectra.z_flux',
             'spectra.z_ivar',
             'spectra.z_mask',
@@ -284,46 +288,52 @@ class Desi(Convert):
         z = record.get('red_shift')
 
         # _b
-        loglam_b = record[o2nLUT['spectra.b_wavelength']]
+        wavelength_b = record[o2nLUT['spectra.b_wavelength']]
         flux_b = record[o2nLUT['spectra.b_flux']]
         ivar_b = record[o2nLUT['spectra.b_ivar']]
-        #
-        #!wavelength_b = (10**np.array(loglam_b))*u.AA
-        flux_b = np.array(flux_b)*u.Jy
+        mask_b = record[o2nLUT['spectra.b_mask']]
+        # Define units
+        wavelength_b = np.array(wavelength_b)*u.AA
+        flux_b = np.array(flux_b)* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
         ivar_b = InverseVariance(np.array(ivar_b))
 
         # _r
-        loglam_r = record[o2nLUT['spectra.r_wavelength']]
+        wavelength_r = record[o2nLUT['spectra.r_wavelength']]
         flux_r = record[o2nLUT['spectra.r_flux']]
         ivar_r = record[o2nLUT['spectra.r_ivar']]
-        #
-        #!wavelength_r = (10**np.array(loglam_r))*u.AA
-        flux_r = np.array(flux_r)*u.Jy
+        mask_r = record[o2nLUT['spectra.r_mask']]
+        # Define units
+        wavelength_r = np.array(wavelength_r)*u.AA
+        flux_r = np.array(flux_r)* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
         ivar_r = InverseVariance(np.array(ivar_r))
 
         # _z
-        loglam_z = record[o2nLUT['spectra.z_wavelength']]
+        wavelength_z = record[o2nLUT['spectra.z_wavelength']]
         flux_z = record[o2nLUT['spectra.z_flux']]
         ivar_z = record[o2nLUT['spectra.z_ivar']]
-        #
-        #!wavelength_z = (10**np.array(loglam_z))*u.AA
-        flux_z = np.array(flux_z)*u.Jy
+        mask_z = record[o2nLUT['spectra.z_mask']]
+        # Define units
+        wavelength_z = np.array(wavelength_z)*u.AA
+        flux_z = np.array(flux_z)* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
         ivar_z = InverseVariance(np.array(ivar_z))
 
         newrec = dict(
-            # flux, uncertainty, wavevelength, mask(or, and), redshift
-            b_spec1d = Spectrum1D(spectral_axis=np.array(loglam_b)*u.AA,
+            # flux, uncertainty, wavevelength, mask, redshift
+            b_spec1d = Spectrum1D(spectral_axis=wavelength_b,
                                   flux=flux_b,
                                   uncertainty=ivar_b,
-                                  redshift=z),
-            r_spec1d = Spectrum1D(spectral_axis=np.array(loglam_r)*u.AA,
+                                  redshift=z,
+                                  mask=mask_b),
+            r_spec1d = Spectrum1D(spectral_axis=wavelength_r,
                                   flux=flux_r,
                                   uncertainty=ivar_r,
-                                  redshift=z),
-            z_spec1d = Spectrum1D(spectral_axis=np.array(loglam_z)*u.AA,
+                                  redshift=z,
+                                  mask=mask_r),
+            z_spec1d = Spectrum1D(spectral_axis=wavelength_z,
                                   flux=flux_z,
                                   uncertainty=ivar_z,
-                                  redshift=z),
+                                  redshift=z,
+                                  mask=mask_z),
             )
         for orig,new in o2nLUT.items():
             if orig in arflds:
