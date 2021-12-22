@@ -414,6 +414,8 @@ get_metadata  = [{'_dr': 'BOSS-DR16',
   'wavemax': 10356.189453125,
   'wavemin': 3601.63745117188}]
 
+get_vectordata = "dict_keys(['and_mask', 'flux', 'ivar', 'loglam'])"
+ 
 rename_fields = ['_dr', 'data_set', 'dec', 'f', 'ivar', 'loglam', 'ra', 'specid', 'z']
 
 rename_fields_internal = ['_dr', 'data_release_id', 'f2', 'red_shift', 'specid', 'spectra.coadd.IVAR', 'spectra.coadd.LOGLAM', 'x', 'y']

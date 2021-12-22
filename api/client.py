@@ -139,6 +139,26 @@ def get_metadata(records):
                  if isinstance(v,Number) or isinstance(v,str)]
     return [{k:v for k,v in r.items() if k in md_fields} for r in records]
 
+def get_vectordata(records):
+    """Get records of just vector data used in records.
+    Vector data is considered to be any field whose type is a list or tuple.
+    Therefore, this will not include Number or String.
+    :param records: List of records (dictionaries)
+    :returns: new list of dictionaries. Each dict contains only vector data fields.
+    :rtype: list(dict)
+    
+    Example:
+      >>> from api.client import get_vectordata
+      >>> recs = client.sample_records(3)
+      >>> vectordata = get_vectordata(recs)
+    """
+    vd_fields = []
+    for i in range(len(records)):
+        for k,v in records[i].items():
+            if isinstance(v,list) or isinstance(v,tuple):
+                vd_fields.append(k)
+    return [{k:v for k,v in r.items() if k in vd_fields} for r in records]
+
 def rename_fields(rename_dict, records):
     """Rename some field names in all given records.
 

@@ -25,8 +25,8 @@ import api.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-rooturl = 'http://localhost:8030/' #@@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://localhost:8030/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -140,6 +140,15 @@ class ApiTest(unittest.TestCase):
         if showact:
             print(f'get_metadata: actual={pformat(actual)}')
         self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
+
+    def test_get_vectordata(self):
+        sids = [1429933274376612]
+        ink = ['loglam', 'flux', 'and_mask', 'ivar', 'ra', 'dec', 'specid']
+        records = self.client2.retrieve(sids, include=ink, structure='BOSS-DR16')
+        actual = api.client.get_vectordata(records)[0].keys()
+        if showact:
+            print(f'get_vectordata: actual={pformat(actual)}')
+        self.assertEqual(str(actual), exp.get_vectordata, msg = 'Actual to Expected')
 
     def test_rename_fields(self):
         """Local rename fields in records (referenced by new names)"""
