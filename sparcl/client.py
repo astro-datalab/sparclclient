@@ -25,10 +25,10 @@ from numbers import Number
 # External Packages
 import requests
 # Local Packages
-import api.utils as ut
-import api.exceptions as ex
-import api.type_conversion as tc
-from api import __version__
+import sparcl.utils as ut
+import sparcl.exceptions as ex
+import sparcl.type_conversion as tc
+from sparcl import __version__
 
 
 
@@ -46,7 +46,7 @@ from api import __version__
 
 #### Generate documentation:
 # cd ~/sandbox/sparclclient
-# sphinx-apidoc -f -o source api
+# sphinx-apidoc -f -o source sparcl
 # make html
 # firefox -new-tab "`pwd`/build/html/index.html"
 
@@ -97,7 +97,7 @@ def fields_available(records):
         dict: dict[Structure] = [field_name1, ...]
     
     Example:
-        >>> from api.client import fields_available
+        >>> from sparcl.client import fields_available
         >>> recs = client.sample_records(3)
         >>> flds = fields_available(recs)
     """
@@ -114,7 +114,7 @@ def record_examples(records):
         dict: dict[Structure] = rec
     
     Example:
-        >>> from api.client import record_examples
+        >>> from sparcl.client import record_examples
         >>> recs = client.sample_records(3)
         >>> rex = record_examples(recs)
     """
@@ -134,7 +134,7 @@ def get_metadata(records):
         list(dict): New list of dictionaries. Each dict contains only metadata fields.
     
     Example:
-        >>> from api.client import get_metadata
+        >>> from sparcl.client import get_metadata
         >>> recs = client.sample_records(3)
         >>> metadata = get_metadata(recs)
     """
@@ -155,7 +155,7 @@ def get_vectordata(records):
         list(dict): New list of dictionaries. Each dict contains only vector data fields.
     
     Example:
-        >>> from api.client import get_vectordata
+        >>> from sparcl.client import get_vectordata
         >>> recs = client.sample_records(3)
         >>> vectordata = get_vectordata(recs)
     """
@@ -177,7 +177,7 @@ def rename_fields(rename_dict, records):
         list: Renamed field names in all given records.
     
     Example:
-        >>> from api.client import rename_fields
+        >>> from sparcl.client import rename_fields
         >>> recs = client.sample_records(1)
         >>> renamed = rename_fields({'ra':'Right_Ascension'},recs)
     """
@@ -375,7 +375,7 @@ class SparclApi():
         """Return a small list of specids.
         
         This is intended to make it easy to get just a few specids to use
-        for experimenting with the rest of the API.
+        for experimenting with the rest of the SPARCL API.
         
         Args:
             samples (:obj:`int`, optional): The number of sample specids to get.

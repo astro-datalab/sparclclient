@@ -10,7 +10,7 @@ from specutils import Spectrum1D
 import astropy.units as u
 from astropy.nddata import InverseVariance
 # Local Packages
-import api.exceptions as ex
+import sparcl.exceptions as ex
 
 
 """It would be much better if this were abstracted and easier to
