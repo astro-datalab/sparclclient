@@ -3,8 +3,8 @@
 '''
 # EXAMPLES:
 # cd ~/sandbox/sparclclient
-# python3 -m api.benchmarks.benchmarks ~/data/sparc/sids5.list
-# python3 -m api.benchmarks.benchmarks ~/data/sparc/sids644.list
+# python3 -m sparcl.benchmarks.benchmarks ~/data/sparc/sids5.list
+# python3 -m sparcl.benchmarks.benchmarks ~/data/sparc/sids644.list
 
 # Alice reported 22 minutes on 64K retrieved from specClient (rate=48 spec/sec)
 #   slack.spectro: 3/31/2021

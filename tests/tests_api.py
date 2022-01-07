@@ -2,8 +2,8 @@
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
 #   python -m unittest  -v tests.tests_api    # VERBOSE
-#   python -m unittest tests.tests_api.ApiTest
-#   python -m unittest tests.tests_api.ApiTest.test_find_3
+#   python -m unittest tests.tests_api.SparclApiTest
+#   python -m unittest tests.tests_api.SparclApiTest.test_find_3
 
 # Python library
 import unittest
@@ -14,11 +14,11 @@ from urllib.parse import urlparse
 from unittest.mock import MagicMock
 from unittest.mock import create_autospec
 # Local Packages
-import api.client
-#from api.client import DEFAULT, ALL
+import sparcl.client
+#from sparcl.client import DEFAULT, ALL
 from tests.utils import tic,toc
 import tests.expected as exp
-import api.exceptions as ex
+import sparcl.exceptions as ex
 # External Packages
 # <none>
 
@@ -32,7 +32,7 @@ showact = False
 #showact = True
 
 
-class ApiTest(unittest.TestCase):
+class SparclApiTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
 
     maxDiff = None # too see full values in DIFF on assert failure
@@ -44,8 +44,8 @@ class ApiTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
-        cls.clienti = api.client.SparclApi(url=rooturl, internal_names=True)
-        cls.client2 = api.client.SparclApi(url=rooturl) # renamed fields
+        cls.clienti = sparcl.client.SparclApi(url=rooturl, internal_names=True)
+        cls.client2 = sparcl.client.SparclApi(url=rooturl) # renamed fields
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -115,7 +115,7 @@ class ApiTest(unittest.TestCase):
         """Fields available in a specific record set."""
         records = self.clienti.sample_records(1,
                                              structure='BOSS-DR16', random=False)
-        actual = api.client.fields_available(records)
+        actual = sparcl.client.fields_available(records)
         if showact:
             print(f'fields_available: actual={pformat(actual)}')
         self.assertEqual(actual, exp.fields_available,msg = 'Actual to Expected')
@@ -125,7 +125,7 @@ class ApiTest(unittest.TestCase):
         records = self.clienti.sample_records(1,
                                              structure='BOSS-DR16',
                                              random=False)
-        examples = api.client.record_examples(records)
+        examples = sparcl.client.record_examples(records)
         # Just the gist of the records (key names)
         actual = {k: sorted(v.keys()) for k,v in examples.items()}
         if showact:
@@ -136,7 +136,7 @@ class ApiTest(unittest.TestCase):
         sids = [1429933274376612]
         records = self.clienti.retrieve(sids, include=ALL, structure='BOSS-DR16')
         [r.pop('dirpath',None) for r in records]
-        actual = api.client.get_metadata(records)
+        actual = sparcl.client.get_metadata(records)
         if showact:
             print(f'get_metadata: actual={pformat(actual)}')
         self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
@@ -145,7 +145,7 @@ class ApiTest(unittest.TestCase):
         sids = [1429933274376612]
         ink = ['loglam', 'flux', 'and_mask', 'ivar', 'ra', 'dec', 'specid']
         records = self.client2.retrieve(sids, include=ink, structure='BOSS-DR16')
-        actual = api.client.get_vectordata(records)[0].keys()
+        actual = sparcl.client.get_vectordata(records)[0].keys()
         if showact:
             print(f'get_vectordata: actual={pformat(actual)}')
         self.assertEqual(str(actual), exp.get_vectordata, msg = 'Actual to Expected')
@@ -160,7 +160,7 @@ class ApiTest(unittest.TestCase):
                                               structure='BOSS-DR16',
                                               random=False)
         rdict = dict(dec_center='y', ra_center='x', redshift='z', flux='f')
-        actual = api.client.rename_fields(rdict, records)
+        actual = sparcl.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields", show=showact)
 
     def test_rename_fields_internal(self):
@@ -178,7 +178,7 @@ class ApiTest(unittest.TestCase):
                  'ra_center': 'x',
                  'redshift':'z',
                  'spectra.coadd.FLUX': 'f2'}
-        actual = api.client.rename_fields(rdict, records)
+        actual = sparcl.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields_internal", show=showact)
 
     ###

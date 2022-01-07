@@ -89,7 +89,7 @@ def objform(obj):
     Example:
        >>> res = client.sample_records(1)[0]
        >>> objform(res)
-       <class 'api.client.AttrDict'>
+       <class 'sparcl.client.AttrDict'>
     """
     if obj is None:
         return None
