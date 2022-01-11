@@ -1,7 +1,7 @@
-api
+sparcl
 ===
 
 .. toctree::
    :maxdepth: 4
 
-   api
+   sparcl
