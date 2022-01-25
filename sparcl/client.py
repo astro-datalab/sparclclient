@@ -628,8 +628,9 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return Results( [ut._AttrDict(tc.convert(r, rtype, self, include))
-                 for r in records] )
+        return Results(
+            [ut._AttrDict(tc.convert(r, rtype, self, include)) for r in records],
+            client=self)
         #! return( records )
         # END retrieve()
 
