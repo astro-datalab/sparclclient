@@ -25,11 +25,11 @@ import api.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
-#showact = True
+#!showact = True
 
 
 class ApiTest(unittest.TestCase):
@@ -133,13 +133,19 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
 
     def test_get_metadata(self):
+        variant_fields = ['dateobs_center','id']
         sids = [1429933274376612]
         records = self.clienti.retrieve(sids, include=ALL, structure='BOSS-DR16')
         [r.pop('dirpath',None) for r in records]
         actual = api.client.get_metadata(records)
+        expected = exp.get_metadata
+        for k in variant_fields:
+            actual[0].pop(k,None)
+            expected[0].pop(k,None)
+
         if showact:
             print(f'get_metadata: actual={pformat(actual)}')
-        self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
+        self.assertEqual(actual, expected , msg = 'Actual to Expected')
 
     def test_rename_fields(self):
         """Local rename fields in records (referenced by new names)"""
