@@ -26,7 +26,7 @@ DEFAULT='DEFAULT'
 ALL='ALL'
 
 rooturl = 'http://localhost:8030/' #@@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
