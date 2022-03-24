@@ -161,7 +161,7 @@ def get_vectordata(records):
 
 
 def rename_fields(rename_dict, records):
-    """Rename some field names in all given records.
+    """Rename some field names in all given records. EXPERIMENTAL.
 
     :param rename_dict: The key is current field name, value is new.
     :param records: List of records (dictionaries) to transform
@@ -389,6 +389,7 @@ class SparclApi():
             'spectra.coadd.FLUX'
 
         """
+        # new2origLUT[dr][new] = orig
         return self.new2origLUT[structure][client_name]
 
     def client_field(self, structure, orig_name):

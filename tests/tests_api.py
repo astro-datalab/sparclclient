@@ -29,7 +29,7 @@ rooturl = 'http://localhost:8030/' #@@@
 #rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
-showact = True
+#showact = True
 
 
 class ApiTest(unittest.TestCase):
@@ -160,6 +160,7 @@ class ApiTest(unittest.TestCase):
         actual = api.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields", show=showact)
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_rename_fields_internal(self):
         """Local rename fields in records (referenced by stored names)"""
         flds = ['data_release_id', 'specid',
@@ -369,7 +370,7 @@ class ApiTest(unittest.TestCase):
             'spectra.coadd.SKY',
             'spectra.coadd.WDISP',
             ]
-        print(f'clienti={self.clienti}')
+        #!print(f'clienti={self.clienti}')
         recs = self.clienti.sample_records(1,
                                            structure='BOSS-DR16', rtype='numpy',
                                            include=arflds, random=False)
@@ -416,6 +417,7 @@ class ApiTest(unittest.TestCase):
 
     #############################
     ## EVEREST type conversions
+    @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_numpy(self):
         """Convert to Numpy."""
         arflds = [
@@ -442,6 +444,7 @@ class ApiTest(unittest.TestCase):
             print(f'everest_numpy: actual={pformat(actual)}')
         self.assertEqual(actual, exp.everest_numpy, msg='Actual to Expected')
 
+    @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_pandas(self):
         """Convert to Pandas."""
         arflds = [
@@ -466,6 +469,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
 
 
+    @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_spectrum1d(self):
         """Convert to Spectrum1D."""
         arflds = [
