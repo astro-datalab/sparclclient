@@ -156,14 +156,14 @@ class ApiTest(unittest.TestCase):
                                               include=flds,
                                               structure='BOSS-DR16',
                                               random=False)
-        rdict = dict(dec_center='y', ra_center='x', redshift='z', flux='f')
+        rdict = dict(dec='y', ra='x', redshift='z', flux='f')
         actual = api.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields", show=showact)
 
     def test_rename_fields_internal(self):
         """Local rename fields in records (referenced by stored names)"""
         flds = ['data_release_id', 'specid',
-                'dec_center', 'ra_center','red_shift',
+                'decr', 'rar','redshift',
                 'spectra.coadd.FLUX',
                 'spectra.coadd.IVAR',
                 'spectra.coadd.LOGLAM']
@@ -171,8 +171,8 @@ class ApiTest(unittest.TestCase):
                                               include=flds,
                                               structure='BOSS-DR16',
                                               random=False)
-        rdict = {'dec_center': 'y',
-                 'ra_center': 'x',
+        rdict = {'dec': 'y',
+                 'ra': 'x',
                  'redshift':'z',
                  'spectra.coadd.FLUX': 'f2'}
         actual = api.client.rename_fields(rdict, records)
@@ -341,9 +341,9 @@ class ApiTest(unittest.TestCase):
     ## BOSS type conversions
     def test_retrieve_boss_json(self):
         """(non)Convert to JSON."""
-        flds = ['dec_center',
-                'ra_center',
-                'red_shift',
+        flds = ['dec',
+                'ra',
+                'redshift',
                 'specid',
                 'spectra.coadd.FLUX',
                 'spectra.coadd.IVAR']
@@ -404,7 +404,7 @@ class ApiTest(unittest.TestCase):
             'spectra.coadd.FLUX',
             'spectra.coadd.IVAR',
             'spectra.coadd.LOGLAM',
-            'red_shift'
+            'redshift'
         ]
         recs = self.clienti.sample_records(1, structure='BOSS-DR16',
                                            rtype='spectrum1d',
@@ -419,7 +419,7 @@ class ApiTest(unittest.TestCase):
     def test_retrieve_everest_numpy(self):
         """Convert to Numpy."""
         arflds = [
-            'specid', 'ra_center','dec_center',
+            'specid', 'ra','dec',
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
@@ -469,7 +469,7 @@ class ApiTest(unittest.TestCase):
     def test_retrieve_everest_spectrum1d(self):
         """Convert to Spectrum1D."""
         arflds = [
-            'red_shift',
+            'redshift',
 
             'spectra.b_flux',
             'spectra.b_ivar',
@@ -494,3 +494,22 @@ class ApiTest(unittest.TestCase):
 
         self.assertEqual(actual, exp.everest_spectrum1d,
                          msg='Actual to Expected')
+
+
+    def test_find_0(self):
+        """Get metadata using search spec."""
+        name = 'find_0'
+        this = self.test_find_0
+
+        outfields = ['id','ra','dec']
+        # from list(FitsFile.objects.all().values('ra','dec'))
+        constraints = [
+            ['ra', 198.0, 199.0],
+            ['dec', -2.0, -1.0],
+        ]
+
+        records = self.clienti.find(outfields, constraints)
+        print(f'find_0 records={records.json()}')
+        actual = sorted(r['id'] for r in records)
+
+        self.assertEqual(actual, exp.find_0, msg='Actual to Expected')

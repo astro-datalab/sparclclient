@@ -656,6 +656,17 @@ class SparclApi():
     #!     return ut.dict2tree(recs[0])
 
 
+    def find(self, outfields, constraints=None):
+        uparams =dict()
+        qstr = urlencode(uparams)
+        url = f'{self.apiurl}/find/?{qstr}'
+        search = [] if constraints is None else constraints
+        sspec = dict(outfields=outfields,  search=search)
+        res = requests.post(url, json=sspec, timeout=self.timeout)
+        return(res)
+        #! info, *rows = res
+        #! return(rows)
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

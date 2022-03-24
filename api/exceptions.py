@@ -14,6 +14,8 @@ def genSparclException(response, verbose=False):
     # https://docs.python.org/3.10/whatsnew/3.10.html#pep-634-structural-pattern-matching
     if status.get('errorCode') == 'BADPATH':
         return BadPath(status.get('errorMessage'))
+    elif status.get('errorCode') == 'BADQUERY':
+        return BadQuery(status.get('errorMessage'))
     else:
         return UnknownServerError(status.get('errorMessage'))
 
@@ -47,6 +49,10 @@ class BaseSparclException(Exception):
 
 class BadPath(BaseSparclException):
     """A field path starts with a non-core field."""
+    error_code = 'BADPATH'
+
+class BadQuery(BaseSparclException):
+    """Bad find constraints."""
     error_code = 'BADPATH'
 
 class BadInclude(BaseSparclException):
