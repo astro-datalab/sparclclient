@@ -1,15 +1,9 @@
 """Client module for SPARCL.
 
 This module interfaces to the SPARC-Server to get spectra data.
-
-Todo:
-
-  * Data Discovery
-
-    Allow retrieval of spectra based upon matches to metadata values.
-
 """
 
+############################################
 # Python Standard Library
 from urllib.parse import urlencode
 from enum import Enum,auto
@@ -19,11 +13,13 @@ from warnings import warn
 import json
 import pickle
 from collections.abc import MutableMapping
-from collections import OrderedDict
+from collections import OrderedDict, UserList
 import pkg_resources
 from numbers import Number
+############################################
 # External Packages
 import requests
+############################################
 # Local Packages
 import api.utils as ut
 import api.exceptions as ex
@@ -139,6 +135,31 @@ def get_metadata(records):
                  if isinstance(v,Number) or isinstance(v,str)]
     return [{k:v for k,v in r.items() if k in md_fields} for r in records]
 
+def get_vectordata(records):
+    """Get records of just vector data used in records.
+
+    Vector data is considered to be any field whose type is a list or tuple.
+    Therefore, this will not include Number or String.
+
+    Args:
+        records (list): List of records (dictionaries).
+
+    Returns:
+        list(dict): New list of dictionaries. Each dict contains only vector data fields.
+
+    Example:
+        >>> from sparcl.client import get_vectordata
+        >>> recs = client.sample_records(3)
+        >>> vectordata = get_vectordata(recs)
+    """
+    vd_fields = []
+    for i in range(len(records)):
+        for k,v in records[i].items():
+            if isinstance(v,list) or isinstance(v,tuple):
+                vd_fields.append(k)
+    return [{k:v for k,v in r.items() if k in vd_fields} for r in records]
+
+
 def rename_fields(rename_dict, records):
     """Rename some field names in all given records.
 
@@ -155,6 +176,50 @@ def rename_fields(rename_dict, records):
     """
     return [{rename_dict.get(k,k):v for k,v in r.items()}
             for r in records]
+
+###########################
+### The Results class
+
+# For results of retrieve()
+class Results(UserList):
+    """@@@ NEEDS DOCUMENTATION !!!"""
+
+    def __init__(self, mylist, client = None):
+        UserList.__init__(self, mylist)
+        self.client = client
+
+    def __repr__(self):
+        return f'Results: {len(self.data)} client={self.client}'
+
+    def json(self):
+        return self.data
+
+###########################
+### The Found class
+# For results of find()
+class Found(UserList):
+    """@@@ NEEDS DOCUMENTATION !!!"""
+
+    def __init__(self, mylist, client = None):
+        UserList.__init__(self, mylist)
+        #!print(f'Found. init, mylist={mylist}')
+        self.hdr, *self.records = mylist
+        self.client = client
+
+    def __repr__(self):
+        return f'Found: {len(self.rows)} client={self.client}'
+
+    def json(self):
+        return self.data
+
+    @property
+    def info(self):
+        return self.hdr
+
+    @property
+    def rows(self):
+        return self.records
+
 
 ###########################
 ### The Client class
@@ -556,8 +621,11 @@ class SparclApi():
         #!if not meta['status'].get('success'):
         #!    raise Exception(f"Error in retrieve: {meta['status']}")
 
-        return( [ut._AttrDict(tc.convert(r, rtype, self, include))
-                 for r in records] )
+        #! return( [ut._AttrDict(tc.convert(r, rtype, self, include))
+        #!          for r in records] )
+        return Results(
+            [ut._AttrDict(tc.convert(r, rtype, self, include)) for r in records],
+            client=self)
         #! return( records )
         # END retrieve()
 
@@ -663,7 +731,8 @@ class SparclApi():
         search = [] if constraints is None else constraints
         sspec = dict(outfields=outfields,  search=search)
         res = requests.post(url, json=sspec, timeout=self.timeout)
-        return(res)
+        #!print(f'find res={res.content}')
+        return Found(res.json(), client=self)
         #! info, *rows = res
         #! return(rows)
 

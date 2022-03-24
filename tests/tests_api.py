@@ -29,7 +29,7 @@ rooturl = 'http://localhost:8030/' #@@@
 #rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
-#!showact = True
+showact = True
 
 
 class ApiTest(unittest.TestCase):
@@ -508,8 +508,8 @@ class ApiTest(unittest.TestCase):
             ['dec', -2.0, -1.0],
         ]
 
-        records = self.clienti.find(outfields, constraints)
-        print(f'find_0 records={records.json()}')
-        actual = sorted(r['id'] for r in records)
+        found = self.clienti.find(outfields, constraints)
+        #print(f'find_0 found={found.rows}')
+        actual = found.rows
 
-        self.assertEqual(actual, exp.find_0, msg='Actual to Expected')
+        self.assertDictEqual(actual[0], exp.find_0[0], msg='Actual to Expected')

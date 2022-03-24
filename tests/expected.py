@@ -3718,3 +3718,5 @@ retrieve_5 = ['aux.FIBERID',
  'telescope_id',
  'wavemax',
  'wavemin']
+
+find_0 = [{'ra': 198.93503, 'id': 'c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3', 'dec': -1.4354463}]
