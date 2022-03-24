@@ -25,8 +25,8 @@ import sparcl.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+rooturl = 'http://localhost:8030/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -133,22 +133,28 @@ class SparclApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
 
     def test_get_metadata(self):
+        variant_fields = ['dateobs_center','id']
         sids = [1429933274376612]
         records = self.clienti.retrieve(sids, include=ALL, structure='BOSS-DR16')
         [r.pop('dirpath',None) for r in records]
         actual = sparcl.client.get_metadata(records)
+        expected = exp.get_metadata
+        for k in variant_fields:
+            actual[0].pop(k,None)
+            expected[0].pop(k,None)
+
         if showact:
             print(f'get_metadata: actual={pformat(actual)}')
-        self.assertEqual(actual, exp.get_metadata, msg = 'Actual to Expected')
+        self.assertEqual(actual, expected , msg = 'Actual to Expected')
 
     def test_get_vectordata(self):
         sids = [1429933274376612]
         ink = ['loglam', 'flux', 'and_mask', 'ivar', 'ra', 'dec', 'specid']
         records = self.client2.retrieve(sids, include=ink, structure='BOSS-DR16')
-        actual = sparcl.client.get_vectordata(records)[0].keys()
+        actual = list(sparcl.client.get_vectordata(records)[0].keys())
         if showact:
             print(f'get_vectordata: actual={pformat(actual)}')
-        self.assertEqual(str(actual), exp.get_vectordata, msg = 'Actual to Expected')
+        self.assertListEqual(actual, exp.get_vectordata, msg = 'Actual to Expected')
 
     def test_rename_fields(self):
         """Local rename fields in records (referenced by new names)"""
@@ -159,14 +165,15 @@ class SparclApiTest(unittest.TestCase):
                                               include=flds,
                                               structure='BOSS-DR16',
                                               random=False)
-        rdict = dict(dec_center='y', ra_center='x', redshift='z', flux='f')
+        rdict = dict(dec='y', ra='x', redshift='z', flux='f')
         actual = sparcl.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields", show=showact)
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_rename_fields_internal(self):
         """Local rename fields in records (referenced by stored names)"""
         flds = ['data_release_id', 'specid',
-                'dec_center', 'ra_center','red_shift',
+                'decr', 'rar','redshift',
                 'spectra.coadd.FLUX',
                 'spectra.coadd.IVAR',
                 'spectra.coadd.LOGLAM']
@@ -174,8 +181,8 @@ class SparclApiTest(unittest.TestCase):
                                               include=flds,
                                               structure='BOSS-DR16',
                                               random=False)
-        rdict = {'dec_center': 'y',
-                 'ra_center': 'x',
+        rdict = {'dec': 'y',
+                 'ra': 'x',
                  'redshift':'z',
                  'spectra.coadd.FLUX': 'f2'}
         actual = sparcl.client.rename_fields(rdict, records)
@@ -344,9 +351,9 @@ class SparclApiTest(unittest.TestCase):
     ## BOSS type conversions
     def test_retrieve_boss_json(self):
         """(non)Convert to JSON."""
-        flds = ['dec_center',
-                'ra_center',
-                'red_shift',
+        flds = ['dec',
+                'ra',
+                'redshift',
                 'specid',
                 'spectra.coadd.FLUX',
                 'spectra.coadd.IVAR']
@@ -372,7 +379,7 @@ class SparclApiTest(unittest.TestCase):
             'spectra.coadd.SKY',
             'spectra.coadd.WDISP',
             ]
-        print(f'clienti={self.clienti}')
+        #!print(f'clienti={self.clienti}')
         recs = self.clienti.sample_records(1,
                                            structure='BOSS-DR16', rtype='numpy',
                                            include=arflds, random=False)
@@ -408,7 +415,7 @@ class SparclApiTest(unittest.TestCase):
             'spectra.coadd.IVAR',
             'spectra.coadd.LOGLAM',
             'spectra.coadd.AND_MASK',
-            'red_shift'
+            'redshift'
         ]
         recs = self.clienti.sample_records(1, structure='BOSS-DR16',
                                            rtype='spectrum1d',
@@ -418,29 +425,13 @@ class SparclApiTest(unittest.TestCase):
             print(f'boss_spectrum1d: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
 
-    def test_retrieve_boss_spectrum1d_2(self):
-        """Convert to Spectrum1D, check values."""
-        arflds = [
-            'spectra.coadd.FLUX',
-            'spectra.coadd.IVAR',
-            'spectra.coadd.LOGLAM',
-            'spectra.coadd.AND_MASK',
-            'red_shift'
-        ]
-        sids = [1429860048953377]
-        records = self.clienti.retrieve(sids, structure='BOSS-DR16',
-                                        rtype='spectrum1d', include=arflds)
-        actual = records[0].spec1d.redshift
-        if showact:
-            print(f'boss_spectrum1d.redshift: actual={pformat(actual)}')
-        self.assertEqual(float(actual), exp.boss_spectrum1d_redshift, msg='Actual to Expected')
-
     #############################
     ## EVEREST type conversions
+    @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_numpy(self):
         """Convert to Numpy."""
         arflds = [
-            'specid', 'ra_center','dec_center',
+            'specid', 'ra','dec',
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
@@ -463,6 +454,7 @@ class SparclApiTest(unittest.TestCase):
             print(f'everest_numpy: actual={pformat(actual)}')
         self.assertEqual(actual, exp.everest_numpy, msg='Actual to Expected')
 
+    @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_pandas(self):
         """Convert to Pandas."""
         arflds = [
@@ -487,10 +479,11 @@ class SparclApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
 
 
+    @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_spectrum1d(self):
         """Convert to Spectrum1D."""
         arflds = [
-            'red_shift',
+            'redshift',
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
@@ -512,27 +505,20 @@ class SparclApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.everest_spectrum1d,
                          msg='Actual to Expected')
 
-    def test_retrieve_everest_spectrum1d_2(self):
-        """Convert to Spectrum1D, check values."""
-        arflds = [
-            'red_shift',
-            'spectra.b_flux',
-            'spectra.b_ivar',
-            'spectra.b_mask',
-            'spectra.b_wavelength',
-            'spectra.r_flux',
-            'spectra.r_ivar',
-            'spectra.r_mask',
-            'spectra.r_wavelength',
-            'spectra.z_flux',
-            'spectra.z_ivar',
-            'spectra.z_mask',
-            'spectra.z_wavelength',
+    def test_find_0(self):
+        """Get metadata using search spec."""
+        name = 'find_0'
+        this = self.test_find_0
+
+        outfields = ['id','ra','dec']
+        # from list(FitsFile.objects.all().values('ra','dec'))
+        constraints = [
+            ['ra', 198.0, 199.0],
+            ['dec', -2.0, -1.0],
         ]
-        sids = [283084050856]
-        recs = self.clienti.retrieve(sids, structure='DESI-everest', rtype='spectrum1d',
-                                     include=arflds)
-        actual = recs[0].b_spec1d.redshift
-        if showact:
-            print(f'everest_b_spectrum1d.redshift: actual={pformat(actual)}')
-        self.assertEqual(float(actual), exp.everest_b_spectrum1d_redshift, msg='Actual to Expected')
+
+        found = self.clienti.find(outfields, constraints)
+        #print(f'find_0 found={found.rows}')
+        actual = found.rows
+
+        self.assertDictEqual(actual[0], exp.find_0[0], msg='Actual to Expected')
