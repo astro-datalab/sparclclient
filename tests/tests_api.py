@@ -26,7 +26,7 @@ DEFAULT='DEFAULT'
 ALL='ALL'
 
 rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -280,6 +280,26 @@ class SparclApiTest(unittest.TestCase):
 
         #!print(f'DBG gotspecids={gotspecids} specids={specids}')
         assert gotspecids == specids, "Actual to Expected"
+
+    def test_retrieve_0b(self):
+        """Get spectra using small list of uuids."""
+        name = 'retrieve_0b'
+        this = self.test_retrieve_0b
+        getcnt = 2
+        uuids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3',
+                 '84c1d7fa-aadb-43f6-8047-50d041edba57']
+        tic()
+        records = self.clienti.uuid_retrieve(uuids)
+        self.timing[name] = toc()
+        actual = sorted(records[0].keys())
+        actual.remove('_dr')
+
+        self.doc[name] = this.__doc__
+        self.count[name] = len(records)
+        if showact:
+            print(f'retrieve_0b: actual={pformat(actual)}')
+
+        self.assertEqual(actual, exp.retrieve_0b, msg='Actual to Expected')
 
     def test_retrieve_1(self):
         """Raise exception when unknown field referenced in include"""

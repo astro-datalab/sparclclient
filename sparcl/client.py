@@ -583,6 +583,99 @@ class SparclApi():
             raise ex.BadInclude(msg)
         return True
 
+    def uuid_retrieve(self,
+                      specid_list,
+                      include='DEFAULT',
+                      rtype=None,
+                      structure=None,
+                      #internal_names=False, # No field rename ## Client INIT only
+                      verbose=False):
+        """Get spectrum from UUID (universally unique identifier) list.
+
+        Args:
+           uuid_list (list): List of uuids.
+           include (list, 'DEFAULT', 'ALL'):
+              List of paths to include in each record. (default: 'DEFAULT')
+           rtype (str, optional): Data-type to use for spectra data. One of:
+              json, numpy, pandas, spectrum1d. (default: None)
+           verbose (boolean, optional): (default: False)
+        Returns:
+           List of records. Each record is a dictionary of named fields.
+        Example:
+           >>> ids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3', '84c1d7fa-aadb-43f6-8047-50d041edba57']
+           >>> res = client.uuid_retrieve(ids, include=['flux'])
+        """
+        self._validate_include(None, include)
+
+        verbose = verbose or self.verbose
+        if verbose:
+            print(f'retrieve(rtype={rtype})')
+
+        if include == DEFAULT:
+            inc = '_DEFAULT'
+        elif include == ALL:
+            inc = '_ALL'
+        else:
+            inc = ','.join(include)
+        uparams =dict(include=inc,
+                      internal_names=self.internal_names,
+                      dr=structure)
+        qstr = urlencode(uparams)
+
+        url = f'{self.apiurl}/uuid_retrieve/?{qstr}'
+        if verbose:
+            print(f'Using url="{url}"')
+            ut.tic()
+
+        try:
+            res = requests.post(url, json=specid_list, timeout=self.timeout)
+        except requests.exceptions.ConnectTimeout as reCT:
+            raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
+        except requests.exceptions.ReadTimeout as reRT:
+           msg = (f'Try increasing the value of the "read_timeout" parameter'
+                   f' to "SparclApi()".'
+                   f' The current values is: {self.r_timeout} (seconds)' )
+           raise ex.ReadTimeout(msg) from None
+        except requests.exceptions.ConnectionError as reCE:
+            raise ex.UnknownSparcl(f'ConnectionError: {reCE}')
+        except requests.exceptions.TooManyRedirects as reTMR:
+            raise ex.UnknownSparcl(f'TooManyRedirects: {reTMR}')
+        except requests.exceptions.HTTPError as reHTTP:
+            raise ex.UnknownSparcl(f'HTTPError: {reHTTP}')
+        except requests.exceptions.URLRequired as reUR:
+            raise ex.UnknownSparcl(f'URLRequired: {reUR}')
+        except requests.exceptions.RequestException as reRE:
+            raise ex.UnknownSparcl(f'RequestException: {reRE}')
+        except Exception as err:  # fall through
+            raise ex.UnknownSparcl(err)
+
+        if verbose:
+            elapsed = ut.toc()
+            print(f'Got response to post in {elapsed} seconds')
+        if res.status_code != 200:
+            print(f'DBG: res.content={res.content}') #@@@
+            if verbose and ('traceback' in res.json()):
+                #!print(f'DBG: res.json={res.json()}')
+                print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
+            #!raise ex.genSparclException(**res.json())
+            raise ex.genSparclException(res, verbose=verbose)
+
+        meta,*records = res.json()
+        if verbose:
+            count = len(records)
+            print(f'Got {count} spectra in '
+                  f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
+                  'spectra/sec)')
+            print(f'{meta["status"]}')
+
+        if len(meta['status'].get('warnings',[])) > 0:
+            warn(f"{'; '.join(meta['status'].get('warnings'))}")
+
+        return Results(
+            [ut._AttrDict(tc.convert(r, rtype, self, include))
+             for r in records],
+            client=self)
+
     def retrieve(self,
                  specid_list,
                  include='DEFAULT',

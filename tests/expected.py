@@ -3131,6 +3131,24 @@ df_lut=OrderedDict([('_dr', {'default': True, 'new': '_dr'}),
              ('wavemax', {'default': False, 'new': 'wavemax', 'store': True}),
              ('wavemin', {'default': False, 'new': 'wavemin', 'store': True})])
 
+retrieve_0b = ['aux.FIBERID',
+ 'aux.MJD',
+ 'aux.PLATEID',
+ 'data_release_id',
+ 'datasetgroup_id',
+ 'dateobs_center',
+ 'dec',
+ 'instrument_id',
+ 'ra',
+ 'redshift',
+ 'specid',
+ 'spectra.coadd.flux',
+ 'spectra.coadd.ivar',
+ 'spectra.coadd.loglam',
+ 'spectype_id',
+ 'targetid']
+
+
 retrieve_4 = ['aux.FIBERID',
  'aux.MJD',
  'aux.PLATEID',
