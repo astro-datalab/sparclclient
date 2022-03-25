@@ -70,12 +70,6 @@ _DEV = 'http://localhost:8030'
 #client_version = pkg_resources.require("sparclclient")[0].version
 client_version=__version__
 
-#! class Inc(Enum):
-#!     DEFAULT = auto()
-#!     ALL = auto()
-#!
-#! DEFAULT=Inc.DEFAULT
-#! ALL=Inc.ALL
 DEFAULT='DEFAULT'
 ALL='ALL'
 RESERVED=set([DEFAULT, ALL])
@@ -671,10 +665,11 @@ class SparclApi():
         if len(meta['status'].get('warnings',[])) > 0:
             warn(f"{'; '.join(meta['status'].get('warnings'))}")
 
-        return Results(
-            [ut._AttrDict(tc.convert(r, rtype, self, include))
-             for r in records],
-            client=self)
+        #! return Results( # @@@ Removed type conversion!!!
+        #!     [ut._AttrDict(tc.convert(r, rtype, self, include))
+        #!      for r in records],
+        #!     client=self)
+        return Results([ut._AttrDict(r) for r in records],  client=self)
 
     def retrieve(self,
                  specid_list,
