@@ -209,14 +209,23 @@ class Results(UserList):
     """@@@ NEEDS DOCUMENTATION !!!"""
 
     def __init__(self, mylist, client = None):
+        # Following allows an instance of Results to be used like a list
         UserList.__init__(self, mylist)
         self.client = client
 
     def __repr__(self):
-        return f'Results: {len(self.data)} client={self.client}'
+        return f'Results: {len(self.data)} rows'
 
     def json(self):
         return self.data
+
+    @property
+    def info(self):
+        return self.hdr
+
+    @property
+    def rows(self):
+        return self.records
 
 ###########################
 ### The Found class
@@ -372,6 +381,10 @@ class SparclApi():
         # dict[drName] = [fieldName, ...]
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
 
+        dsflds = [self.dr_fields[dr].values()
+                  for dr in self.dr_fields.keys()]
+        self.common_fields = set.intersection(*[set(l) for l in dsflds])
+
         ###
         ####################################################
         # END __init__()
@@ -385,6 +398,8 @@ class SparclApi():
                f' connect_timeout={self.c_timeout},'
                f' read_timeout={self.r_timeout})'
         )
+
+
 
     def get_field_names(self, structure):
         """List field names available for retrieve.
@@ -559,22 +574,24 @@ class SparclApi():
         #!print(f'DBG _validate_include: dr={dr} include_list={include_list}')
         if (not isinstance(include_list, list)) and (include_list in RESERVED):
             return True
-        if dr is None: # and include_list is not DEFAULT or ALL
-            raise Exception(
-                'Currently we do not support using an include_list '
-                'when NOT specifying a structure')
-
         incSet = set(include_list)
-        #!print(f'DBG incSet={incSet} dr_fields={self.dr_fields[dr]}')
-        unknown = incSet.difference(self.dr_fields[dr])
-        if len(unknown) > 0:
-            msg = (f'The INCLUDE list contains invalid data field names '
-                   f'for Structure "{dr}" '
-                   f'({", ".join(sorted(list(unknown)))}). '
-                   f'Available fields are: '
-                   f'{", ".join(sorted(self.dr_fields[dr]))}.'
-                   )
-            raise ex.BadInclude(msg)
+        if dr is None: # and include_list is not DEFAULT or ALL
+            if incSet.issubset(self.common_fields):
+                return True
+            else: # dr=None, include not subset of common
+                raise Exception(
+                    'Currently we do not support using an include_list '
+                    'when NOT specifying a structure')
+        else: # dr not None
+            unknown = incSet.difference(self.dr_fields[dr])
+            if len(unknown) > 0:
+                msg = (f'The INCLUDE list contains invalid data field names '
+                       f'for Structure "{dr}" '
+                       f'({", ".join(sorted(list(unknown)))}). '
+                       f'Available fields are: '
+                       f'{", ".join(sorted(self.dr_fields[dr]))}.'
+                )
+                raise ex.BadInclude(msg)
         return True
 
     def uuid_retrieve(self,
@@ -589,7 +606,7 @@ class SparclApi():
         Args:
            uuid_list (list): List of uuids.
            include (list, 'DEFAULT', 'ALL'):
-              List of paths to include in each record. (default: 'DEFAULT')
+              List of field names to include in each record. (default: 'DEFAULT')
            rtype (str, optional): Data-type to use for spectra data. One of:
               json, numpy, pandas, spectrum1d. (default: None)
            verbose (boolean, optional): (default: False)
@@ -682,7 +699,7 @@ class SparclApi():
 
         Args:
            specid_list (list): List of specids.
-           include (list, 'DEFAULT', 'ALL'): List of paths to include in each
+           include (list, 'DEFAULT', 'ALL'): List of field names to include in each
                record. Defaults to 'DEFAULT'.
            rtype (:obj:`str`, optional): Data-type to use for spectra data. One of:
                json, numpy, pandas, spectrum1d. Defaults to None.

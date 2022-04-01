@@ -49,7 +49,17 @@ class SparclApiTest(unittest.TestCase):
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
-        print(f'Running Client tests against Server: {urlparse(rooturl).netloc}')
+        cls.specids = ['1506512395860731904',
+                       '3383388400617889792',
+                       '1429933274376612',
+                       '1429741264506824']
+
+        cls.ids = ['8ad95037-d288-4bf7-84c3-5bdb010174c5',
+                   '6725afe4-a279-4103-9612-cf8dcd5e2bca',
+                   '6ec21117-2cb3-4887-9ed9-fb1dd8dc56f5']
+
+        print(f'Running Client tests against Server: '
+              f'{urlparse(rooturl).netloc}')
 
     @classmethod
     def tearDownClass(cls):
@@ -120,6 +130,7 @@ class SparclApiTest(unittest.TestCase):
             print(f'fields_available: actual={pformat(actual)}')
         self.assertEqual(actual, exp.fields_available,msg = 'Actual to Expected')
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_record_examples(self):
         """Get one record for each Structure type. DEFAULT set."""
         records = self.clienti.sample_records(1,
@@ -147,6 +158,7 @@ class SparclApiTest(unittest.TestCase):
             print(f'get_metadata: actual={pformat(actual)}')
         self.assertEqual(actual, expected , msg = 'Actual to Expected')
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_get_vectordata(self):
         sids = [1429933274376612]
         ink = ['loglam', 'flux', 'and_mask', 'ivar', 'ra', 'dec', 'specid']
@@ -156,6 +168,7 @@ class SparclApiTest(unittest.TestCase):
             print(f'get_vectordata: actual={pformat(actual)}')
         self.assertListEqual(actual, exp.get_vectordata, msg = 'Actual to Expected')
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_rename_fields(self):
         """Local rename fields in records (referenced by new names)"""
         flds = ['data_set', 'specid', 'dec', 'ra','redshift',
@@ -174,9 +187,7 @@ class SparclApiTest(unittest.TestCase):
         """Local rename fields in records (referenced by stored names)"""
         flds = ['data_release_id', 'specid',
                 'decr', 'rar','redshift',
-                'spectra.coadd.FLUX',
-                'spectra.coadd.IVAR',
-                'spectra.coadd.LOGLAM']
+                'flux','ivar','loglam']
         records = self.clienti.sample_records(1,
                                               include=flds,
                                               structure='BOSS-DR16',
@@ -184,7 +195,7 @@ class SparclApiTest(unittest.TestCase):
         rdict = {'dec': 'y',
                  'ra': 'x',
                  'redshift':'z',
-                 'spectra.coadd.FLUX': 'f2'}
+                 'flux': 'f2'}
         actual = sparcl.client.rename_fields(rdict, records)
         self.records_expected(actual,"exp.rename_fields_internal", show=showact)
 
@@ -214,7 +225,7 @@ class SparclApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.orig_field, msg='Actual to Expected')
 
     def test_client_field(self):
-        actual = self.client2.client_field('BOSS-DR16','spectra.coadd.FLUX')
+        actual = self.client2.client_field('BOSS-DR16','flux')
         if showact:
             print(f'client_field: actual={pformat(actual)}')
         self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
@@ -231,19 +242,12 @@ class SparclApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.normalize_field_names,
                          msg = 'Actual to Expected')
 
-    #!@skip('Deprecate functions to return Record Structure.  Use Server site instead.')
-    #!def test_boss_record_structure(self):
-    #!    sids = self.clienti.sample_specids(1,structure='BOSS-DR16', random=False)
-    #!    actual = self.clienti.get_record_structure('BOSS-DR16',specid=sids[0])
-    #!    if showact:
-    #!        print(f'boss_record_structure: actual={pformat(actual)}')
-    #!    self.assertEqual(actual, exp.boss_record_structure,
-    #!                     msg = 'Actual to Expected')
 
     ###
     #################################
 
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_sample(self):
         specids = self.clienti.sample_specids()
         #print(f'DBG: specids={specids}')
@@ -267,27 +271,24 @@ class SparclApiTest(unittest.TestCase):
         this = self.test_retrieve_0
         getcnt = 3
         dr='SDSS-DR16'
-        specids = sorted(self.clienti.sample_specids(samples=getcnt,structure=dr))
-        tic()
-        records = self.clienti.retrieve(specids, structure=dr)
-        #! status = ret['status']
-        #! records = ret['records']
-        gotspecids = sorted(r['specid'] for r in records)
 
-        self.timing[name] = toc()
+        records = self.clienti.retrieve(self.specids, structure=dr)
+        print(f'records[0].keys() = {records[0].keys()}')
+        actual = sorted(r['id'] for r in records)
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
 
         #!print(f'DBG gotspecids={gotspecids} specids={specids}')
-        assert gotspecids == specids, "Actual to Expected"
+        self.assertEqual(actual, exp.retrieve_0, msg='Actual to Expected')
 
     def test_retrieve_0b(self):
         """Get spectra using small list of uuids."""
         name = 'retrieve_0b'
         this = self.test_retrieve_0b
         getcnt = 2
-        uuids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3',
-                 '84c1d7fa-aadb-43f6-8047-50d041edba57']
+        # uuids from expected.py:retrieve_0
+        uuids = exp.retrieve_0
+
         tic()
         records = self.clienti.uuid_retrieve(uuids)
         self.timing[name] = toc()
@@ -303,7 +304,7 @@ class SparclApiTest(unittest.TestCase):
 
     def test_retrieve_1(self):
         """Raise exception when unknown field referenced in include"""
-        inc2 = ['bad_field_name', 'flux', 'spectra.coadd.OR_MASK']
+        inc2 = ['bad_field_name', 'flux', 'or_mask']
 
         specids = sorted(self.clienti.sample_specids(samples=1,
                                                     structure='BOSS-DR16'))
@@ -345,9 +346,7 @@ class SparclApiTest(unittest.TestCase):
         specids = sorted(self.clienti.sample_specids(samples=1, structure=dr,
                                                     random=False))
         #print(f'DBG retrieve_4: specids={specids}')
-        records = self.clienti.retrieve(specids,structure=dr,
-                                       include=ALL,
-                                       verbose=True)
+        records = self.clienti.retrieve(specids,structure=dr, include=ALL)
         actual = sorted(records[0].keys())
         actual.remove('_dr')
         if showact:
@@ -369,14 +368,15 @@ class SparclApiTest(unittest.TestCase):
 
     #############################
     ## BOSS type conversions
+    @skip('Type conversions removed until redesign')
     def test_retrieve_boss_json(self):
         """(non)Convert to JSON."""
         flds = ['dec',
                 'ra',
                 'redshift',
                 'specid',
-                'spectra.coadd.FLUX',
-                'spectra.coadd.IVAR']
+                'flux',
+                'ivar']
         recs = self.clienti.sample_records(1,
                                            random=False,
                                            include=flds,
@@ -387,17 +387,18 @@ class SparclApiTest(unittest.TestCase):
             print(f'boss_json: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_json, msg='Actual to Expected')
 
+    @skip('Type conversions removed until redesign')
     def test_retrieve_boss_numpy(self):
         """Convert to Numpy."""
         arflds = [
-            'spectra.coadd.AND_MASK',
-            'spectra.coadd.FLUX',
-            'spectra.coadd.IVAR',
-            'spectra.coadd.LOGLAM',
-            'spectra.coadd.MODEL',
-            'spectra.coadd.OR_MASK',
-            'spectra.coadd.SKY',
-            'spectra.coadd.WDISP',
+            'mask',
+            'flux',
+            'ivar',
+            'LOGLAM',
+            'MODEL',
+            'OR_MASK',
+            'SKY',
+            'WDISP',
             ]
         #!print(f'clienti={self.clienti}')
         recs = self.clienti.sample_records(1,
@@ -408,6 +409,7 @@ class SparclApiTest(unittest.TestCase):
             print(f'boss_numpy: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_numpy, msg='Actual to Expected')
 
+    @skip('Type conversions removed until redesign')
     def test_retrieve_boss_pandas(self):
         """Convert to Pandas."""
         arflds = [
@@ -428,6 +430,7 @@ class SparclApiTest(unittest.TestCase):
             print(f'boss_pandas: actual={pformat(actual)}')
         self.assertEqual(actual, exp.boss_pandas, msg='Actual to Expected')
 
+    @skip('Type conversions removed until redesign')
     def test_retrieve_boss_spectrum1d(self):
         """Convert to Spectrum1D."""
         arflds = [
@@ -525,6 +528,8 @@ class SparclApiTest(unittest.TestCase):
         self.assertEqual(actual, exp.everest_spectrum1d,
                          msg='Actual to Expected')
 
+    # To get suitable constraints (Pothier, DEV, in sparc-shell):
+    #   list(FitsFile.objects.all().values('ra','dec')[:10])
     def test_find_0(self):
         """Get metadata using search spec."""
         name = 'find_0'
@@ -533,12 +538,11 @@ class SparclApiTest(unittest.TestCase):
         outfields = ['id','ra','dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
         constraints = [
-            ['ra', 198.0, 199.0],
-            ['dec', -2.0, -1.0],
+            ['ra', 200.0, 210.0],
+            ['dec', -2.0, +2.0],
         ]
-
         found = self.clienti.find(outfields, constraints)
-        #print(f'find_0 found={found.rows}')
-        actual = found.rows
-
-        self.assertDictEqual(actual[0], exp.find_0[0], msg='Actual to Expected')
+        actual = found.rows[:2]
+        if showact:
+            print(f'find_0: actual={actual}')
+        self.assertEqual(actual, exp.find_0, msg='Actual to Expected')
