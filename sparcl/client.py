@@ -547,8 +547,6 @@ class SparclApi():
             >>> client.missing_specids(si)
             [1858907533188556800, 6171312851359387648]
         """
-        # Removed documentation
-        #! countOnly (boolean, optional): (default: False) If true, only return the count of missing specids.
 
         verbose = verbose or self.verbose
         uparams = dict()
@@ -581,7 +579,7 @@ class SparclApi():
             else: # dr=None, include not subset of common
                 raise Exception(
                     'Currently we do not support using an include_list '
-                    'when NOT specifying a structure')
+                    'when NOT specifying a Data Set')
         else: # dr not None
             unknown = incSet.difference(self.dr_fields[dr])
             if len(unknown) > 0:
@@ -798,7 +796,8 @@ class SparclApi():
             warn(f"{'; '.join(meta['status'].get('warnings'))}")
 
         return Results(
-            [ut._AttrDict(tc.convert(r, rtype, self, include)) for r in records],
+            [ut._AttrDict(tc.convert(r, rtype, self, include))
+             for r in records],
             client=self)
 
     def sample_records(self, count, structure=None, include='DEFAULT', **kwargs):

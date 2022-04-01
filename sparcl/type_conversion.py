@@ -5,7 +5,7 @@ from pprint import pformat
 from enum import Enum,auto
 # External Packages
 import numpy as np
-import pandas as pd
+#!import pandas as pd
 from specutils import Spectrum1D
 import astropy.units as u
 from astropy.nddata import InverseVariance
@@ -65,10 +65,10 @@ class Convert(ABC):
         newrec = copy.deepcopy(record)
         return(newrec)
 
-    @abstractmethod
-    def to_pandas(self, record, o2nLUT):
-        newrec = copy.deepcopy(record)
-        return(newrec)
+#!    @abstractmethod
+#!    def to_pandas(self, record, o2nLUT):
+#!        newrec = copy.deepcopy(record)
+#!        return(newrec)
 
 
 class NoopConvert(Convert):
@@ -138,26 +138,26 @@ class SdssDr16(Convert):
         return(newrec)
 
 
-    def to_pandas(self, record, o2nLUT):
-        arflds = [
-            'spectra.coadd.and_mask',
-            'spectra.coadd.flux',
-            'spectra.coadd.ivar',
-            'spectra.coadd.loglam',
-            'spectra.coadd.model',
-            'spectra.coadd.or_mask',
-            'spectra.coadd.sky',
-            'spectra.coadd.wdisp',
-            ]
-        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
-                      for f in arflds if f in o2nLUT)
-        newrec = dict(df = pd.DataFrame(dfdict))
-        for orig,new in o2nLUT.items():
-            if orig in arflds:
-                continue
-            if new in record:
-                newrec[new] = record[new]
-        return(newrec)
+#!    def to_pandas(self, record, o2nLUT):
+#!        arflds = [
+#!            'spectra.coadd.and_mask',
+#!            'spectra.coadd.flux',
+#!            'spectra.coadd.ivar',
+#!            'spectra.coadd.loglam',
+#!            'spectra.coadd.model',
+#!            'spectra.coadd.or_mask',
+#!            'spectra.coadd.sky',
+#!            'spectra.coadd.wdisp',
+#!            ]
+#!        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+#!                      for f in arflds if f in o2nLUT)
+#!        newrec = dict(df = pd.DataFrame(dfdict))
+#!        for orig,new in o2nLUT.items():
+#!            if orig in arflds:
+#!                continue
+#!            if new in record:
+#!                newrec[new] = record[new]
+#!        return(newrec)
 
 
 class BossDr16(Convert):
@@ -218,26 +218,26 @@ class BossDr16(Convert):
                 newrec[new] = record[new]
         return(newrec)
 
-    def to_pandas(self, record, o2nLUT): # BOSS
-        arflds = [
-            'spectra.coadd.AND_MASK',
-            'spectra.coadd.FLUX',
-            'spectra.coadd.IVAR',
-            'spectra.coadd.LOGLAM',
-            'spectra.coadd.MODEL',
-            'spectra.coadd.OR_MASK',
-            'spectra.coadd.SKY',
-            'spectra.coadd.WDISP',
-            ]
-        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
-                      for f in arflds if f in o2nLUT)
-        newrec = dict(df = pd.DataFrame(dfdict))
-        for orig,new in o2nLUT.items():
-            if orig in arflds:
-                continue
-            if new in record:
-                newrec[new] = record[new]
-        return(newrec)
+#!    def to_pandas(self, record, o2nLUT): # BOSS
+#!        arflds = [
+#!            'spectra.coadd.AND_MASK',
+#!            'spectra.coadd.FLUX',
+#!            'spectra.coadd.IVAR',
+#!            'spectra.coadd.LOGLAM',
+#!            'spectra.coadd.MODEL',
+#!            'spectra.coadd.OR_MASK',
+#!            'spectra.coadd.SKY',
+#!            'spectra.coadd.WDISP',
+#!            ]
+#!        dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+#!                      for f in arflds if f in o2nLUT)
+#!        newrec = dict(df = pd.DataFrame(dfdict))
+#!        for orig,new in o2nLUT.items():
+#!            if orig in arflds:
+#!                continue
+#!            if new in record:
+#!                newrec[new] = record[new]
+#!        return(newrec)
 
 
 
@@ -343,43 +343,43 @@ class Desi(Convert):
         return(newrec)
 
 
-    def to_pandas(self, record, o2nLUT):
-        arflds = [
-            'spectra.b_flux',
-            'spectra.b_ivar',
-            'spectra.b_mask',
-            'spectra.b_wavelength',
-            'spectra.r_flux',
-            'spectra.r_ivar',
-            'spectra.r_mask',
-            'spectra.r_wavelength',
-            'spectra.z_flux',
-            'spectra.z_ivar',
-            'spectra.z_mask',
-            'spectra.z_wavelength',
-        ]
-        b_flds = [f for f in arflds if f.startswith('spectra.b_')]
-        r_flds = [f for f in arflds if f.startswith('spectra.r_')]
-        z_flds = [f for f in arflds if f.startswith('spectra.z_')]
-
-        #! dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
-        #!               for f in arflds if f in o2nLUT)
-        #! newrec = dict(df = pd.DataFrame(dfdict))
-        newrec = dict(
-            b_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in b_flds}),
-            r_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in r_flds}),
-            z_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in z_flds}),
-        )
-
-        # Copy all the rest of the fields
-        for orig,new in o2nLUT.items():
-            if orig in arflds:
-                continue
-            if new in record:
-                newrec[new] = record[new]
-
-
-        return(newrec)
+#!    def to_pandas(self, record, o2nLUT):
+#!        arflds = [
+#!            'spectra.b_flux',
+#!            'spectra.b_ivar',
+#!            'spectra.b_mask',
+#!            'spectra.b_wavelength',
+#!            'spectra.r_flux',
+#!            'spectra.r_ivar',
+#!            'spectra.r_mask',
+#!            'spectra.r_wavelength',
+#!            'spectra.z_flux',
+#!            'spectra.z_ivar',
+#!            'spectra.z_mask',
+#!            'spectra.z_wavelength',
+#!        ]
+#!        b_flds = [f for f in arflds if f.startswith('spectra.b_')]
+#!        r_flds = [f for f in arflds if f.startswith('spectra.r_')]
+#!        z_flds = [f for f in arflds if f.startswith('spectra.z_')]
+#!
+#!        #! dfdict = dict((o2nLUT[f], record[o2nLUT[f]])
+#!        #!               for f in arflds if f in o2nLUT)
+#!        #! newrec = dict(df = pd.DataFrame(dfdict))
+#!        newrec = dict(
+#!            b_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in b_flds}),
+#!            r_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in r_flds}),
+#!            z_df = pd.DataFrame({o2nLUT[f]: record[o2nLUT[f]] for f in z_flds}),
+#!        )
+#!
+#!        # Copy all the rest of the fields
+#!        for orig,new in o2nLUT.items():
+#!            if orig in arflds:
+#!                continue
+#!            if new in record:
+#!                newrec[new] = record[new]
+#!
+#!
+#!        return(newrec)
 
 
 class DesiDenali(Desi):

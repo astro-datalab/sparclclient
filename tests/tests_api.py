@@ -49,26 +49,25 @@ class SparclApiTest(unittest.TestCase):
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
-        cls.specids = ['1506512395860731904',
-                       '3383388400617889792',
-                       '1429933274376612',
-                       '1429741264506824']
-
-        cls.ids = ['8ad95037-d288-4bf7-84c3-5bdb010174c5',
-                   '6725afe4-a279-4103-9612-cf8dcd5e2bca',
-                   '6ec21117-2cb3-4887-9ed9-fb1dd8dc56f5']
+        cls.specids = [1429741264506824, 1429933274376612,
+                       1506512395860731904, 3383388400617889792]
+        cls.uuids = ['8ad95037-d288-4bf7-84c3-5bdb010174c5',
+                     '6725afe4-a279-4103-9612-cf8dcd5e2bca',
+                     'bf0b1583-2d27-4b66-b2c7-7e7177e25c01',
+                     '6ec21117-2cb3-4887-9ed9-fb1dd8dc56f5']
 
         print(f'Running Client tests against Server: '
               f'{urlparse(rooturl).netloc}')
 
     @classmethod
     def tearDownClass(cls):
-        print(f'\n## Times on: {urlparse(rooturl).netloc.split(".")[0]}'
-              ' (TestName, NumRecs, Description)')
-        for k,v in cls.timing.items():
-            print(f'##   {k}: elapsed={v:.1f} secs;'
-                  f'\t{cls.count.get(k)}'
-                  f'\t{cls.doc.get(k)}')
+        pass
+        #! print(f'\n## Times on: {urlparse(rooturl).netloc.split(".")[0]}'
+        #!       ' (TestName, NumRecs, Description)')
+        #! for k,v in cls.timing.items():
+        #!     print(f'##   {k}: elapsed={v:.1f} secs;'
+        #!           f'\t{cls.count.get(k)}'
+        #!           f'\t{cls.doc.get(k)}')
 
     # Full records are big.  Get the gist of them.
     def records_expected(self, recs, expd, jdata=None, show=False):
@@ -265,29 +264,37 @@ class SparclApiTest(unittest.TestCase):
         missing = self.clienti.missing_specids(specids)
         assert missing == []
 
+    def test_missing_2(self):
+        """None missing, use in other tests"""
+        missing = self.clienti.missing_specids(self.specids)
+        if len(missing) > 0:
+            print(f'test_missing_2: missing={missing}')
+        assert missing == []
+
     def test_retrieve_0(self):
         """Get spectra using small list of specids."""
         name = 'retrieve_0'
         this = self.test_retrieve_0
-        getcnt = 3
         dr='SDSS-DR16'
 
-        records = self.clienti.retrieve(self.specids, structure=dr)
-        print(f'records[0].keys() = {records[0].keys()}')
-        actual = sorted(r['id'] for r in records)
+        #!records = self.clienti.retrieve(self.specids, structure=dr)
+        records = self.clienti.retrieve(self.specids, include=['id','specid'])
+        actual = sorted([r['specid'] for r in records])
+        if showact:
+            print(f'retrieve_0: uuids={[r["id"] for r in records]}')
+            print(f'retrieve_0: actual={actual}')
         self.doc[name] = this.__doc__
         self.count[name] = len(records)
 
         #!print(f'DBG gotspecids={gotspecids} specids={specids}')
-        self.assertEqual(actual, exp.retrieve_0, msg='Actual to Expected')
+        self.assertEqual(actual, self.specids, msg='Actual to Expected')
 
     def test_retrieve_0b(self):
         """Get spectra using small list of uuids."""
         name = 'retrieve_0b'
         this = self.test_retrieve_0b
-        getcnt = 2
         # uuids from expected.py:retrieve_0
-        uuids = exp.retrieve_0
+        uuids = self.uuids
 
         tic()
         records = self.clienti.uuid_retrieve(uuids)
