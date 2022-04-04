@@ -621,7 +621,7 @@ class SparclApi():
            >>> ids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3', '84c1d7fa-aadb-43f6-8047-50d041edba57']
            >>> res = client.uuid_retrieve(ids, include=['flux'])
         """
-        self._validate_include(None, include)
+        self._validate_include(structure, include)
 
         verbose = verbose or self.verbose
         if verbose:
