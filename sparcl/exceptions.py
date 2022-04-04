@@ -16,6 +16,8 @@ def genSparclException(response, verbose=False):
         return BadPath(status.get('errorMessage'))
     elif status.get('errorCode') == 'BADQUERY':
         return BadQuery(status.get('errorMessage'))
+    elif status.get('errorCode') == 'UNKFIELD':
+        return UnknownField(status.get('errorMessage'))
     else:
         return UnknownServerError(status.get('errorMessage'))
 
@@ -77,5 +79,9 @@ class UnknownSparcl(BaseSparclException):
     """Unknown SPARCL error.  If this is ever raised (seen in a log)
     create and use a new BaseSparcException exception that is more specific."""
     error_code = 'UNKSPARC'
+
+class UnknownField(BaseSparclException):
+    """Unknown field name for a record"""
+    error_code = 'UNKFIELD'
 
 # error_code values should be no bigger than 8 characters 12345678

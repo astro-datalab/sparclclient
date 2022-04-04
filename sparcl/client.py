@@ -921,11 +921,15 @@ class SparclApi():
         search = [] if constraints is None else constraints
         sspec = dict(outfields=outfields,  search=search)
         res = requests.post(url, json=sspec, timeout=self.timeout)
-        #!print(f'find res={res.content}')
-        return Found(res.json(), client=self)
-        #! info, *rows = res
-        #! return(rows)
 
+        if res.status_code != 200:
+            #!print(f'DBG: res.content={res.content}') #@@@
+            if self.verbose and ('traceback' in res.json()):
+                #!print(f'DBG: res.json={res.json()}')
+                print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
+            raise ex.genSparclException(res, verbose=self.verbose)
+
+        return Found(res.json(), client=self)
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
