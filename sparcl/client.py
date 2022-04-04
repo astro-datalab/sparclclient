@@ -577,9 +577,16 @@ class SparclApi():
             if incSet.issubset(self.common_fields):
                 return True
             else: # dr=None, include not subset of common
-                raise Exception(
-                    'Currently we do not support using an include_list '
-                    'when NOT specifying a Data Set')
+                unknown = incSet - set(self.common_fields)
+                msg = (f'The INCLUDE list contains invalid data field names. '
+                       f'Since you did not specify a Data Set, you can only '
+                       f'use field names that are common to ALL Data Sets. '
+                       f'Your include list contains '
+                       f'({", ".join(sorted(list(unknown)))}) '
+                       f'which is not a common field '
+                       f'(one of: '
+                       f'{", ".join(sorted(list(self.common_fields)))}).')
+                raise ex.BadInclude(msg)
         else: # dr not None
             unknown = incSet.difference(self.dr_fields[dr])
             if len(unknown) > 0:
