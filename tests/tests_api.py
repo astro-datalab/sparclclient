@@ -553,3 +553,30 @@ class SparclApiTest(unittest.TestCase):
         if showact:
             print(f'find_0: actual={actual}')
         self.assertEqual(actual, exp.find_0, msg='Actual to Expected')
+
+    def test_find_1(self):
+        """Get metadata using search spec."""
+        outfields = ['id','ra','dec']
+        found = self.clienti.find(outfields, limit=1)
+        actual = found.rows
+        if showact:
+            print(f'find_1: actual={actual}')
+        self.assertEqual(actual, exp.find_1, msg='Actual to Expected')
+
+    def test_find_2(self):
+        """Get metadata using search spec."""
+        outfields = ['id','ra','dec']
+        found = self.clienti.find(outfields, limit=None)
+        actual = len(found.rows)
+        if showact:
+            print(f'find_2: actual={actual}')
+        self.assertEqual(actual, exp.find_2, msg='Actual to Expected')
+
+    def test_find_3(self):
+        """Get metadata using search spec."""
+        outfields = ['id','ra','dec']
+        found = self.clienti.find(outfields, limit=3)
+        actual = found.rows
+        if showact:
+            print(f'find_3: actual={actual}')
+        self.assertEqual(actual, exp.find_3, msg='Actual to Expected')

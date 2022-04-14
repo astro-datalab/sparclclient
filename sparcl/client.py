@@ -209,8 +209,10 @@ class Results(UserList):
     """@@@ NEEDS DOCUMENTATION !!!"""
 
     def __init__(self, mylist, client = None):
+        #!UserList.__init__(self, self.data)
+        super().__init__(mylist)
+        self.hdr, *self.records = mylist
         # Following allows an instance of Results to be used like a list
-        UserList.__init__(self, mylist)
         self.client = client
 
     def __repr__(self):
@@ -234,8 +236,8 @@ class Found(UserList):
     """@@@ NEEDS DOCUMENTATION !!!"""
 
     def __init__(self, mylist, client = None):
-        UserList.__init__(self, mylist)
-        #!print(f'Found. init, mylist={mylist}')
+        #UserList.__init__(self, self.data)
+        super().__init__(mylist)
         self.hdr, *self.records = mylist
         self.client = client
 
@@ -914,8 +916,8 @@ class SparclApi():
     #!     return ut.dict2tree(recs[0])
 
 
-    def find(self, outfields, constraints=None):
-        uparams =dict()
+    def find(self, outfields, constraints=None, limit=500):
+        uparams =dict(limit=limit,)
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/find/?{qstr}'
         search = [] if constraints is None else constraints
@@ -930,6 +932,7 @@ class SparclApi():
             raise ex.genSparclException(res, verbose=self.verbose)
 
         return Found(res.json(), client=self)
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
