@@ -85,3 +85,6 @@ class UnknownField(BaseSparclException):
     error_code = 'UNKFIELD'
 
 # error_code values should be no bigger than 8 characters 12345678
+
+class ServerConnectionError(BaseSparclException):
+    error_code = 'SRVCONER'

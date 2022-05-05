@@ -5,7 +5,7 @@ This module interfaces to the SPARC-Server to get spectra data.
 
 ############################################
 # Python Standard Library
-from urllib.parse import urlencode
+from urllib.parse import urlencode,urlparse
 from enum import Enum,auto
 from pprint import pformat as pf
 from pathlib import Path, PosixPath
@@ -26,7 +26,7 @@ import sparcl.exceptions as ex
 import sparcl.type_conversion as tc
 from sparcl import __version__
 
-
+pat_hosts = ['sparc1.datalab.noirlab.edu','sparc2.datalab.noirlab.edu']
 
 #23456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.
 
@@ -318,8 +318,15 @@ class SparclApi():
         #@@@ read timeout should be a function of the POST payload size
 
         # Get API Version
-        verstr = requests.get(
-            f'{self.apiurl}/version/',timeout=self.timeout).content
+        try:
+            verstr = requests.get(
+                f'{self.apiurl}/version/',timeout=self.timeout).content
+        except requests.ConnectionError as err:
+            msg=f'Could not connect to {self.rooturl}.  '
+            if urlparse(url).hostname in pat_hosts:
+                msg += 'Did you enable VPN?'
+            raise ex.ServerConnectionError(msg) from None # disable chaining
+
         self.apiversion = float(verstr)
 
         if (int(self.apiversion) - int(SparclApi.KNOWN_GOOD_API_VERSION)) >= 1:
