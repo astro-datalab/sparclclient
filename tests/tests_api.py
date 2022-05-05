@@ -25,8 +25,8 @@ import sparcl.exceptions as ex
 DEFAULT='DEFAULT'
 ALL='ALL'
 
-rooturl = 'http://localhost:8030/' #@@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://localhost:8030/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 showact = False
 #showact = True
@@ -50,11 +50,10 @@ class SparclApiTest(unittest.TestCase):
         cls.doc = dict()
         cls.count = dict()
         cls.specids = [1429741264506824, 1429933274376612,
-                       1506512395860731904, 3383388400617889792]
-        cls.uuids = ['8ad95037-d288-4bf7-84c3-5bdb010174c5',
-                     '6725afe4-a279-4103-9612-cf8dcd5e2bca',
-                     'bf0b1583-2d27-4b66-b2c7-7e7177e25c01',
-                     '6ec21117-2cb3-4887-9ed9-fb1dd8dc56f5']
+                       1506512395860731904]
+        cls.uuids = ['d641330b-c49e-49d4-b38c-60ac3e033f3d',
+                     '8ef5974d-f748-47d1-9fc4-46bdf6bc0cdf',
+                     '4dbd8f7a-1900-4ab3-bb09-f57d4850a6e8']
 
         print(f'Running Client tests against Server: '
               f'{urlparse(rooturl).netloc}')
@@ -269,6 +268,7 @@ class SparclApiTest(unittest.TestCase):
         missing = self.clienti.missing_specids(self.specids)
         if len(missing) > 0:
             print(f'test_missing_2: missing={missing}')
+        #print("missing:", missing)
         assert missing == []
 
     def test_retrieve_0(self):
