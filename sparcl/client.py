@@ -1,5 +1,4 @@
 """Client module for SPARCL.
-
 This module interfaces to the SPARC-Server to get spectra data.
 """
 
@@ -79,22 +78,16 @@ RESERVED=set([DEFAULT, ALL])
 
 def fields_available(records):
     """Get list of fields used in records. One list per Data Set.
-
     Args:
         records (list): List of records (each is a dictionary).
-
     Returns:
         dict: dict[Structure] = [field_name1, ...]
-
     :param records: List of records (each is a dictionary)
     :returns: dict[Structure] = [field_name1, ...]
-    :rtype: dict
-
     Example:
       >>> from api.client import fields_available
       >>> recs = client.sample_records(3)
       >>> flds = fields_available(recs)
-
     Example:
         >>> from sparcl.client import fields_available
         >>> recs = client.sample_records(3)
@@ -105,22 +98,16 @@ def fields_available(records):
 
 def record_examples(records):
     """Copy one record for each Data Set type.
-
     Args:
         records (list): List of records (each is a dictionary).
-
     :param records: List of records (each is a dictionary)
     :returns: dict[Structure] = rec
-    :rtype: dict
-
     Example:
       >>> from api.client import record_examples
       >>> recs = client.sample_records(3)
       >>> rex = record_examples(recs)
-
     Returns:
         dict: dict[Structure] = rec
-
     Example:
         >>> from sparcl.client import record_examples
         >>> recs = client.sample_records(3)
@@ -131,20 +118,14 @@ def record_examples(records):
 
 def get_metadata(records):
     """Get records of just metadata used in records.
-
     Metadata is considered to be any field whose type is a Number or String.
     Therefore, this will not include vectors, lists, tuples, etc.
-
     Args:
         records (list): List of records (dictionaries).
-
     Returns:
         list(dict): New list of dictionaries. Each dict contains only metadata fields.
-
     :param records: List of records (dictionaries)
     :returns: new list of dictionaries. Each dict contains only metadata fields.
-    :rtype: list(dict)
-
     Example:
         >>> from sparcl.client import get_metadata
         >>> recs = client.sample_records(3)
@@ -156,16 +137,12 @@ def get_metadata(records):
 
 def get_vectordata(records):
     """Get records of just vector data used in records.
-
     Vector data is considered to be any field whose type is a list or tuple.
     Therefore, this will not include Number or String.
-
     Args:
         records (list): List of records (dictionaries).
-
     Returns:
         list(dict): New list of dictionaries. Each dict contains only vector data fields.
-
     Example:
         >>> from sparcl.client import get_vectordata
         >>> recs = client.sample_records(3)
@@ -180,19 +157,14 @@ def get_vectordata(records):
 
 def rename_fields(rename_dict, records):
     """Rename some field names in all given records. EXPERIMENTAL.
-
     Args:
         rename_dict (key,value): The key is the current field name, value is the new field name.
         records (list): List of records (dictionaries) to transform.
-
     Returns:
         list: Renamed field names in all given records.
-
     :param rename_dict: The key is current field name, value is new.
     :param records: List of records (dictionaries) to transform
     :returns: new_records
-    :rtype: list
-
     Example:
       >>> from api.client import rename_fields
       >>> recs = client.sample_records(1)
@@ -262,11 +234,9 @@ class Found(UserList):
 
 class SparclApi():
     """Provides interface to SPARCL Server.
-
     When using this to report a bug, set verbose to True. Also print
     your instance of this.  The results will include important info
     about the Client and Server that is usefule to Developers.
-
     :param url: Base URL of SPARC Server
     :param verbose: (True,[False]) Default verbosity for all client methods.
     :param verbose: (True,[False]) True:: override field renaming
@@ -274,7 +244,6 @@ class SparclApi():
                connection with server.
     :param read_timeout [5400]: Number of seconds to wait for server to send
                a response. (generally time to wait for first byte)
-
     Args:
         url (str): Base URL of SPARC Server.
         verbose (:obj:`bool`, optional): Default verbosity is set to False for all client methods.
@@ -282,11 +251,9 @@ class SparclApi():
             Defaults to 1.1.
         read_timeout (:obj:`float`, optional): Number of seconds to wait for server to send a response.
             Generally time to wait for first byte. Defaults to 5400.
-
     Example:
         >>> client = SparclApi(verbose=True)
         >>> print(client)
-
     Raises:
         Exception: Object creation compares the version from the Server against the one expected
             by the Client. Throws an error if the Client is a major version or more behind.
@@ -301,7 +268,6 @@ class SparclApi():
                  read_timeout=90*60,   # seconds
     ):
         """Create client instance.
-
         """
         self.rooturl=url.rstrip("/")
         self.apiurl = f'{self.rooturl}/sparc'
@@ -412,17 +378,12 @@ class SparclApi():
 
     def get_field_names(self, structure):
         """List field names available for retrieve.
-
         Args:
             structure (str): Data Set to get the field names of.
-
         Returns:
             list: List of field names.
-
         :param structure: List field names of this Data Set.
         :returns: list of field names
-        :rtype: list
-
         Example:
             >>> client.get_field_names('DESI-everest')
         """
@@ -438,19 +399,14 @@ class SparclApi():
 
     def orig_field(self, structure, client_name):
         """Get original field name as provided in Data Set.
-
         Args:
             structure (str): Name of Data Set.
             client_name (str): Field name used in Client methods.
-
         Returns:
             str: Original field name.
-
         :param structure: Name of Data Set
         :param client_name: Field name used in Client methods.
         :returns: Original field name
-        :rtype: string
-
         Example:
             >>> client.orig_field('BOSS-DR16', 'flux')
             'spectra.coadd.FLUX'
@@ -460,19 +416,14 @@ class SparclApi():
 
     def client_field(self, structure, orig_name):
         """Get field name used in Client methods.
-
         Args:
             structure (str): Name of Data Set.
             orig_name (str): Original field name as provided in Data Set.
-
         Returns:
             str: Client field name.
-
         :param structure: Name of Data Set
         :param orig_name: Original field name as provided in Data Set.
         :returns: Client field name
-        :rtype: string
-
         Example:
             >>> client.client_field('BOSS-DR16', 'spectra.coadd.FLUX')
             'flux'
@@ -482,10 +433,8 @@ class SparclApi():
 
     def sample_specids(self, samples=5, structure=None, random=True, **kwargs):
         """Return a small list of specids.
-
         This is intended to make it easy to get just a few specids to use
         for experimenting with the rest of the SPARCL API.
-
         Args:
             samples (:obj:`int`, optional): The number of sample specids to get.
                 Defaults to 5.
@@ -493,10 +442,8 @@ class SparclApi():
                Defaults to None (meaning ANY Data Set).
            random (:obj:`bool`, optional): Randomize sample by returning specids
                from any of the Data Sets hosted on SPARC. Defaults to True.
-
         Returns:
             list: List of specids.
-
         Example:
             >>> client.sample_specids(samples=3, structure='DESI-everest')
         """
@@ -518,13 +465,10 @@ class SparclApi():
     @property
     def version(self):
         """Return version of Server Rest API used by this client.
-
         If the Rest API changes such that the Major version increases,
         a new version of this module will likely need to be used.
-
         Returns:
             float: API version.
-
         Example:
             >>> SparclApi('http://localhost:8030').version
             1.0
@@ -539,18 +483,15 @@ class SparclApi():
     def missing_specids(self, specid_list, countOnly=False, verbose=False):
         """Return the subset of the given specid list that is NOT stored
         in the database.
-
         Args:
            specid_list (list): List of specids.
            countOnly (:obj:`bool`, optional): Set to True to return only a count
                of the missing specids from the list. Defaults to False.
            verbose (:obj:`bool`, optional): Set to True for in-depth return statement.
                Defaults to False.
-
         Returns:
             list: The subset of the given specid list that is NOT stored in the
                 database.
-
         Example:
             >>> si = [1858907533188556800, 6171312851359387648, 1647268306035435520]
             >>> client.missing_specids(si)
@@ -611,18 +552,15 @@ class SparclApi():
     def uuid_retrieve(self,
                       specid_list,
                       include='DEFAULT',
-                      rtype=None,
+                      #rtype=None, # not supported for MVP
                       structure=None,
                       #internal_names=False, # No field rename ## Client INIT only
                       verbose=False):
         """Get spectrum from UUID (universally unique identifier) list.
-
         Args:
            uuid_list (list): List of uuids.
            include (list, 'DEFAULT', 'ALL'):
               List of field names to include in each record. (default: 'DEFAULT')
-           rtype (str, optional): Data-type to use for spectra data. One of:
-              json, numpy, pandas, spectrum1d. (default: None)
            verbose (boolean, optional): (default: False)
         Returns:
            List of records. Each record is a dictionary of named fields.
@@ -633,8 +571,8 @@ class SparclApi():
         self._validate_include(structure, include)
 
         verbose = verbose or self.verbose
-        if verbose:
-            print(f'retrieve(rtype={rtype})')
+        #if verbose:
+        #    print(f'retrieve(rtype={rtype})') # rtype not supported for MVP
 
         if include == DEFAULT:
             inc = '_DEFAULT'
@@ -705,32 +643,26 @@ class SparclApi():
     def retrieve(self,
                  specid_list,
                  include='DEFAULT',
-                 rtype=None,
+                 #rtype=None, # not supported for MVP
                  structure=None,
                  #internal_names=False, # No field rename ## Client INIT only
                  verbose=False):
         """Get spectrum from specid list.
-
         Args:
            specid_list (list): List of specids.
            include (list, 'DEFAULT', 'ALL'): List of field names to include in each
                record. Defaults to 'DEFAULT'.
-           rtype (:obj:`str`, optional): Data-type to use for spectra data. One of:
-               json, numpy, pandas, spectrum1d. Defaults to None.
            structure (str): The Data Set (DS) name associated with the specids.
                Or None to retrieve from any DS that contains the specid. Defaults
                to None.
            verbose (:obj:`bool`, optional): Set to true for in-depth return statement.
                Defaults to False.
-
         Returns:
             list(dict): List of records. Each record is a dictionary of named fields.
-
         Example:
             >>> ink = ['flux']
             >>> sdss_ids = [849044290804934656, 309718438815754240]
             >>> res_sdss = client.retrieve(sdss_ids, structure='SDSS-DR16', include=ink)
-
         Raises:
             ConnectTimeout: Took too long to establish connection with server.
             ReadTimeout: Server took too long to send a response.
@@ -739,7 +671,6 @@ class SparclApi():
             HTTPError: Error in the HTTP.
             URLRequired: A URL is required.
             RequestException: Problem with request.
-
         """
         #!   internal_names (boolean, optional): (default: False)
         #!      If True, do not rename fields.
@@ -747,8 +678,8 @@ class SparclApi():
         self._validate_include(structure, include)
 
         verbose = verbose or self.verbose
-        if verbose:
-            print(f'retrieve(rtype={rtype})')
+        #if verbose:
+        #    print(f'retrieve(rtype={rtype})') # rtype not supported for MVP
 
         if include == DEFAULT:
             inc = '_DEFAULT'
@@ -811,28 +742,30 @@ class SparclApi():
         if len(meta['status'].get('warnings',[])) > 0:
             warn(f"{'; '.join(meta['status'].get('warnings'))}")
 
-        return Results(
-            [ut._AttrDict(tc.convert(r, rtype, self, include))
-             for r in records],
-            client=self)
+        #return Results(
+        #    [ut._AttrDict(tc.convert(r, rtype, self, include)) # rtype not supported in MVP
+        #     for r in records],
+        #    client=self)
+
+        #return Results(
+        #    [ut._AttrDict(tc.convert(r, self, include))
+        #     for r in records],
+        #    client=self)
+
+        return Results([ut._AttrDict(r) for r in records],  client=self)
 
     def sample_records(self, count, structure=None, include='DEFAULT', **kwargs):
         """Return list of random records from given STRUCTURE (Data Set).
-
         Args:
             count (int): Number of sample records to get from database.
             structure (:obj:`str`, optional): The Data Set from which to get
                 sample records. Defaults to None (meaning ANY Data Set).
-
            include (list, 'DEFAULT', 'ALL'):
                List of paths to include in each record. Defaults to 'DEFAULT'.
-
            structure (str, optional): (default: None means ANY)
                The Data Set from which to get sample records.
-
         Returns:
             list(dict): List of random records from given STRUCTURE (Data Set).
-
         Example:
             >>> samrec = client.sample_records(1, structure='BOSS-DR16')
             >>> pprint.pprint(samrec,depth=2)
@@ -869,22 +802,16 @@ class SparclApi():
     def normalize_field_names(self, recs):
         """Return copy of records with all field names converted to the names
         used by the Data Set provider.
-
         Args:
             recs (list): List of dictionaries representing spectra records.
-
         :param recs: List of dictionaries representing spectra records
         :returns: new list of dicts of spectra records (with diff field names)
-        :rtype: list
-
         Example:
            >>> recs = client.sample_records(1)
            >>> client.normalize_field_names(recs)
-
         Returns:
             list: New list of dictionaries of spectra records with different
                 field names.
-
         Example:
             >>> recs = client.sample_records(1)
             >>> client.normalize_field_names(recs)
