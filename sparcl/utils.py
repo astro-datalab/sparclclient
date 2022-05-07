@@ -131,3 +131,7 @@ def dict2tree(obj, name=None, prefix=''):
     else:
         tree = {showname: type(obj).__name__}
     return(tree)
+
+def invLUT(lut):
+    """Given dict[k]=v, Return dict[v]=k"""
+    return {v : k for k,v in lut.items()}

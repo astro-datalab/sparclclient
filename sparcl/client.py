@@ -15,6 +15,7 @@ from collections.abc import MutableMapping
 from collections import OrderedDict, UserList
 import pkg_resources
 from numbers import Number
+from collections import defaultdict
 ############################################
 ## External Packages
 import requests
@@ -312,46 +313,51 @@ class SparclApi():
         ### Convenience LookUp Tables derived from one query
         ###
         # dfLUT[dr][origPath] => dict[new=newPath,default=bool,store=bool]
-        lut0 = requests.get(f'{self.apiurl}/fields/').json()
-        lut1 = OrderedDict(sorted(lut0.items()))
-        self.dfLUT = {k:OrderedDict(sorted(d.items()))
-                      for k,d in lut1.items()}
+        #! lut0 = requests.get(f'{self.apiurl}/fields/').json()
+        #! lut1 = OrderedDict(sorted(lut0.items()))
+        #! self.dfLUT = {k:OrderedDict(sorted(d.items()))
+        #!               for k,d in lut1.items()}
 
+        datafields = requests.get(f'{self.apiurl}/datafields/').json()
+        core_list = set([df['origdp']
+                         for df in datafields if df['storage']=='C'])
+        dr_list = set(df['data_release_id'] for df in datafields)
 
-        if internal_names:
-            # Change newPath to value of origPath in all dfLUT
-            # fields[orig] = dict[new=newPath,default=bool,store=bool]
-            for fields in self.dfLUT.values():
-                for k,d in fields.items():
-                    d['new'] = k
+        # Per DataRelease: map ORIG fieldname (key) to NEW fieldname (value)
+        # dr_o2n[DR][ORIG] => NEW
+        dr_o2n = {dr : {df['origdp'] : df['newdp']
+                        for df in datafields if df['data_release_id'] == dr}
+                  for dr in dr_list}
+        dr_n2o = {dr : {df['newdp'] : df['origdp']
+                        for df in datafields if df['data_release_id'] == dr}
+                  for dr in dr_list}
 
-            # default[dr] => origFieldName
-            self.default = dict(
-                (dr, [orig for orig,d in v.items() if d['default']])
-                for dr,v in self.dfLUT.items())
+        # Per DataRelease: get Storage, Default, All for each (user) fieldname
+        # dr_attrs[DR][newdp] => dict[storage,default,all]
+        dr_attrs = {dr : {df['newdp'] : {'storage': df['storage'],
+                                         'default': df['default'],
+                                         'all': df['all']}
+                          for df in datafields if df['data_release_id'] == dr}
+                    for dr in dr_list}
 
-            # orig2newLUT[dr][orig] = new
-            self.orig2newLUT = dict((dr,dict((orig,orig)
-                                             for orig,d in v.items()))
-                                    for dr,v in self.dfLUT.items())
-            # new2origLUT[dr][new] = orig
-            self.new2origLUT = dict((dr,dict((orig,orig)
-                                             for orig,d in v.items()))
-                                    for dr,v in self.dfLUT.items())
-        else:  # use field renaming
-            # default[dr] => newFieldName
-            self.default = dict(
-                (dr, [d['new'] for orig,d in v.items() if d['default']])
-                for dr,v in self.dfLUT.items())
+        self.datafields = datafields
+        self.dr_o2n = dr_o2n  # Given Internal name, return User fldname
+        self.dr_n2o = dr_n2o  # Given User fldname, return Internal name
+        self.dr_attrs = dr_attrs
 
-            # orig2newLUT[dr][orig] = new
-            self.orig2newLUT = dict((dr,dict((orig,d['new'])
-                                             for orig,d in v.items()))
-                                    for dr,v in self.dfLUT.items())
-            # new2origLUT[dr][new] = orig
-            self.new2origLUT = dict((dr,dict((d['new'],orig)
-                                             for orig,d in v.items()))
-                                    for dr,v in self.dfLUT.items())
+        # default[dr] => newFieldName, ...
+        self.default = dict(
+            (dr, [d['new'] for orig,d in v.items() if d['default']])
+            for dr,v in self.dfLUT.items())
+
+        # orig2newLUT[dr][orig] = new
+        self.orig2newLUT = dict((dr,dict((orig,d['new'])
+                                         for orig,d in v.items()))
+                                for dr,v in self.dfLUT.items())
+        # new2origLUT[dr][new] = orig
+        self.new2origLUT = dict((dr,dict((d['new'],orig)
+                                         for orig,d in v.items()))
+                                for dr,v in self.dfLUT.items())
 
         # dict[drName] = [fieldName, ...]
         self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
