@@ -178,8 +178,10 @@ def rename_fields(rename_dict, records):
 
 # For results of retrieve()
 class Results(UserList):
-    """@@@ NEEDS DOCUMENTATION !!!"""
-
+    """Inherits from UserList, composed with client instance. 
+       Overrides __repr__ so notebook, ipython will display
+       abbreviated results instead of potentially huge list.
+    """
     def __init__(self, mylist, client = None):
         #!UserList.__init__(self, self.data)
         super().__init__(mylist)
@@ -205,7 +207,9 @@ class Results(UserList):
 ### The Found class
 # For results of find()
 class Found(UserList):
-    """@@@ NEEDS DOCUMENTATION !!!"""
+    """Inherits from UserList. The results from using
+       find() will output its results as a Found class.
+    """
 
     def __init__(self, mylist, client = None):
         #UserList.__init__(self, self.data)
@@ -550,7 +554,7 @@ class SparclApi():
         return True
 
     def uuid_retrieve(self,
-                      specid_list,
+                      uuid_list,
                       include='DEFAULT',
                       #rtype=None, # not supported for MVP
                       structure=None,
@@ -591,7 +595,7 @@ class SparclApi():
             ut.tic()
 
         try:
-            res = requests.post(url, json=specid_list, timeout=self.timeout)
+            res = requests.post(url, json=uuid_list, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
         except requests.exceptions.ReadTimeout as reRT:
