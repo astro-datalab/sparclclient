@@ -24,7 +24,7 @@ everest_spectrum1d = ['_dr', 'b_spec1d', 'r_spec1d', 'z_spec1d']
 
 everest_b_spectrum1d_redshift = 0.17526327367673789
 
-fields_available = {'BOSS-DR16': ['_dr', 'flux', 'id', 'wavelength']}
+fields_available = {'BOSS-DR16': ['_dr', 'flux', 'uuid', 'wavelength']}
 
 record_examples = {'BOSS-DR16': ['_dr',
                'data_release_id',
@@ -49,21 +49,21 @@ get_metadata  = [{'FIBERID': 892,
   'data_release_id': 'BOSS-DR16',
   'datasetgroup_id': 'SDSS_BOSS',
   'dec': 28.751204,
-  'filename': 'spec-10660-58466-0892.fits',
-  'filesize': 218880,
   'instrument_id': 'BOSS',
   'ra': 133.46096,
-  'redshift': -0.00413607759401202,
   'redshift_err': -1.0,
   'redshift_warning': 5,
-  'site_id': 'apo',
+  'site': 'apo',
   'specid': 1429933274376612,
   'specprimary': True,
   'spectype_id': 'STAR',
   'targetid': 0,
   'telescope_id': 'sloan25m',
+  'uuid': 'bf0b1583-2d27-4b66-b2c7-7e7177e25c01',
   'wavemax': 10356.189453125,
-  'wavemin': 3601.63745117188}]
+  'wavemin': 3601.63745117188,
+  'z': -0.00413607759401202}]
+
 
 rename_fields = ['_dr', 'data_set', 'f', 'ivar', 'loglam', 'specid', 'x', 'y', 'z']
 rename_fields_internal = ['_dr', 'data_release_id', 'f2', 'redshift', 'specid', 'spectra.coadd.IVAR', 'spectra.coadd.LOGLAM', 'x', 'y']
@@ -234,7 +234,7 @@ df_lut=OrderedDict([('FIBERID', {'default': False, 'new': 'FIBERID'}),
 
 retrieve_0 = [1429741264506824, 1429933274376612, 1506512395860731904]
 
-retrieve_0b = ['flux', 'id', 'wavelength']
+retrieve_0b = ['flux', 'uuid', 'wavelength']
 
 retrieve_4 = ['FIBERID',
  'MJD',
@@ -247,32 +247,28 @@ retrieve_4 = ['FIBERID',
  'dateobs',
  'dateobs_center',
  'dec',
- 'dirpath',
  'exptime',
- 'extra_files',
- 'filename',
- 'filesize',
  'flux',
- 'id',
  'instrument_id',
  'ivar',
  'mask',
  'model',
  'ra',
- 'redshift',
  'redshift_err',
  'redshift_warning',
- 'site_id',
+ 'site',
  'sky',
  'specid',
  'specprimary',
  'spectype_id',
  'targetid',
  'telescope_id',
+ 'uuid',
  'wave_sigma',
  'wavelength',
  'wavemax',
- 'wavemin']
+ 'wavemin',
+ 'z']
 
 retrieve_5 = ['FIBERID',
  'MJD',
@@ -312,17 +308,30 @@ retrieve_5 = ['FIBERID',
  'wavemax',
  'wavemin']
 
-find_0 = [{'dec': -1.3182428,
-           'id': '00076b91-ecbe-477b-8408-688508c1dcd1',
-           'ra': 200.7604},
-          {'dec': -1.5178219,
-           'id': '0016152a-49fb-4ea2-8693-38a5473b2554',
-           'ra': 200.21042}]
+find_0 = [{'_dr': 'BOSS-DR16',
+  'dec': -0.37900273,
+  'ra': 208.02613,
+  'uuid': '6ec21117-2cb3-4887-9ed9-fb1dd8dc56f5'}]
 
-find_1 = [{'dec': 43.635286, 'id': '000008b3-e3ad-4e40-9fc1-feb18a42227c', 'ra': 145.1597}]
+find_1 = [{'_dr': 'DESI-edr',
+  'dec': 31.0485292872803,
+  'ra': 164.8064626212,
+  'uuid': '00d74e6f-1198-4645-a3ab-1825c847ad87'}]
 
-#find_2 = 92
+find_2 = 92   # DEV
+#find_2 = 582669 # PAT
 
-find_2 = 582669
-find_3 = [{'dec': 43.635286, 'id': '000008b3-e3ad-4e40-9fc1-feb18a42227c', 'ra': 145.1597}, {'dec': 0.46353569, 'id': '00002089-eaf2-44fc-948e-d90210bca3da', 'ra': 322.51088}, {'dec': 32.884866, 'id': '00005e39-cf17-4db2-b23c-a7d335317c1f', 'ra': 179.51175}]
+find_3 = [{'_dr': 'DESI-edr',
+  'dec': 31.0485292872803,
+  'ra': 164.8064626212,
+  'uuid': '00d74e6f-1198-4645-a3ab-1825c847ad87'},
+ {'_dr': 'DESI-edr',
+  'dec': 30.9096466272553,
+  'ra': 164.836648885898,
+  'uuid': '0175617b-3a85-4553-97a6-945cc6307204'},
+ {'_dr': 'DESI-edr',
+  'dec': 31.0938521581518,
+  'ra': 164.724627115411,
+  'uuid': '08cabb87-f5c0-4704-a014-9b10eeaeed64'}]
+
 find_6 = []

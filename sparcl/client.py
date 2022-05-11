@@ -25,8 +25,10 @@ import sparcl.utils as ut
 import sparcl.exceptions as ex
 import sparcl.type_conversion as tc
 from sparcl import __version__
+from sparcl.Results import Found, Retrieved
 
 pat_hosts = ['sparc1.datalab.noirlab.edu','sparc2.datalab.noirlab.edu']
+idfld = 'uuid'  # Science Field Name for uuid.
 
 #23456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.
 
@@ -52,7 +54,7 @@ pat_hosts = ['sparc1.datalab.noirlab.edu','sparc2.datalab.noirlab.edu']
 # http :8030/sparc/version
 
 # specids = [394069118933821440, 1355741587413428224, 1355617892355303424, 1355615143576233984, 1355661872820414464, 1355755331308775424, 1355716848401803264]
-# client = api.api.SparclApi(url='http://localhost:8030/sparc')
+# client = api.api.SparclClient(url='http://localhost:8030/sparc')
 # client.retrieve(specids)[0].keys() # >> dict_keys(['flux','loglam'])
 #
 # data0 = client.retrieve(specids,columns='flux')
@@ -74,17 +76,21 @@ DEFAULT='DEFAULT'
 ALL='ALL'
 RESERVED=set([DEFAULT, ALL])
 
+
 ###########################
 ### Convenience Functions
+
+def intersection(*listas):
+    return set(listas[0]).intersection(*listas[1:])
 
 def fields_available(records):
     """Get list of fields used in records. One list per Data Set.
     Args:
         records (list): List of records (each is a dictionary).
     Returns:
-        dict: dict[Structure] = [field_name1, ...]
+        dict: dict[Data_Set] = [field_name1, ...]
     :param records: List of records (each is a dictionary)
-    :returns: dict[Structure] = [field_name1, ...]
+    :returns: dict[Data_Set] = [field_name1, ...]
     Example:
       >>> from api.client import fields_available
       >>> recs = client.sample_records(3)
@@ -102,13 +108,13 @@ def record_examples(records):
     Args:
         records (list): List of records (each is a dictionary).
     :param records: List of records (each is a dictionary)
-    :returns: dict[Structure] = rec
+    :returns: dict[Data_Set] = rec
     Example:
       >>> from api.client import record_examples
       >>> recs = client.sample_records(3)
       >>> rex = record_examples(recs)
     Returns:
-        dict: dict[Structure] = rec
+        dict: dict[Data_Set] = rec
     Example:
         >>> from sparcl.client import record_examples
         >>> recs = client.sample_records(3)
@@ -174,66 +180,12 @@ def rename_fields(rename_dict, records):
     return [{rename_dict.get(k,k):v for k,v in r.items()}
             for r in records]
 
-###########################
-### The Results class
-
-# For results of retrieve()
-class Results(UserList):
-    """@@@ NEEDS DOCUMENTATION !!!"""
-
-    def __init__(self, mylist, client = None):
-        #!UserList.__init__(self, self.data)
-        super().__init__(mylist)
-        self.hdr, *self.records = mylist
-        # Following allows an instance of Results to be used like a list
-        self.client = client
-
-    def __repr__(self):
-        return f'Results: {len(self.data)} rows'
-
-    def json(self):
-        return self.data
-
-    @property
-    def info(self):
-        return self.hdr
-
-    @property
-    def rows(self):
-        return self.records
-
-###########################
-### The Found class
-# For results of find()
-class Found(UserList):
-    """@@@ NEEDS DOCUMENTATION !!!"""
-
-    def __init__(self, mylist, client = None):
-        #UserList.__init__(self, self.data)
-        super().__init__(mylist)
-        self.hdr, *self.records = mylist
-        self.client = client
-
-    def __repr__(self):
-        return f'Found: {len(self.rows)} client={self.client}'
-
-    def json(self):
-        return self.data
-
-    @property
-    def info(self):
-        return self.hdr
-
-    @property
-    def rows(self):
-        return self.records
 
 
 ###########################
 ### The Client class
 
-
-class SparclApi():
+class SparclClient():  # was SparclApi()
     """Provides interface to SPARCL Server.
     When using this to report a bug, set verbose to True. Also print
     your instance of this.  The results will include important info
@@ -247,24 +199,34 @@ class SparclApi():
                a response. (generally time to wait for first byte)
     Args:
         url (str): Base URL of SPARC Server.
-        verbose (:obj:`bool`, optional): Default verbosity is set to False for all client methods.
-        connect_timeout (:obj:`float`, optional): Number of seconds to wait to establish connection with server.
-            Defaults to 1.1.
-        read_timeout (:obj:`float`, optional): Number of seconds to wait for server to send a response.
-            Generally time to wait for first byte. Defaults to 5400.
+
+        verbose (:obj:`bool`, optional): Default verbosity is set to
+        False for all client methods.
+
+        connect_timeout (:obj:`float`, optional): Number of seconds to
+            wait to establish connection with server.  Defaults to
+            1.1.
+
+        read_timeout (:obj:`float`, optional): Number of seconds to
+            wait for server to send a response.  Generally time to
+            wait for first byte. Defaults to 5400.
+
     Example:
-        >>> client = SparclApi(verbose=True)
+        >>> client = SparclClient(verbose=True)
         >>> print(client)
+
     Raises:
-        Exception: Object creation compares the version from the Server against the one expected
-            by the Client. Throws an error if the Client is a major version or more behind.
+        Exception: Object creation compares the version from the
+            Server against the one expected by the Client. Throws an
+            error if the Client is a major version or more behind.
+
     """
 
-    KNOWN_GOOD_API_VERSION = 4.0 #@@@ Change this when Server version increments
+    KNOWN_GOOD_API_VERSION = 6.0 #@@@ Change this when Server version increments
 
     def __init__(self, url=_PAT,
                  verbose=False,
-                 internal_names=False, # override field renaming
+                 #!@@@internal_names=False, # override field renaming
                  connect_timeout=1.1,  # seconds
                  read_timeout=90*60,   # seconds
     ):
@@ -274,7 +236,7 @@ class SparclApi():
         self.apiurl = f'{self.rooturl}/sparc'
         self.apiversion = None
         self.verbose = verbose
-        self.internal_names = internal_names
+        #!self.internal_names = internal_names
         self.c_timeout = float(connect_timeout)  # seconds
         self.r_timeout = float(read_timeout)     # seconds
 
@@ -296,12 +258,12 @@ class SparclApi():
 
         self.apiversion = float(verstr)
 
-        if (int(self.apiversion) - int(SparclApi.KNOWN_GOOD_API_VERSION)) >= 1:
+        if (int(self.apiversion) - int(SparclClient.KNOWN_GOOD_API_VERSION)) >= 1:
             msg = (f'The SPARCL Client you are running expects an older '
                    f'version of the API services. '
                    f'Please upgrade to the latest "sparclclient".  '
                    f'The Client you are using expected version '
-                   f'{SparclApi.KNOWN_GOOD_API_VERSION} but got '
+                   f'{SparclClient.KNOWN_GOOD_API_VERSION} but got '
                    f'{self.apiversion} from the SPARCL Server '
                    f'at {self.apiurl}.')
             raise Exception(msg)
@@ -334,133 +296,185 @@ class SparclApi():
 
         # Per DataRelease: get Storage, Default, All for each (user) fieldname
         # dr_attrs[DR][newdp] => dict[storage,default,all]
-        dr_attrs = {dr : {df['newdp'] : {'storage': df['storage'],
+        dr_attrs = {dr : {df['origdp'] : {'storage': df['storage'],
                                          'default': df['default'],
                                          'all': df['all']}
                           for df in datafields if df['data_release_id'] == dr}
                     for dr in dr_list}
+        dr_default = {dr : {new
+                            for new,v in dr_attrs[dr].items()
+                            if v['default']} for dr in dr_list}
+        dr_all = {dr : {new
+                            for new,v in dr_attrs[dr].items()
+                            if v['all']} for dr in dr_list}
 
+        # Fields (new) common to ALL DRs
+        common = set.intersection(*[set(dr_n2o[dr].keys())
+                                    for dr in dr_n2o.keys()])
+
+        # Handy structures for field name management
         self.datafields = datafields
-        self.dr_o2n = dr_o2n  # Given Internal name, return User fldname
-        self.dr_n2o = dr_n2o  # Given User fldname, return Internal name
         self.dr_attrs = dr_attrs
+        self.dr_list = dr_list
+        self.dr_o2n = dr_o2n   # Given Internal name, return User fldname
+        self.dr_n2o = dr_n2o   # Given User fldname, return Internal name
+        self.dr_attrs = dr_attrs      # {Storage, Default, All} per DR (orig)
+        self.dr_default = dr_default  # Default fields per DR (orig names)
+        self.dr_all = dr_all          # "All" fields per DR (orig names)
+        self.common_fields = common
 
-        # default[dr] => newFieldName, ...
-        self.default = dict(
-            (dr, [d['new'] for orig,d in v.items() if d['default']])
-            for dr,v in self.dfLUT.items())
-
-        # orig2newLUT[dr][orig] = new
-        self.orig2newLUT = dict((dr,dict((orig,d['new'])
-                                         for orig,d in v.items()))
-                                for dr,v in self.dfLUT.items())
-        # new2origLUT[dr][new] = orig
-        self.new2origLUT = dict((dr,dict((d['new'],orig)
-                                         for orig,d in v.items()))
-                                for dr,v in self.dfLUT.items())
-
-        # dict[drName] = [fieldName, ...]
-        self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
-
-        dsflds = [self.dr_fields[dr].values()
-                  for dr in self.dr_fields.keys()]
-        self.common_fields = set.intersection(*[set(l) for l in dsflds])
+        #! # default[dr] => newFieldName, ...
+        #! self.default = dict(
+        #!     (dr, [d['new'] for orig,d in v.items() if d['default']])
+        #!     for dr,v in self.dfLUT.items())
+        #!
+        #! # orig2newLUT[dr][orig] = new
+        #! self.orig2newLUT = dict((dr,dict((orig,d['new'])
+        #!                                  for orig,d in v.items()))
+        #!                         for dr,v in self.dfLUT.items())
+        #! # new2origLUT[dr][new] = orig
+        #! self.new2origLUT = dict((dr,dict((d['new'],orig)
+        #!                                  for orig,d in v.items()))
+        #!                         for dr,v in self.dfLUT.items())
+        #!
+        #! # dict[drName] = [fieldName, ...]
+        #! self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
+        #!
+        #! dsflds = [self.dr_fields[dr].values()
+        #!           for dr in self.dr_fields.keys()]
+        #! self.common_fields = set.intersection(*[set(l) for l in dsflds])
 
         ###
         ####################################################
         # END __init__()
 
+
     def __repr__(self):
+        #!f' internal_names={self.internal_names},'
         return(f'(sparclclient:{self.clientversion},'
                f' api:{self.apiversion},'
                f' {self.apiurl},'
                f' verbose={self.verbose},'
-               f' internal_names={self.internal_names},'
                f' connect_timeout={self.c_timeout},'
                f' read_timeout={self.r_timeout})'
         )
 
+    def get_default_fields(self, data_set=None):
+        """Get fields tagged as 'default' that are in DATA_SET.
+        If DATA_SET is None (the default),
+        get the /intersection/ of 'default' fields across all DATA_SETS."""
+
+        if data_set is None:
+            every = [self.get_default_fields(dr) for dr in self.dr_list]
+            return intersection(*every)
+        else:  # get fields for ALL drs
+            return [self.dr_o2n[data_set][orig]
+                    for orig in self.dr_default.get(data_set)]
+
+    def get_all_fields(self, data_set=None):
+        """Get fields tagged as 'all' that are in DATA_SET.
+        If DATA_SET is None (the default),
+        get the /intersection/ of 'all' fields across all DATA_SETS."""
+
+        if data_set is None:
+            every = [self.get_all_fields(dr) for dr in self.dr_list]
+            return intersection(*every)
+        else: # get fields for ALL drs
+            return [self.dr_o2n[data_set][orig]
+                    for orig in self.dr_all.get(data_set)]
+
+    def get_common_internal(self, science_fields, data_set=None):
+        """Get subset of fields that are all (or selected) DATA_SETs."""
+        #!print(f'dbg: science_fields={science_fields} data_set={data_set}')
+        every = [[self.dr_n2o[dr][sn] for sn in science_fields]
+                 for dr in self.dr_list]
+        common = intersection(*every)
+        #!print(f'dbg: common={common} science_fields={science_fields}')
+        return list(common)
 
 
-    def get_field_names(self, structure):
+    def get_field_names(self, data_set):
         """List field names available for retrieve.
         Args:
-            structure (str): Data Set to get the field names of.
+            data_set (str): Data Set to get the field names of.
         Returns:
             list: List of field names.
-        :param structure: List field names of this Data Set.
+        :param data_set: List field names of this Data Set.
         :returns: list of field names
         Example:
             >>> client.get_field_names('DESI-everest')
         """
-        dr = structure
+        dr = data_set
         if dr in self.dr_fields:
             return list(self.dr_fields[dr].keys())
         else:
-            print(f'That is not a currently support structure. '
-                  f'Available structures are: '
+            print(f'That is not a currently support data_set. '
+                  f'Available data_sets are: '
                   f"{', '.join(self.dr_fields.keys())}"
                   )
             return None
 
-    def orig_field(self, structure, client_name):
-        """Get original field name as provided in Data Set.
-        Args:
-            structure (str): Name of Data Set.
-            client_name (str): Field name used in Client methods.
-        Returns:
-            str: Original field name.
-        :param structure: Name of Data Set
-        :param client_name: Field name used in Client methods.
-        :returns: Original field name
-        Example:
-            >>> client.orig_field('BOSS-DR16', 'flux')
-            'spectra.coadd.FLUX'
-        """
-        # new2origLUT[dr][new] = orig
-        return self.new2origLUT[structure][client_name]
+    #!ef orig_field(self, data_set, client_name):
+    #!   """Get original field name as provided in Data Set.
+    #!   Args:
+    #!       data_set (str): Name of Data Set.
+    #!       client_name (str): Field name used in Client methods.
+    #!   Returns:
+    #!       str: Original field name.
+    #!   :param data_set: Name of Data Set
+    #!   :param client_name: Field name used in Client methods.
+    #!   :returns: Original field name
+    #!   Example:
+    #!       >>> client.orig_field('BOSS-DR16', 'flux')
+    #!       'spectra.coadd.FLUX'
+    #!   """
+    #!   # new2origLUT[dr][new] = orig
+    #!   return self.new2origLUT[data_set][client_name]
+    #!
+    #!ef client_field(self, data_set, orig_name):
+    #!   """Get field name used in Client methods.
+    #!   Args:
+    #!       data_set (str): Name of Data Set.
+    #!       orig_name (str): Original field name as provided in Data Set.
+    #!   Returns:
+    #!       str: Client field name.
+    #!   :param data_set: Name of Data Set
+    #!   :param orig_name: Original field name as provided in Data Set.
+    #!   :returns: Client field name
+    #!   Example:
+    #!       >>> client.client_field('BOSS-DR16', 'spectra.coadd.FLUX')
+    #!       'flux'
+    #!   """
+    #!   #!return self.orig2newLUT[data_set][orig_name]
+    #!   return self.dr_o2n[data_set][orig_name]
 
-    def client_field(self, structure, orig_name):
-        """Get field name used in Client methods.
-        Args:
-            structure (str): Name of Data Set.
-            orig_name (str): Original field name as provided in Data Set.
-        Returns:
-            str: Client field name.
-        :param structure: Name of Data Set
-        :param orig_name: Original field name as provided in Data Set.
-        :returns: Client field name
-        Example:
-            >>> client.client_field('BOSS-DR16', 'spectra.coadd.FLUX')
-            'flux'
-        """
-        return self.orig2newLUT[structure][orig_name]
+    def sample_ids(self, samples=5, random=True):
+        pass
 
-
-    def sample_specids(self, samples=5, structure=None, random=True, **kwargs):
+    def sample_specids(self, samples=5, data_set=None, random=True, **kwargs):
         """Return a small list of specids.
         This is intended to make it easy to get just a few specids to use
         for experimenting with the rest of the SPARCL API.
         Args:
             samples (:obj:`int`, optional): The number of sample specids to get.
                 Defaults to 5.
-           structure (:obj:`str`, optional): The Data Set from which to get specids.
+           data_set (:obj:`str`, optional): The Data Set from which to get specids.
                Defaults to None (meaning ANY Data Set).
            random (:obj:`bool`, optional): Randomize sample by returning specids
                from any of the Data Sets hosted on SPARC. Defaults to True.
         Returns:
             list: List of specids.
         Example:
-            >>> client.sample_specids(samples=3, structure='DESI-everest')
+            >>> client.sample_specids(samples=3, data_set='DESI-everest')
         """
         uparams = dict(random=bool(random),
                        samples=int(samples),
-                       dr=structure)
+                       dr=data_set)
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/sample/?{qstr}'
         if self.verbose:
             print(f'Using url="{url}"')
-            print(f'sample_specids(samples={samples}, structure={structure}, '
+            print(f'sample_specids(samples={samples}, data_set={data_set}, '
                   f'random={random}, kwargs={kwargs})')
 
         response = requests.get(url,  timeout=self.timeout)
@@ -476,7 +490,7 @@ class SparclApi():
         Returns:
             float: API version.
         Example:
-            >>> SparclApi('http://localhost:8030').version
+            >>> SparclClient('http://localhost:8030').version
             1.0
         """
         if self.apiversion is None:
@@ -485,6 +499,27 @@ class SparclApi():
                                     cache=True)
             self.apiversion = float(response.content)
         return self.apiversion
+
+    def find(self, outfields, constraints=None, limit=500, sort=None):
+        """sort :: comma seperated list of fields to sort by"""
+        uparams =dict(limit=limit,)
+        if sort is not None:
+            uparams['sort'] = sort
+        qstr = urlencode(uparams)
+        url = f'{self.apiurl}/find/?{qstr}'
+        search = [] if constraints is None else constraints
+        sspec = dict(outfields=self.get_common_internal(outfields),
+                     search=search)
+        res = requests.post(url, json=sspec, timeout=self.timeout)
+
+        if res.status_code != 200:
+            #!print(f'DBG: res.content={res.content}') #@@@
+            if self.verbose and ('traceback' in res.json()):
+                #!print(f'DBG: res.json={res.json()}')
+                print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
+            raise ex.genSparclException(res, verbose=self.verbose)
+
+        return Found(res.json(), client=self)
 
     def missing_specids(self, specid_list, countOnly=False, verbose=False):
         """Return the subset of the given specid list that is NOT stored
@@ -518,8 +553,8 @@ class SparclApi():
         return ret
         # END missing_specids()
 
-    def _specids2tuples(self, specids, structure):
-        uparams =dict(dr=structure)
+    def _specids2tuples(self, specids, data_set):
+        uparams =dict(dr=data_set)
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/specids2tuples/?{qstr}'
         res = requests.post(url, json=specids, timeout=self.timeout)
@@ -544,65 +579,75 @@ class SparclApi():
                        f'{", ".join(sorted(list(self.common_fields)))}).')
                 raise ex.BadInclude(msg)
         else: # dr not None
-            unknown = incSet.difference(self.dr_fields[dr])
+            unknown = incSet.difference(self.dr_n2o[dr].keys())
             if len(unknown) > 0:
-                msg = (f'The INCLUDE list contains invalid data field names '
-                       f'for Structure "{dr}" '
-                       f'({", ".join(sorted(list(unknown)))}). '
+                msg = (f'The INCLUDE list {include_list} '
+                       f'contains invalid data field names '
+                       f'for Data Set "{dr}". '
+                       f'Unknown fields are: '
+                       f'{", ".join(sorted(list(unknown)))}). '
                        f'Available fields are: '
-                       f'{", ".join(sorted(self.dr_fields[dr]))}.'
+                       f'{", ".join(sorted(self.dr_n2o[dr].keys()))}.'
                 )
                 raise ex.BadInclude(msg)
         return True
 
-    def uuid_retrieve(self,
-                      specid_list,
-                      include='DEFAULT',
-                      #rtype=None, # not supported for MVP
-                      structure=None,
-                      #internal_names=False, # No field rename ## Client INIT only
-                      verbose=False):
+    def retrieve(self,
+                 uuid_list,
+                 include='DEFAULT',
+                 data_set=None, # was: data_set
+                 verbose=False):
         """Get spectrum from UUID (universally unique identifier) list.
         Args:
            uuid_list (list): List of uuids.
-           include (list, 'DEFAULT', 'ALL'):
-              List of field names to include in each record. (default: 'DEFAULT')
-           verbose (boolean, optional): (default: False)
+
+           include (list, 'DEFAULT', 'ALL'): List of field names to
+              include in each record. (default: 'DEFAULT') verbose
+              (boolean, optional): (default: False)
+
         Returns:
            List of records. Each record is a dictionary of named fields.
+
         Example:
-           >>> ids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3', '84c1d7fa-aadb-43f6-8047-50d041edba57']
-           >>> res = client.uuid_retrieve(ids, include=['flux'])
+           >>> ids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3',]
+           >>> res = client.retrieve(ids, include=['flux'])
+
         """
-        self._validate_include(structure, include)
 
         verbose = verbose or self.verbose
-        #if verbose:
-        #    print(f'retrieve(rtype={rtype})') # rtype not supported for MVP
 
         if include == DEFAULT:
-            inc = '_DEFAULT'
+            include = self.get_default_fields(data_set)
         elif include == ALL:
-            inc = '_ALL'
-        else:
-            inc = ','.join(include)
+            include = self.get_all_fields(data_set)
+        #!print(f'dbg0: include={include}')
+        inc = ','.join(include)
+
+        self._validate_include(data_set, include)
+
+        # !!!@@@
+        # Interpret special values to make real list of ORIG field names.
+
         uparams =dict(include=inc,
-                      internal_names=self.internal_names,
-                      dr=structure)
+                      #!internal_names=self.internal_names,
+                      dr=data_set)
         qstr = urlencode(uparams)
 
-        url = f'{self.apiurl}/uuid_retrieve/?{qstr}'
+        url = f'{self.apiurl}/retrieve/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
+            print(f'Using include="{include}"')
+            print(f'Using inc="{inc}"')
             ut.tic()
 
         try:
-            res = requests.post(url, json=specid_list, timeout=self.timeout)
+            ids = uuid_list
+            res = requests.post(url, json=ids, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
         except requests.exceptions.ReadTimeout as reRT:
            msg = (f'Try increasing the value of the "read_timeout" parameter'
-                   f' to "SparclApi()".'
+                   f' to "SparclClient()".'
                    f' The current values is: {self.r_timeout} (seconds)' )
            raise ex.ReadTimeout(msg) from None
         except requests.exceptions.ConnectionError as reCE:
@@ -622,16 +667,18 @@ class SparclApi():
             elapsed = ut.toc()
             print(f'Got response to post in {elapsed} seconds')
         if res.status_code != 200:
-            print(f'DBG: res.content={res.content}') #@@@
+            #!print(f'DBG: res.content={res.content}') #@@@
             if verbose and ('traceback' in res.json()):
                 #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             #!raise ex.genSparclException(**res.json())
             raise ex.genSparclException(res, verbose=verbose)
 
-        meta,*records = res.json()
+        #!meta,*records = res.json()
+        results = res.json()
+        meta = results[0]
         if verbose:
-            count = len(records)
+            count = len(results)-1
             print(f'Got {count} spectra in '
                   f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
                   'spectra/sec)')
@@ -644,31 +691,54 @@ class SparclApi():
         #!     [ut._AttrDict(tc.convert(r, rtype, self, include))
         #!      for r in records],
         #!     client=self)
-        return Results([ut._AttrDict(r) for r in records],  client=self)
+        #!return Retrieved([ut._AttrDict(r) for r in records],  client=self)
+        #!print(f'dbg9: len(results)={len(results)}')
+        return Retrieved(results,  client=self)
 
-    def retrieve(self,
+    def retrieve_by_specid(self,
                  specid_list,
                  include='DEFAULT',
-                 #rtype=None, # not supported for MVP
-                 structure=None,
-                 #internal_names=False, # No field rename ## Client INIT only
+                 data_set=None,
+                 verbose=False):
+        if data_set is  None:
+            cons = [['specid', *specid_list]]
+        else:
+            cons = [['specid', *specid_list], ['data_release_id', data_set]]
+        found = self.find([idfld], constraints=cons)
+        res = self.retrieve(found.ids,
+                            include=include,
+                            data_set=data_set,
+                            verbose=verbose)
+        return res
+
+    def _ORIG_retrieve_by_specid(self,
+                 specid_list,
+                 include='DEFAULT',
+                 data_set=None,
                  verbose=False):
         """Get spectrum from specid list.
         Args:
            specid_list (list): List of specids.
-           include (list, 'DEFAULT', 'ALL'): List of field names to include in each
-               record. Defaults to 'DEFAULT'.
-           structure (str): The Data Set (DS) name associated with the specids.
-               Or None to retrieve from any DS that contains the specid. Defaults
-               to None.
-           verbose (:obj:`bool`, optional): Set to true for in-depth return statement.
-               Defaults to False.
-        Returns:
-            list(dict): List of records. Each record is a dictionary of named fields.
+
+           include (list, 'DEFAULT', 'ALL'): List of field names to
+               include in each record. Defaults to 'DEFAULT'.
+
+
+           data_set (str): The Data Set (DS) name associated with the
+               specids.  Or None to retrieve from any DS that contains
+               the specid. Defaults to None.
+
+           verbose (:obj:`bool`, optional): Set to true for in-depth
+               return statement.  Defaults to False.
+
+        Returns: list(dict): List of records. Each record is a
+            dictionary of named fields.
+
         Example:
             >>> ink = ['flux']
             >>> sdss_ids = [849044290804934656, 309718438815754240]
-            >>> res_sdss = client.retrieve(sdss_ids, structure='SDSS-DR16', include=ink)
+            >>> res_sdss = client.retrieve_by_specid(sdss_ids, data_set='SDSS-DR16', include=ink)
+
         Raises:
             ConnectTimeout: Took too long to establish connection with server.
             ReadTimeout: Server took too long to send a response.
@@ -677,15 +747,12 @@ class SparclApi():
             HTTPError: Error in the HTTP.
             URLRequired: A URL is required.
             RequestException: Problem with request.
-        """
-        #!   internal_names (boolean, optional): (default: False)
-        #!      If True, do not rename fields.
 
-        self._validate_include(structure, include)
+        """
+
+        self._validate_include(data_set, include)
 
         verbose = verbose or self.verbose
-        #if verbose:
-        #    print(f'retrieve(rtype={rtype})') # rtype not supported for MVP
 
         if include == DEFAULT:
             inc = '_DEFAULT'
@@ -694,11 +761,11 @@ class SparclApi():
         else:
             inc = ','.join(include)
         uparams =dict(include=inc,
-                      internal_names=self.internal_names,
-                      dr=structure)
+                      #!internal_names=self.internal_names,
+                      dr=data_set)
         qstr = urlencode(uparams)
 
-        url = f'{self.apiurl}/retrieve/?{qstr}'
+        url = f'{self.apiurl}/retrieve_by_specid/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
             ut.tic()
@@ -709,7 +776,7 @@ class SparclApi():
             raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
         except requests.exceptions.ReadTimeout as reRT:
            msg = (f'Try increasing the value of the "read_timeout" parameter'
-                   f' to "SparclApi()".'
+                   f' to "SparclClient()".'
                    f' The current values is: {self.r_timeout} (seconds)' )
            raise ex.ReadTimeout(msg) from None
         except requests.exceptions.ConnectionError as reCE:
@@ -730,7 +797,7 @@ class SparclApi():
             print(f'Got response to post in {elapsed} seconds')
 
         if res.status_code != 200:
-            print(f'DBG: res.content={res.content}') #@@@
+            #!print(f'DBG: res.content={res.content}') #@@@
             if verbose and ('traceback' in res.json()):
                 #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
@@ -760,25 +827,23 @@ class SparclApi():
 
         return Results([ut._AttrDict(r) for r in records],  client=self)
 
-    def sample_records(self, count, structure=None, include='DEFAULT', **kwargs):
-        """Return list of random records from given STRUCTURE (Data Set).
+    def sample_records(self, count, data_set=None, include='DEFAULT', **kwargs):
+        """Return list of random records from given DATA_SET.
         Args:
             count (int): Number of sample records to get from database.
-            structure (:obj:`str`, optional): The Data Set from which to get
+            data_set (:obj:`str`, optional): The Data Set from which to get
                 sample records. Defaults to None (meaning ANY Data Set).
            include (list, 'DEFAULT', 'ALL'):
                List of paths to include in each record. Defaults to 'DEFAULT'.
-           structure (str, optional): (default: None means ANY)
+           data_set (str, optional): (default: None means ANY)
                The Data Set from which to get sample records.
         Returns:
-            list(dict): List of random records from given STRUCTURE (Data Set).
+            list(dict): List of random records from given DATA_SET.
         Example:
-            >>> samrec = client.sample_records(1, structure='BOSS-DR16')
-            >>> pprint.pprint(samrec,depth=2)
+            >>> samrec = client.sample_records(1, data_set='BOSS-DR16')
+            >>> pprint.pprint(samrec,depth=2a)
             [{'data_release_id': 'BOSS-DR16',
               'dec_center': 47.193549,
-              'dirpath': '/net/mss1/archive/hlsp/sdss/dr16/eboss/spectro/redux/v5_13_0/spectra/lite/7399',
-              'filename': 'spec-7399-57162-0376.fits',
               'specid': 1429845755960551,
               'spectra': {...},
               'updated': '2021-04-28T20:16:20.399464Z'}]
@@ -787,45 +852,49 @@ class SparclApi():
         random = kwargs.pop('random',True)
         verb = self.verbose if kverb is None else kverb
         if verb:
-            print(f'sample_records(count={count}, structure={structure}, '
+            print(f'sample_records(count={count}, data_set={data_set}, '
                   f'include={include}, kwargs={kwargs}).')
-        sids = self.sample_specids(count, structure=structure,
+        sids = self.sample_specids(count, data_set=data_set,
                                    verbose=verb, **kwargs)
-        if structure is None:
+        if data_set is None:
             recs = []
-            for dr in self.dfLUT.keys():
+            for dr in self.dr_list:  # dfLUT.keys():
                 if verb:
                     print(f'Retrieving from: {dr}')
-                recs.extend(self.retrieve(sids, structure=dr, include=include,
-                                          verbose=verb, **kwargs))
+                recs.extend(self.retrieve_by_specid(sids,
+                                                    data_set=dr,
+                                                    include=include,
+                                                    verbose=verb,
+                                                    **kwargs))
         else:
-            recs = self.retrieve(sids, structure=structure, include=include,
-                                 verbose=verb, **kwargs)
+            recs = self.retrieve_by_specid(sids,
+                                           data_set=data_set,
+                                           include=include,
+                                           verbose=verb, **kwargs)
         return recs
-
         # END sample_records()
 
-    def normalize_field_names(self, recs):
-        """Return copy of records with all field names converted to the names
-        used by the Data Set provider.
-        Args:
-            recs (list): List of dictionaries representing spectra records.
-        :param recs: List of dictionaries representing spectra records
-        :returns: new list of dicts of spectra records (with diff field names)
-        Example:
-           >>> recs = client.sample_records(1)
-           >>> client.normalize_field_names(recs)
-        Returns:
-            list: New list of dictionaries of spectra records with different
-                field names.
-        Example:
-            >>> recs = client.sample_records(1)
-            >>> client.normalize_field_names(recs)
-        """
-        if self.internal_names:
-            return recs
-        return [{self.orig_field(r['_dr'],k):v for k,v in r.items()}
-                for r in recs]
+#!    def normalize_field_names(self, recs):
+#!        """Return copy of records with all field names converted to the names
+#!        used by the Data Set provider.
+#!        Args:
+#!            recs (list): List of dictionaries representing spectra records.
+#!        :param recs: List of dictionaries representing spectra records
+#!        :returns: new list of dicts of spectra records (with diff field names)
+#!        Example:
+#!           >>> recs = client.sample_records(1)
+#!           >>> client.normalize_field_names(recs)
+#!        Returns:
+#!            list: New list of dictionaries of spectra records with different
+#!                field names.
+#!        Example:
+#!            >>> recs = client.sample_records(1)
+#!            >>> client.normalize_field_names(recs)
+#!        """
+#!        if self.internal_names:
+#!            return recs
+#!        return [{self.orig_field(r['_dr'],k):v for k,v in r.items()}
+#!                for r in recs]
 
     # EXAMPLES:
     # client.show_record_structure('DESI-denali',xfer='database')
@@ -856,22 +925,6 @@ class SparclApi():
     #!     return ut.dict2tree(recs[0])
 
 
-    def find(self, outfields, constraints=None, limit=500):
-        uparams =dict(limit=limit,)
-        qstr = urlencode(uparams)
-        url = f'{self.apiurl}/find/?{qstr}'
-        search = [] if constraints is None else constraints
-        sspec = dict(outfields=outfields,  search=search)
-        res = requests.post(url, json=sspec, timeout=self.timeout)
-
-        if res.status_code != 200:
-            #!print(f'DBG: res.content={res.content}') #@@@
-            if self.verbose and ('traceback' in res.json()):
-                #!print(f'DBG: res.json={res.json()}')
-                print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
-            raise ex.genSparclException(res, verbose=self.verbose)
-
-        return Found(res.json(), client=self)
 
 if __name__ == "__main__":
     import doctest
