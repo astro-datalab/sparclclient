@@ -16,6 +16,7 @@ from collections import OrderedDict, UserList
 import pkg_resources
 from numbers import Number
 from collections import defaultdict
+from itertools import chain
 ############################################
 ## External Packages
 import requests
@@ -80,8 +81,11 @@ RESERVED=set([DEFAULT, ALL])
 ###########################
 ### Convenience Functions
 
-def intersection(*listas):
-    return set(listas[0]).intersection(*listas[1:])
+
+
+def intersection(*lists):
+    """Return intersection of all LISTS."""
+    return set(lists[0]).intersection(*lists[1:])
 
 def fields_available(records):
     """Get list of fields used in records. One list per Data Set.
@@ -312,13 +316,18 @@ class SparclClient():  # was SparclApi()
         common = set.intersection(*[set(dr_n2o[dr].keys())
                                     for dr in dr_n2o.keys()])
 
-        # Handy structures for field name management
+
+        # Handy structures for field name management in ivars
+        warn('''Implementation ignores that fact that a
+        single Science Field Name might map to MULTIPLE Internal Field Names
+        within a single Data Set.  If this is the case (see Admin)
+        results may be unpredictable!!!''', stacklevel=2)
         self.datafields = datafields
-        self.dr_attrs = dr_attrs
+        # dr_atrrs[dr][orig] => dict[storage, default, all]
+        self.dr_attrs = dr_attrs  # dr_atrrs[dr][orig] => dict
         self.dr_list = dr_list
-        self.dr_o2n = dr_o2n   # Given Internal name, return User fldname
-        self.dr_n2o = dr_n2o   # Given User fldname, return Internal name
-        self.dr_attrs = dr_attrs      # {Storage, Default, All} per DR (orig)
+        self.dr_o2n = dr_o2n   # dr_n2o[dr][orig] => new   Internal to Science
+        self.dr_n2o = dr_n2o   # dr_n2o[dr][new] => orig  Science to Internal
         self.dr_default = dr_default  # Default fields per DR (orig names)
         self.dr_all = dr_all          # "All" fields per DR (orig names)
         self.common_fields = common
@@ -359,6 +368,7 @@ class SparclClient():  # was SparclApi()
                f' read_timeout={self.r_timeout})'
         )
 
+
     def get_default_fields(self, data_set=None):
         """Get fields tagged as 'default' that are in DATA_SET.
         If DATA_SET is None (the default),
@@ -383,14 +393,25 @@ class SparclClient():  # was SparclApi()
             return [self.dr_o2n[data_set][orig]
                     for orig in self.dr_all.get(data_set)]
 
-    def get_common_internal(self, science_fields, data_set=None):
-        """Get subset of fields that are all (or selected) DATA_SETs."""
-        #!print(f'dbg: science_fields={science_fields} data_set={data_set}')
-        every = [[self.dr_n2o[dr][sn] for sn in science_fields]
-                 for dr in self.dr_list]
+    def get_common_internal(self, science_fields=None, data_sets=None):
+        """Get subset of fields that are all (or selected) DATA_SETS.
+        data_sets :: list, None=All_Available
+        """
+
+        ds_list = self.dr_list if data_sets is None else data_sets
+        every = [[self.dr_n2o[dr][fn] for fn in science_fields]
+                 for dr in ds_list]
         common = intersection(*every)
-        #!print(f'dbg: common={common} science_fields={science_fields}')
         return list(common)
+
+    def get_available_science(self, data_sets=None):
+        """Get subset of fields that are in all (or selected) DATA_SETS.
+        data_sets :: list, None=All_Available
+        """
+        ds_list = self.dr_list if data_sets is None else data_sets
+
+        all_science = chain(*[self.dr_n2o[dr].keys() for dr in ds_list])
+        return set(all_science)
 
 
     def get_field_names(self, data_set):
@@ -559,51 +580,37 @@ class SparclClient():  # was SparclApi()
         url = f'{self.apiurl}/specids2tuples/?{qstr}'
         res = requests.post(url, json=specids, timeout=self.timeout)
 
-    def _validate_include(self, dr, include_list):
-        #!print(f'DBG _validate_include: dr={dr} include_list={include_list}')
-        if (not isinstance(include_list, list)) and (include_list in RESERVED):
-            return True
-        incSet = set(include_list)
-        if dr is None: # and include_list is not DEFAULT or ALL
-            if incSet.issubset(self.common_fields):
-                return True
-            else: # dr=None, include not subset of common
-                unknown = incSet - set(self.common_fields)
-                msg = (f'The INCLUDE list contains invalid data field names. '
-                       f'Since you did not specify a Data Set, you can only '
-                       f'use field names that are common to ALL Data Sets. '
-                       f'Your include list contains '
-                       f'({", ".join(sorted(list(unknown)))}) '
-                       f'which is not a common field '
-                       f'(one of: '
-                       f'{", ".join(sorted(list(self.common_fields)))}).')
-                raise ex.BadInclude(msg)
-        else: # dr not None
-            unknown = incSet.difference(self.dr_n2o[dr].keys())
-            if len(unknown) > 0:
-                msg = (f'The INCLUDE list {include_list} '
-                       f'contains invalid data field names '
-                       f'for Data Set "{dr}". '
-                       f'Unknown fields are: '
-                       f'{", ".join(sorted(list(unknown)))}). '
-                       f'Available fields are: '
-                       f'{", ".join(sorted(self.dr_n2o[dr].keys()))}.'
-                )
-                raise ex.BadInclude(msg)
+    def _validate_include(self, include_list, data_sets):
+        available_science = self.get_available_science(data_sets=data_sets)
+        inc_set = set(include_list)
+        unknown = inc_set.difference(available_science)
+        if len(unknown) > 0:
+            msg = (f'The INCLUDE list ({",".join(sorted(include_list))}) '
+                   f'contains invalid data field names '
+                   f'for Data Sets ({",".join(sorted(data_sets))}). '
+                   f'Unknown fields are: '
+                   f'{", ".join(sorted(list(unknown)))}. '
+                   f'Available fields are: '
+                   f'{", ".join(sorted(available_science))}.'
+            )
+            raise ex.BadInclude(msg)
         return True
 
     def retrieve(self,
                  uuid_list,
                  include='DEFAULT',
-                 data_set=None, # was: data_set
+                 data_sets=None,
                  verbose=False):
         """Get spectrum from UUID (universally unique identifier) list.
         Args:
            uuid_list (list): List of uuids.
 
+           data_sets:: list, None  @@@
+
            include (list, 'DEFAULT', 'ALL'): List of field names to
               include in each record. (default: 'DEFAULT') verbose
               (boolean, optional): (default: False)
+              SPECIAL CASES: field not in ALL DS @@@
 
         Returns:
            List of records. Each record is a dictionary of named fields.
@@ -617,27 +624,23 @@ class SparclClient():  # was SparclApi()
         verbose = verbose or self.verbose
 
         if include == DEFAULT:
-            include = self.get_default_fields(data_set)
+            include_list = self.get_default_fields(data_sets)
         elif include == ALL:
-            include = self.get_all_fields(data_set)
+            include_list = self.get_all_fields(data_sets)
+        else:
+            include_list = include
         #!print(f'dbg0: include={include}')
-        inc = ','.join(include)
 
-        self._validate_include(data_set, include)
+        self._validate_include(include_list, data_sets)
 
-        # !!!@@@
-        # Interpret special values to make real list of ORIG field names.
-
-        uparams =dict(include=inc,
-                      #!internal_names=self.internal_names,
-                      dr=data_set)
+        com_include = self.get_common_internal(include_list, data_sets)
+        uparams =dict(include=','.join(com_include),
+                      dr=','.join(data_sets))
         qstr = urlencode(uparams)
 
         url = f'{self.apiurl}/retrieve/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
-            print(f'Using include="{include}"')
-            print(f'Using inc="{inc}"')
             ut.tic()
 
         try:
