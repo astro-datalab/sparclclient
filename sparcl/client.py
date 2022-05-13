@@ -22,9 +22,10 @@ from itertools import chain
 import requests
 ############################################
 ## Local Packages
+from sparcl.fields import Fields
 import sparcl.utils as ut
 import sparcl.exceptions as ex
-import sparcl.type_conversion as tc
+#!import sparcl.type_conversion as tc
 from sparcl import __version__
 from sparcl.Results import Found, Retrieved
 
@@ -274,84 +275,7 @@ class SparclClient():  # was SparclApi()
         #self.session = requests.Session() #@@@
 
         self.clientversion = client_version
-
-        ####################################################
-        ### Convenience LookUp Tables derived from one query
-        ###
-        # dfLUT[dr][origPath] => dict[new=newPath,default=bool,store=bool]
-        #! lut0 = requests.get(f'{self.apiurl}/fields/').json()
-        #! lut1 = OrderedDict(sorted(lut0.items()))
-        #! self.dfLUT = {k:OrderedDict(sorted(d.items()))
-        #!               for k,d in lut1.items()}
-
-        datafields = requests.get(f'{self.apiurl}/datafields/').json()
-        core_list = set([df['origdp']
-                         for df in datafields if df['storage']=='C'])
-        dr_list = set(df['data_release_id'] for df in datafields)
-
-        # Per DataRelease: map ORIG fieldname (key) to NEW fieldname (value)
-        # dr_o2n[DR][ORIG] => NEW
-        dr_o2n = {dr : {df['origdp'] : df['newdp']
-                        for df in datafields if df['data_release_id'] == dr}
-                  for dr in dr_list}
-        dr_n2o = {dr : {df['newdp'] : df['origdp']
-                        for df in datafields if df['data_release_id'] == dr}
-                  for dr in dr_list}
-
-        # Per DataRelease: get Storage, Default, All for each (user) fieldname
-        # dr_attrs[DR][newdp] => dict[storage,default,all]
-        dr_attrs = {dr : {df['origdp'] : {'storage': df['storage'],
-                                         'default': df['default'],
-                                         'all': df['all']}
-                          for df in datafields if df['data_release_id'] == dr}
-                    for dr in dr_list}
-        dr_default = {dr : {new
-                            for new,v in dr_attrs[dr].items()
-                            if v['default']} for dr in dr_list}
-        dr_all = {dr : {new
-                            for new,v in dr_attrs[dr].items()
-                            if v['all']} for dr in dr_list}
-
-        # Fields (new) common to ALL DRs
-        common = set.intersection(*[set(dr_n2o[dr].keys())
-                                    for dr in dr_n2o.keys()])
-
-
-        # Handy structures for field name management in ivars
-        warn('''Implementation ignores that fact that a
-        single Science Field Name might map to MULTIPLE Internal Field Names
-        within a single Data Set.  If this is the case (see Admin)
-        results may be unpredictable!!!''', stacklevel=2)
-        self.datafields = datafields
-        # dr_atrrs[dr][orig] => dict[storage, default, all]
-        self.dr_attrs = dr_attrs  # dr_atrrs[dr][orig] => dict
-        self.dr_list = dr_list
-        self.dr_o2n = dr_o2n   # dr_n2o[dr][orig] => new   Internal to Science
-        self.dr_n2o = dr_n2o   # dr_n2o[dr][new] => orig  Science to Internal
-        self.dr_default = dr_default  # Default fields per DR (orig names)
-        self.dr_all = dr_all          # "All" fields per DR (orig names)
-        self.common_fields = common
-
-        #! # default[dr] => newFieldName, ...
-        #! self.default = dict(
-        #!     (dr, [d['new'] for orig,d in v.items() if d['default']])
-        #!     for dr,v in self.dfLUT.items())
-        #!
-        #! # orig2newLUT[dr][orig] = new
-        #! self.orig2newLUT = dict((dr,dict((orig,d['new'])
-        #!                                  for orig,d in v.items()))
-        #!                         for dr,v in self.dfLUT.items())
-        #! # new2origLUT[dr][new] = orig
-        #! self.new2origLUT = dict((dr,dict((d['new'],orig)
-        #!                                  for orig,d in v.items()))
-        #!                         for dr,v in self.dfLUT.items())
-        #!
-        #! # dict[drName] = [fieldName, ...]
-        #! self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
-        #!
-        #! dsflds = [self.dr_fields[dr].values()
-        #!           for dr in self.dr_fields.keys()]
-        #! self.common_fields = set.intersection(*[set(l) for l in dsflds])
+        self.fields = Fields(self.apiurl)
 
         ###
         ####################################################
@@ -369,48 +293,48 @@ class SparclClient():  # was SparclApi()
         )
 
 
-    def get_default_fields(self, data_set=None):
+    def get_default_fields(self, data_sets=None):
         """Get fields tagged as 'default' that are in DATA_SET.
-        If DATA_SET is None (the default),
-        get the /intersection/ of 'default' fields across all DATA_SETS."""
+        If DATA_SETs is None (the default),
+        get the /union/ of 'default' fields across all DATA_SETS."""
 
-        if data_set is None:
-            every = [self.get_default_fields(dr) for dr in self.dr_list]
-            return intersection(*every)
-        else:  # get fields for ALL drs
-            return [self.dr_o2n[data_set][orig]
-                    for orig in self.dr_default.get(data_set)]
+        return self.fields.default_retrieve_fields(dataset_list=data_sets)
 
-    def get_all_fields(self, data_set=None):
+    def get_all_fields(self, data_sets=None):
         """Get fields tagged as 'all' that are in DATA_SET.
         If DATA_SET is None (the default),
-        get the /intersection/ of 'all' fields across all DATA_SETS."""
+        get the /union/ of 'all' fields across all DATA_SETS."""
+        return self.fields.all_retrieve_fields(dataset_list=data_sets)
 
-        if data_set is None:
-            every = [self.get_all_fields(dr) for dr in self.dr_list]
-            return intersection(*every)
-        else: # get fields for ALL drs
-            return [self.dr_o2n[data_set][orig]
-                    for orig in self.dr_all.get(data_set)]
+#!    def get_common_internal(self, science_fields=None, dataset_list=None):
+#!        """Get subset of fields that are all (or selected) DATA_SETS.
+#!        data_sets :: list, None=All_Available
+#!        """
+#!
+#!        ds_list = self.fields.all_drs if data_sets is None else data_sets
+#!        every = [[self.dr_n2o[dr][fn] for fn in science_fields]
+#!                 for dr in ds_list]
+#!        common = intersection(*every)
+#!        return list(common)
 
-    def get_common_internal(self, science_fields=None, data_sets=None):
-        """Get subset of fields that are all (or selected) DATA_SETS.
-        data_sets :: list, None=All_Available
-        """
-
-        ds_list = self.dr_list if data_sets is None else data_sets
-        every = [[self.dr_n2o[dr][fn] for fn in science_fields]
-                 for dr in ds_list]
-        common = intersection(*every)
-        return list(common)
+    def common_internal(self, science_fields=None, dataset_list=None):
+        if science_fields is None:
+            science_fields = self.fields.all_fields
+        common = self.fields.common_internal(dataset_list)
+        flds = set()
+        for dr in self.fields.all_drs:
+            for sn in science_fields:
+                flds.add(self.fields._internal_name(sn, dr))
+        return common.intersection(flds)
 
     def get_available_science(self, data_sets=None):
         """Get subset of fields that are in all (or selected) DATA_SETS.
         data_sets :: list, None=All_Available
         """
-        ds_list = self.dr_list if data_sets is None else data_sets
+        ds_list = self.fields.all_drs if data_sets is None else data_sets
 
-        all_science = chain(*[self.dr_n2o[dr].keys() for dr in ds_list])
+        #!all_science = chain(*[self.dr_n2o[dr].keys() for dr in ds_list])
+        all_science = self.fields.all_fields
         return set(all_science)
 
 
@@ -529,7 +453,7 @@ class SparclClient():  # was SparclApi()
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/find/?{qstr}'
         search = [] if constraints is None else constraints
-        sspec = dict(outfields=self.get_common_internal(outfields),
+        sspec = dict(outfields=list(self.common_internal(outfields)),
                      search=search)
         res = requests.post(url, json=sspec, timeout=self.timeout)
 
@@ -581,6 +505,10 @@ class SparclClient():  # was SparclApi()
         res = requests.post(url, json=specids, timeout=self.timeout)
 
     def _validate_include(self, include_list, data_sets):
+        if not isinstance(include_list, (list, set)):
+            msg = f'Bad INCLUDE_LIST. Must be list. Got {include_list}'
+            raise ex.BadInclude(msg)
+
         available_science = self.get_available_science(data_sets=data_sets)
         inc_set = set(include_list)
         unknown = inc_set.difference(available_science)
@@ -599,13 +527,13 @@ class SparclClient():  # was SparclApi()
     def retrieve(self,
                  uuid_list,
                  include='DEFAULT',
-                 data_sets=None,
+                 dataset_list=None,
                  verbose=False):
-        """Get spectrum from UUID (universally unique identifier) list.
+        """Get spectrum by UUID (universally unique identifier) list.
         Args:
            uuid_list (list): List of uuids.
 
-           data_sets:: list, None  @@@
+           dataset_list:: list, None  @@@
 
            include (list, 'DEFAULT', 'ALL'): List of field names to
               include in each record. (default: 'DEFAULT') verbose
@@ -620,22 +548,28 @@ class SparclClient():  # was SparclApi()
            >>> res = client.retrieve(ids, include=['flux'])
 
         """
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
+        assert isinstance(dataset_list, (list, set)), (
+            f'DATASET_LIST must be a list. Found {dataset_list}')
 
         verbose = verbose or self.verbose
 
-        if include == DEFAULT:
-            include_list = self.get_default_fields(data_sets)
+        if (include == DEFAULT) or (include is None):
+            print(f'dbg0: DEFAULT')
+            include_list = self.get_default_fields(dataset_list)
         elif include == ALL:
-            include_list = self.get_all_fields(data_sets)
+            include_list = self.get_all_fields(dataset_list)
         else:
             include_list = include
-        #!print(f'dbg0: include={include}')
+        print(f'dbg0: include={include} include_list={include_list} '
+              f'dataset_list={dataset_list}')
 
-        self._validate_include(include_list, data_sets)
+        self._validate_include(include_list, dataset_list)
 
-        com_include = self.get_common_internal(include_list, data_sets)
+        com_include = self.common_internal(include_list, dataset_list)
         uparams =dict(include=','.join(com_include),
-                      dr=','.join(data_sets))
+                      dataset_list=','.join(dataset_list))
         qstr = urlencode(uparams)
 
         url = f'{self.apiurl}/retrieve/?{qstr}'
@@ -699,19 +633,24 @@ class SparclClient():  # was SparclApi()
         return Retrieved(results,  client=self)
 
     def retrieve_by_specid(self,
-                 specid_list,
-                 include='DEFAULT',
-                 data_set=None,
-                 verbose=False):
-        if data_set is  None:
-            cons = [['specid', *specid_list]]
+                           specid_list,
+                           include='DEFAULT',
+                           dataset_list=None,
+                           verbose=False):
+        if dataset_list is  None:
+            constraints = [['specid', *specid_list]]
         else:
-            cons = [['specid', *specid_list], ['data_release_id', data_set]]
-        found = self.find([idfld], constraints=cons)
+            constraints = [['specid', *specid_list],
+                           ['data_release_id', dataset_list]]
+        found = self.find([idfld], constraints=constraints)
+        if verbose:
+            print(f'Found {found.count} matches.')
         res = self.retrieve(found.ids,
                             include=include,
-                            data_set=data_set,
+                            dataset_list=dataset_list,
                             verbose=verbose)
+        if verbose:
+            print(f'Got {res.count} records.')
         return res
 
     def _ORIG_retrieve_by_specid(self,
@@ -830,20 +769,20 @@ class SparclClient():  # was SparclApi()
 
         return Results([ut._AttrDict(r) for r in records],  client=self)
 
-    def sample_records(self, count, data_set=None, include='DEFAULT', **kwargs):
-        """Return list of random records from given DATA_SET.
+    def sample_records(self, count, dataset_list=None, include='DEFAULT', **kwargs):
+        """Return list of random records from given DATASET_LIST.
         Args:
             count (int): Number of sample records to get from database.
-            data_set (:obj:`str`, optional): The Data Set from which to get
+            dataset_list (:obj:`str`, optional): The Data Set from which to get
                 sample records. Defaults to None (meaning ANY Data Set).
            include (list, 'DEFAULT', 'ALL'):
                List of paths to include in each record. Defaults to 'DEFAULT'.
-           data_set (str, optional): (default: None means ANY)
+           dataset_list (str, optional): (default: None means ANY)
                The Data Set from which to get sample records.
         Returns:
-            list(dict): List of random records from given DATA_SET.
+            list(dict): List of random records from given DATASET_LIST.
         Example:
-            >>> samrec = client.sample_records(1, data_set='BOSS-DR16')
+            >>> samrec = client.sample_records(1, dataset_list='BOSS-DR16')
             >>> pprint.pprint(samrec,depth=2a)
             [{'data_release_id': 'BOSS-DR16',
               'dec_center': 47.193549,
@@ -855,23 +794,23 @@ class SparclClient():  # was SparclApi()
         random = kwargs.pop('random',True)
         verb = self.verbose if kverb is None else kverb
         if verb:
-            print(f'sample_records(count={count}, data_set={data_set}, '
+            print(f'sample_records(count={count}, dataset_list={dataset_list}, '
                   f'include={include}, kwargs={kwargs}).')
-        sids = self.sample_specids(count, data_set=data_set,
+        sids = self.sample_specids(count, dataset_list=dataset_list,
                                    verbose=verb, **kwargs)
-        if data_set is None:
+        if dataset_list is None:
             recs = []
-            for dr in self.dr_list:  # dfLUT.keys():
+            for dr in self.fields.all_drs:  # dfLUT.keys():
                 if verb:
                     print(f'Retrieving from: {dr}')
                 recs.extend(self.retrieve_by_specid(sids,
-                                                    data_set=dr,
+                                                    dataset_list=dr,
                                                     include=include,
                                                     verbose=verb,
                                                     **kwargs))
         else:
             recs = self.retrieve_by_specid(sids,
-                                           data_set=data_set,
+                                           dataset_list=dataset_list,
                                            include=include,
                                            verbose=verb, **kwargs)
         return recs

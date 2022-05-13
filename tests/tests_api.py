@@ -24,6 +24,7 @@ import sparcl.exceptions as ex
 
 DEFAULT='DEFAULT'
 ALL='ALL'
+drs = ['BOSS-DR16']
 
 rooturl = 'http://localhost:8030/' #@@@
 #rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
@@ -52,8 +53,7 @@ class SparclClientTest(unittest.TestCase):
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
-        cls.specids = [1429741264506824, 1429933274376612,
-                       1506512395860731904]
+        cls.specids = [1429831265344501, 1429831265410037]
         found = cls.client.find([idfld, 'data_release'], limit=None)
         cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
 
@@ -100,7 +100,7 @@ class SparclClientTest(unittest.TestCase):
         """
         actual = self.client.dfLUT
         if showact:
-            print(f"df_lut actual={pformat(actual['BOSS-DR16'])}")
+            print(f"df_lut actual={pf(actual['BOSS-DR16'])}")
         self.assertDictEqual(actual['BOSS-DR16'],
                              exp.df_lut,
                              msg = 'Actual to Expected')
@@ -112,11 +112,11 @@ class SparclClientTest(unittest.TestCase):
     def test_fields_available(self):
         """Fields available in a specific record set."""
         records = self.client.sample_records(1,
-                                             data_set='BOSS-DR16',
+                                             dataset_list=drs,
                                              random=False)
         actual = sparcl.client.fields_available(records)
         if showact:
-            print(f'fields_available: actual={pformat(actual)}')
+            print(f'fields_available: actual={pf(actual)}')
         self.assertEqual(actual,
                          exp.fields_available,
                          msg = 'Actual to Expected')
@@ -125,19 +125,20 @@ class SparclClientTest(unittest.TestCase):
     def test_record_examples(self):
         """Get one record for each Structure type. DEFAULT set."""
         records = self.client.sample_records(1,
-                                             data_set='BOSS-DR16',
+                                             dataset_list=drs,
                                              random=False)
         examples = sparcl.client.record_examples(records)
         # Just the gist of the records (key names)
         actual = {k: sorted(v.keys()) for k,v in examples.items()}
         if showact:
-            print(f'record_examples: actual={pformat(actual)}')
+            print(f'record_examples: actual={pf(actual)}')
         self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
 
     def test_get_metadata(self):
         variant_fields = ['dateobs_center',idfld]
         sids = [1429933274376612]
-        records = self.client.retrieve_by_specid(sids, include=ALL, data_set='BOSS-DR16')
+        records = self.client.retrieve_by_specid(sids, include=ALL,
+                                                 dataset_list=drs)
         [r.pop('dirpath',None) for r in records]
         actual = sparcl.client.get_metadata(records)
         expected = exp.get_metadata
@@ -146,17 +147,18 @@ class SparclClientTest(unittest.TestCase):
             expected[0].pop(k,None)
 
         if showact:
-            print(f'get_metadata: actual={pformat(actual)}')
+            print(f'get_metadata: actual={pf(actual)}')
         self.assertEqual(actual, expected , msg = 'Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_get_vectordata(self):
         sids = [1429933274376612]
         ink = ['loglam', 'flux', 'and_mask', 'ivar', 'ra', 'dec', 'specid']
-        records = self.client.retrieve_by_specid(sids, include=ink, data_set='BOSS-DR16')
+        records = self.client.retrieve_by_specid(sids, include=ink,
+                                                 dataset_list=drs)
         actual = list(sparcl.client.get_vectordata(records)[0].keys())
         if showact:
-            print(f'get_vectordata: actual={pformat(actual)}')
+            print(f'get_vectordata: actual={pf(actual)}')
         self.assertListEqual(actual, exp.get_vectordata, msg = 'Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
@@ -167,7 +169,7 @@ class SparclClientTest(unittest.TestCase):
 
         records = self.client.sample_records(1,
                                               include=flds,
-                                              data_set='BOSS-DR16',
+                                              dataset_list=drs,
                                               random=False)
         rdict = dict(dec='y', ra='x', redshift='z', flux='f')
         actual = sparcl.client.rename_fields(rdict, records)
@@ -181,7 +183,7 @@ class SparclClientTest(unittest.TestCase):
                 'flux','ivar','loglam']
         records = self.client.sample_records(1,
                                               include=flds,
-                                              data_set='BOSS-DR16',
+                                              dataset_list=drs,
                                               random=False)
         rdict = {'dec': 'y',
                  'ra': 'x',
@@ -201,40 +203,40 @@ class SparclClientTest(unittest.TestCase):
     def test_get_field_names(self):
         actual = self.client.get_field_names('BOSS-DR16')
         if showact:
-            print(f'get_field_names: actual={pformat(actual)}')
+            print(f'get_field_names: actual={pf(actual)}')
         self.assertEqual(actual, exp.get_field_names, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_get_field_names_internal(self):
         actual = self.client.get_field_names('BOSS-DR16')
         if showact:
-            print(f'get_field_names_internal: actual={pformat(actual)}')
+            print(f'get_field_names_internal: actual={pf(actual)}')
         self.assertEqual(actual, exp.get_field_names_internal, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_orig_field(self):
         actual = self.client.orig_field('BOSS-DR16', 'flux')
         if showact:
-            print(f'orig_field: actual={pformat(actual)}')
+            print(f'orig_field: actual={pf(actual)}')
         self.assertEqual(actual, exp.orig_field, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_client_field(self):
         actual = self.client.client_field('BOSS-DR16','flux')
         if showact:
-            print(f'client_field: actual={pformat(actual)}')
+            print(f'client_field: actual={pf(actual)}')
         self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_normalize_field_names(self):
         """Convert all included  field names to internal names"""
-        sids = self.client.sample_specids(1,data_set='BOSS-DR16',random=False)
-        recs = self.client.retrieve_by_specid(sids, data_set='BOSS-DR16',
+        sids = self.client.sample_specids(1,dataset_list=drs,random=False)
+        recs = self.client.retrieve_by_specid(sids, dataset_list=drs,
                                      include=['flux','ivar'])
         recs_b = self.client.normalize_field_names(recs)
         actual = [sorted(r.keys()) for r in recs_b]
         if showact:
-            print(f'normalize_field_names: actual={pformat(actual)}')
+            print(f'normalize_field_names: actual={pf(actual)}')
         self.assertEqual(actual, exp.normalize_field_names,
                          msg = 'Actual to Expected')
 
@@ -273,16 +275,12 @@ class SparclClientTest(unittest.TestCase):
         """Get spectra using small list of specids."""
         name = 'retrieve_0'
         this = self.test_retrieve_0
-        dr='SDSS-DR16'
 
-        #!records = self.client.retrieve_by_specid(self.specids, data_set=dr)
-        records = self.client.retrieve_by_specid(self.specids,
-                                                 include=[idfld,'specid'])
-        actual = sorted([r['specid'] for r in records])
+        res = self.client.retrieve_by_specid(self.specids,
+                                             include=[idfld,'specid'])
+        actual = sorted([r['specid'] for r in res.records])
         if showact:
             print(f'retrieve_0: actual={actual}')
-        self.doc[name] = this.__doc__
-        self.count[name] = len(records)
 
         #!print(f'DBG gotspecids={gotspecids} specids={specids}')
         self.assertEqual(actual, self.specids, msg='Actual to Expected')
@@ -295,15 +293,12 @@ class SparclClientTest(unittest.TestCase):
         uuids = self.uuids
 
         tic()
-        records = self.client.retrieve(uuids)
+        res = self.client.retrieve(uuids)
         self.timing[name] = toc()
-        actual = sorted(records[0].keys())
-        actual.remove('_dr')
+        actual = sorted(res.records[0].keys())
 
-        self.doc[name] = this.__doc__
-        self.count[name] = len(records)
         if showact:
-            print(f'retrieve_0b: actual={pformat(actual)}')
+            print(f'retrieve_0b: actual={pf(actual)}')
 
         self.assertEqual(actual, exp.retrieve_0b, msg='Actual to Expected')
 
@@ -312,11 +307,11 @@ class SparclClientTest(unittest.TestCase):
         inc2 = ['bad_field_name', 'flux', 'or_mask']
 
         specids = sorted(self.client.sample_specids(samples=1,
-                                                    data_set='BOSS-DR16'))
+                                                    dataset_list=drs))
         with self.assertRaises(ex.BadInclude):
-            records = self.client.retrieve_by_specid(specids,
-                                           include=inc2,
-                                           data_set='BOSS-DR16')
+            res = self.client.retrieve_by_specid(specids,
+                                                 include=inc2,
+                                                 dataset_list=drs)
 
     #! @skip('Cannot find an example of this edge case occuring')
     #! def test_retrieve_2(self):
@@ -324,53 +319,45 @@ class SparclClientTest(unittest.TestCase):
     #!     inc2 = ['flux', 'spectra.coadd.OR_MASK']
     #!
     #!     specids = sorted(self.client.sample_specids(samples=1,
-    #!                                           data_set='BOSS-DR16'))
+    #!                                           dataset_list=drs))
     #!     with self.assertWarns(Warning):
     #!         records = self.client.retrieve_by_specid(specids,
     #!                                        include=inc2,
-    #!                                        data_set='BOSS-DR16')
+    #!                                        dataset_list=drs)
 
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
         inc = ['specid']
         sids = sorted(self.client.sample_specids(samples=1, random=False,
-                                                 data_set='BOSS-DR16'))
+                                                 dataset_list=drs))
         with self.assertWarns(Warning):
             records = self.client.retrieve_by_specid(sids+[999], include=inc,
-                                            data_set='BOSS-DR16')
-    def test_retrieve_3_internal(self):
-        """Issue warning when some sids do not exist."""
-        sids = sorted(self.client.sample_specids(samples=1, random=False,
-                                                 data_set='BOSS-DR16'))
-        with self.assertWarns(Warning):
-            records = self.client.retrieve_by_specid(sids+[999], data_set='BOSS-DR16')
+                                            dataset_list=drs)
 
     def test_retrieve_4(self):
         """Get ALL records with their internal (original) field names."""
-        dr='BOSS-DR16'
-        specids = sorted(self.client.sample_specids(samples=1, data_set=dr,
+        specids = sorted(self.client.sample_specids(samples=1, dataset_list=drs,
                                                     random=False))
         #print(f'DBG retrieve_4: specids={specids}')
         records = self.client.retrieve_by_specid(specids,
-                                                 data_set=dr, include=ALL)
+                                                 dataset_list=drs, include=ALL)
         actual = sorted(records[0].keys())
         actual.remove('_dr')
         if showact:
-            print(f'retrieve_4: actual={pformat(actual)}')
+            print(f'retrieve_4: actual={pf(actual)}')
         self.assertEqual(actual, exp.retrieve_4, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_retrieve_5(self):
         """Get record samples with their internal (original) field names."""
-        dr='BOSS-DR16'
         records = self.client.sample_records(1,
                                              include=ALL,
-                                             data_set=dr,
+                                             dataset_list=drs,
                                              random=False)
         actual = sorted(records[0].keys())
         actual.remove('_dr')
         if showact:
-            print(f'retrieve_5: actual={pformat(actual)}')
+            print(f'retrieve_5: actual={pf(actual)}')
         self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')
 
     #############################
@@ -387,10 +374,10 @@ class SparclClientTest(unittest.TestCase):
         recs = self.client.sample_records(1,
                                           random=False,
                                           include=flds,
-                                          data_set='BOSS-DR16')
+                                          dataset_list=drs)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'boss_json: actual={pformat(actual)}')
+            print(f'boss_json: actual={pf(actual)}')
         self.assertEqual(actual, exp.boss_json, msg='Actual to Expected')
 
     @skip('Type conversions removed until redesign')
@@ -408,11 +395,11 @@ class SparclClientTest(unittest.TestCase):
             ]
         #!print(f'clienti={self.client}')
         recs = self.client.sample_records(1,
-                                           data_set='BOSS-DR16', rtype='numpy',
+                                           dataset_list=drs, rtype='numpy',
                                            include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'boss_numpy: actual={pformat(actual)}')
+            print(f'boss_numpy: actual={pf(actual)}')
         self.assertEqual(actual, exp.boss_numpy, msg='Actual to Expected')
 
     @skip('Type conversions removed until redesign')
@@ -429,11 +416,11 @@ class SparclClientTest(unittest.TestCase):
             'spectra.coadd.WDISP',
             ]
         recs = self.client.sample_records(1,
-                                           data_set='BOSS-DR16',rtype='pandas',
+                                           dataset_list=drs,rtype='pandas',
                                            include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'boss_pandas: actual={pformat(actual)}')
+            print(f'boss_pandas: actual={pf(actual)}')
         self.assertEqual(actual, exp.boss_pandas, msg='Actual to Expected')
 
     @skip('Type conversions removed until redesign')
@@ -446,12 +433,12 @@ class SparclClientTest(unittest.TestCase):
             'spectra.coadd.AND_MASK',
             'redshift'
         ]
-        recs = self.client.sample_records(1, data_set='BOSS-DR16',
+        recs = self.client.sample_records(1, dataset_list=drs,
                                            rtype='spectrum1d',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'boss_spectrum1d: actual={pformat(actual)}')
+            print(f'boss_spectrum1d: actual={pf(actual)}')
         self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
 
     #############################
@@ -474,13 +461,13 @@ class SparclClientTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, data_set='DESI-everest',
+        recs = self.client.sample_records(1, dataset_list='DESI-everest',
                                            rtype='numpy',
                                            include=arflds,
                                            random=False)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'everest_numpy: actual={pformat(actual)}')
+            print(f'everest_numpy: actual={pf(actual)}')
         self.assertEqual(actual, exp.everest_numpy, msg='Actual to Expected')
 
     @skip('OBSOLETE dataset. Replace with DES-edr')
@@ -500,11 +487,11 @@ class SparclClientTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, data_set='DESI-everest', rtype='pandas',
+        recs = self.client.sample_records(1, dataset_list='DESI-everest', rtype='pandas',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'everest_pandas: actual={pformat(actual)}')
+            print(f'everest_pandas: actual={pf(actual)}')
         self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
 
 
@@ -526,11 +513,11 @@ class SparclClientTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, data_set='DESI-everest',
+        recs = self.client.sample_records(1, dataset_list='DESI-everest',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
-            print(f'everest_spectrum1d: actual={pformat(actual)}')
+            print(f'everest_spectrum1d: actual={pf(actual)}')
         self.assertEqual(actual, exp.everest_spectrum1d,
                          msg='Actual to Expected')
 

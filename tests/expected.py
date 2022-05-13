@@ -232,9 +232,9 @@ df_lut=OrderedDict([('FIBERID', {'default': False, 'new': 'FIBERID'}),
              ('wavemax', {'default': False, 'new': 'wavemax'}),
              ('wavemin', {'default': False, 'new': 'wavemin'})])
 
-retrieve_0 = [1429741264506824, 1429933274376612, 1506512395860731904]
+retrieve_0 = [1429831265344501, 1429831265410037]
 
-retrieve_0b = ['flux', 'uuid', 'wavelength']
+retrieve_0b = ['_dr', 'flux', 'uuid', 'wavelength']
 
 retrieve_4 = ['FIBERID',
  'MJD',

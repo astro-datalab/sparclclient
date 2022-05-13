@@ -10,12 +10,17 @@ class Results(UserList):
         self.hdr = dict_list[0]
         self.recs = dict_list[1:]
         self.client = client
+        self.fields = client.fields
         self.to_science_fields()
         self.hdr['Count'] = len(self.recs)
 
     @property
     def info(self):
         return self.hdr
+
+    @property
+    def count(self):
+        return self.hdr['Count']
 
     @property
     def records(self):
@@ -38,7 +43,7 @@ class Results(UserList):
                     # to Internal Field Names later.
                     newrec[orig] = rec[orig]
                 else:
-                    new = self.client.dr_o2n[dr][orig]
+                    new = self.fields._science_name(orig, dr)
                     newrec[new] = rec[orig]
             newrecs.append(_AttrDict(newrec))
         self.recs = newrecs
@@ -52,7 +57,7 @@ class Results(UserList):
                     # keep DR around unchanged. We need it to rename back
                     # to Internal Field Names later.
                     continue
-                orig = self.client.dr_n2o[dr][new]
+                orig = self.fields._internal_name(new, dr)
                 rec[orig] = rec.pop(new)
 
 
