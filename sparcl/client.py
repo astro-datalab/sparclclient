@@ -292,46 +292,61 @@ class SparclClient():  # was SparclApi()
                f' read_timeout={self.r_timeout})'
         )
 
+    @property
+    def all_datasets(self):
+        return self.fields.all_drs
 
-    def get_default_fields(self, data_sets=None):
-        """Get fields tagged as 'default' that are in DATA_SET.
-        If DATA_SETs is None (the default),
-        get the /union/ of 'default' fields across all DATA_SETS."""
+    def get_default_fields(self, dataset_list=None):
+        """Get fields tagged as 'default' that are in DATASET_LIST.
+        If DATASET_LIST is None (the default),
+        get the /intersection/ of 'default' fields across all DATASET_LIST."""
 
-        return self.fields.default_retrieve_fields(dataset_list=data_sets)
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
 
-    def get_all_fields(self, data_sets=None):
+        assert isinstance(dataset_list, (list, set)), (
+            f'DATASET_LIST must be a list. Found {dataset_list}')
+
+        common = set(self.fields.common(dataset_list))
+        union = self.fields.default_retrieve_fields(dataset_list=dataset_list)
+        return sorted(common.intersection(union))
+
+    def get_all_fields(self, dataset_list=None):
         """Get fields tagged as 'all' that are in DATA_SET.
         If DATA_SET is None (the default),
-        get the /union/ of 'all' fields across all DATA_SETS."""
-        return self.fields.all_retrieve_fields(dataset_list=data_sets)
+        get the /intersection/ of 'all' fields across all DATASET_LIST."""
+        common = set(self.fields.common(dataset_list))
+        union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
+        return sorted(common.intersection(union))
 
 #!    def get_common_internal(self, science_fields=None, dataset_list=None):
-#!        """Get subset of fields that are all (or selected) DATA_SETS.
-#!        data_sets :: list, None=All_Available
+#!        """Get subset of fields that are all (or selected) DATASET_LIST.
+#!        dataset_list :: list, None=All_Available
 #!        """
 #!
-#!        ds_list = self.fields.all_drs if data_sets is None else data_sets
+#!        ds_list = self.fields.all_drs if dataset_list is None else dataset_list
 #!        every = [[self.dr_n2o[dr][fn] for fn in science_fields]
 #!                 for dr in ds_list]
 #!        common = intersection(*every)
 #!        return list(common)
 
     def common_internal(self, science_fields=None, dataset_list=None):
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
         if science_fields is None:
             science_fields = self.fields.all_fields
         common = self.fields.common_internal(dataset_list)
         flds = set()
-        for dr in self.fields.all_drs:
+        for dr in dataset_list:
             for sn in science_fields:
                 flds.add(self.fields._internal_name(sn, dr))
         return common.intersection(flds)
 
-    def get_available_science(self, data_sets=None):
-        """Get subset of fields that are in all (or selected) DATA_SETS.
-        data_sets :: list, None=All_Available
+    def get_available_science(self, dataset_list=None):
+        """Get subset of fields that are in all (or selected) DATASET_LIST.
+        dataset_list :: list, None=All_Available
         """
-        ds_list = self.fields.all_drs if data_sets is None else data_sets
+        ds_list = self.fields.all_drs if dataset_list is None else dataset_list
 
         #!all_science = chain(*[self.dr_n2o[dr].keys() for dr in ds_list])
         all_science = self.fields.all_fields
@@ -504,18 +519,19 @@ class SparclClient():  # was SparclApi()
         url = f'{self.apiurl}/specids2tuples/?{qstr}'
         res = requests.post(url, json=specids, timeout=self.timeout)
 
-    def _validate_include(self, include_list, data_sets):
+    def _validate_include(self, include_list, dataset_list):
         if not isinstance(include_list, (list, set)):
             msg = f'Bad INCLUDE_LIST. Must be list. Got {include_list}'
             raise ex.BadInclude(msg)
 
-        available_science = self.get_available_science(data_sets=data_sets)
+        available_science = self.get_available_science(
+            dataset_list=dataset_list)
         inc_set = set(include_list)
         unknown = inc_set.difference(available_science)
         if len(unknown) > 0:
             msg = (f'The INCLUDE list ({",".join(sorted(include_list))}) '
                    f'contains invalid data field names '
-                   f'for Data Sets ({",".join(sorted(data_sets))}). '
+                   f'for Data Sets ({",".join(sorted(dataset_list))}). '
                    f'Unknown fields are: '
                    f'{", ".join(sorted(list(unknown)))}. '
                    f'Available fields are: '
@@ -556,14 +572,13 @@ class SparclClient():  # was SparclApi()
         verbose = verbose or self.verbose
 
         if (include == DEFAULT) or (include is None):
-            print(f'dbg0: DEFAULT')
             include_list = self.get_default_fields(dataset_list)
         elif include == ALL:
             include_list = self.get_all_fields(dataset_list)
         else:
             include_list = include
-        print(f'dbg0: include={include} include_list={include_list} '
-              f'dataset_list={dataset_list}')
+        #! print(f'dbg0: include={include} include_list={include_list} '
+        #!       f'dataset_list={dataset_list}')
 
         self._validate_include(include_list, dataset_list)
 
@@ -578,7 +593,7 @@ class SparclClient():  # was SparclApi()
             ut.tic()
 
         try:
-            ids = uuid_list
+            ids = list(uuid_list)
             res = requests.post(url, json=ids, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')

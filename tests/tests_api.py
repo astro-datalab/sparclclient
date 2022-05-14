@@ -109,6 +109,7 @@ class SparclClientTest(unittest.TestCase):
     ### Convenience Functions
     ###
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_fields_available(self):
         """Fields available in a specific record set."""
         records = self.client.sample_records(1,
@@ -134,6 +135,7 @@ class SparclClientTest(unittest.TestCase):
             print(f'record_examples: actual={pf(actual)}')
         self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
 
+    @skip('Not required.  EXPERIMENTAL')
     def test_get_metadata(self):
         variant_fields = ['dateobs_center',idfld]
         sids = [1429933274376612]
@@ -261,6 +263,8 @@ class SparclClientTest(unittest.TestCase):
         """None missing"""
         specids = self.client.sample_specids()
         missing = self.client.missing_specids(specids)
+        if showact:
+            print(f'missing_1: missing={missing}')
         assert missing == []
 
     def test_missing_2(self):
@@ -269,6 +273,8 @@ class SparclClientTest(unittest.TestCase):
         if len(missing) > 0:
             print(f'test_missing_2: missing={missing}')
         #print("missing:", missing)
+        if showact:
+            print(f'missing_2: missing={missing}')
         assert missing == []
 
     def test_retrieve_0(self):
@@ -331,21 +337,9 @@ class SparclClientTest(unittest.TestCase):
         sids = sorted(self.client.sample_specids(samples=1, random=False,
                                                  dataset_list=drs))
         with self.assertWarns(Warning):
-            records = self.client.retrieve_by_specid(sids+[999], include=inc,
-                                            dataset_list=drs)
-
-    def test_retrieve_4(self):
-        """Get ALL records with their internal (original) field names."""
-        specids = sorted(self.client.sample_specids(samples=1, dataset_list=drs,
-                                                    random=False))
-        #print(f'DBG retrieve_4: specids={specids}')
-        records = self.client.retrieve_by_specid(specids,
-                                                 dataset_list=drs, include=ALL)
-        actual = sorted(records[0].keys())
-        actual.remove('_dr')
-        if showact:
-            print(f'retrieve_4: actual={pf(actual)}')
-        self.assertEqual(actual, exp.retrieve_4, msg='Actual to Expected')
+            records = self.client.retrieve_by_specid(sids+[999],
+                                                     include=inc,
+                                                     dataset_list=drs)
 
     @skip('Not required.  EXPERIMENTAL')
     def test_retrieve_5(self):
@@ -531,7 +525,7 @@ class SparclClientTest(unittest.TestCase):
         outfields = [idfld,'ra','dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
         constraints = [
-            ['ra', 200.0, 210.0],
+            ['ra', 180.0, 240.0],
             ['dec', -2.0, +2.0],
         ]
         found = self.client.find(outfields, constraints)
