@@ -1,5 +1,6 @@
 # Python Standard Library
 from warnings import warn
+from collections import defaultdict
 # External Packages
 import requests
 
@@ -49,7 +50,8 @@ class Fields():
         return self.all_drs
 
     def _science_name(self, internal_name, dataset):
-        return self.o2n[dataset][internal_name]
+        #!print(f'DBG _science_name: dr={dataset} name={internal_name}')
+        return self.o2n[dataset].get(internal_name)
 
     def _internal_name(self, science_name, dataset):
         return self.n2o[dataset][science_name]
@@ -85,6 +87,27 @@ class Fields():
             dataset_list = self.all_drs
         return set.intersection(*[set(self.o2n[dr].keys())
                                   for dr in dataset_list])
+
+    # There is probably an algorithm to partition ELEMENTS into
+    # the _minumum_ number of SETS such that the union of all SETS
+    # contains all ELEMENTS. For now, parition by Data Set (when used).
+    def field_partitions(self, fields):
+        """Partition FIELDS into the DataSets that contain them"""
+        dr_fields = defaultdict(list)
+        for field in fields:
+            for dr in self.all_drs:
+                if field in self.n2o[dr]:
+                    dr_fields[dr].append(field)
+        return dict(dr_fields)
+
+    def get_hetero_record_lists(self, records):
+        lut = defaultdict(list)  # lut[dr] => records
+        for dr in self.all_drs:
+            for rec in records:
+                lut[rec._dr].append(rec)
+        return lut
+
+
 
 #! dfLUT[dr][origPath] => dict[new=newPath,default=bool,store=bool]
 #! lut0 = requests.get(f'{self.apiurl}/fields/').json()

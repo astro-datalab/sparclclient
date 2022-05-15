@@ -481,22 +481,22 @@ class SparclClient():  # was SparclApi()
 
         return Found(res.json(), client=self)
 
-    def missing_specids(self, specid_list, countOnly=False, verbose=False):
-        """Return the subset of the given specid list that is NOT stored
+    def missing_uuids(self, uuid_list, countOnly=False, verbose=False):
+        """Return the subset of the given uuid_list that is NOT stored
         in the database.
         Args:
-           specid_list (list): List of specids.
+           uuid_list (list): List of uuids.
            countOnly (:obj:`bool`, optional): Set to True to return only a count
-               of the missing specids from the list. Defaults to False.
+               of the missing uuids from the list. Defaults to False.
            verbose (:obj:`bool`, optional): Set to True for in-depth return statement.
                Defaults to False.
         Returns:
-            list: The subset of the given specid list that is NOT stored in the
+            list: The subset of the given uuid_list that is NOT stored in the
                 database.
         Example:
-            >>> si = [1858907533188556800, 6171312851359387648, 1647268306035435520]
-            >>> client.missing_specids(si)
-            [1858907533188556800, 6171312851359387648]
+            >>> si = ['0b1128aa-609e-48f7-ace6-f87a4e2c09ec', '18f77947-9716-4f84-841c-14344abf2c33']
+            >>> client.missing_uuids(si)
+            ['0b1128aa-609e-48f7-ace6-f87a4e2c09ec']
         """
 
         verbose = verbose or self.verbose
@@ -505,13 +505,48 @@ class SparclClient():  # was SparclApi()
         url = f'{self.apiurl}/missing/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
-        res = requests.post(url, json=specid_list, timeout=self.timeout)
+        res = requests.post(url, json=uuid_list, timeout=self.timeout)
+        if verbose:
+            print(f'res.content="{res.content}"')
+
         res.raise_for_status()
         if res.status_code != 200:
             raise Exception(res)
         ret =  res.json()
         return ret
-        # END missing_specids()
+        # END missing_uuids()
+
+#!    def missing_specids(self, specid_list, countOnly=False, verbose=False):
+#!        """Return the subset of the given specid list that is NOT stored
+#!        in the database.
+#!        Args:
+#!           specid_list (list): List of specids.
+#!           countOnly (:obj:`bool`, optional): Set to True to return only a count
+#!               of the missing specids from the list. Defaults to False.
+#!           verbose (:obj:`bool`, optional): Set to True for in-depth return statement.
+#!               Defaults to False.
+#!        Returns:
+#!            list: The subset of the given specid list that is NOT stored in the
+#!                database.
+#!        Example:
+#!            >>> si = [1858907533188556800, 6171312851359387648, 1647268306035435520]
+#!            >>> client.missing_specids(si)
+#!            [1858907533188556800, 6171312851359387648]
+#!        """
+#!
+#!        verbose = verbose or self.verbose
+#!        uparams = dict()
+#!        qstr = urlencode(uparams)
+#!        url = f'{self.apiurl}/missing/?{qstr}'
+#!        if verbose:
+#!            print(f'Using url="{url}"')
+#!        res = requests.post(url, json=specid_list, timeout=self.timeout)
+#!        res.raise_for_status()
+#!        if res.status_code != 200:
+#!            raise Exception(res)
+#!        ret =  res.json()
+#!        return ret
+#!        # END missing_specids()
 
     def _specids2tuples(self, specids, data_set):
         uparams =dict(dr=data_set)
@@ -544,7 +579,7 @@ class SparclClient():  # was SparclApi()
                  uuid_list,
                  include='DEFAULT',
                  dataset_list=None,
-                 verbose=False):
+                 verbose=None):
         """Get spectrum by UUID (universally unique identifier) list.
         Args:
            uuid_list (list): List of uuids.
@@ -569,7 +604,7 @@ class SparclClient():  # was SparclApi()
         assert isinstance(dataset_list, (list, set)), (
             f'DATASET_LIST must be a list. Found {dataset_list}')
 
-        verbose = verbose or self.verbose
+        verbose = self.verbose if verbose is None else verbose
 
         if (include == DEFAULT) or (include is None):
             include_list = self.get_default_fields(dataset_list)
@@ -637,7 +672,8 @@ class SparclClient():  # was SparclApi()
             print(f'{meta["status"]}')
 
         if len(meta['status'].get('warnings',[])) > 0:
-            warn(f"{'; '.join(meta['status'].get('warnings'))}")
+            warn(f"{'; '.join(meta['status'].get('warnings'))}",
+                 stacklevel=2)
 
         #! return Results( # @@@ Removed type conversion!!!
         #!     [ut._AttrDict(tc.convert(r, rtype, self, include))

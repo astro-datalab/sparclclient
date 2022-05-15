@@ -33,19 +33,26 @@ class Results(UserList):
         """Convert Internal field names to Science field names.
         SIDE-EFFECT: modifies self.recs """
         newrecs = list()
+        #! print(f'DBG to_science_fields: '
+        #!       f'recs.keys={sorted([r.keys() for r in self.recs])}')
         for rec in self.recs:
             newrec = dict()
             dr = rec['_dr']
+            keep = True
+            #!print(f'dbg0: dr={dr}, rec-keys={sorted(rec.keys())}')
             for orig in rec.keys():
-                #! print(f'dbg0: dr={dr}, orig={orig}')
+                #!print(f'dbg0: dr={dr}, orig={orig}')
                 if orig == '_dr':
                     # keep DR around unchanged. We need it to rename back
                     # to Internal Field Names later.
                     newrec[orig] = rec[orig]
                 else:
                     new = self.fields._science_name(orig, dr)
+                    if new is None:
+                        keep = False
                     newrec[new] = rec[orig]
-            newrecs.append(_AttrDict(newrec))
+            if keep:
+                newrecs.append(_AttrDict(newrec))
         self.recs = newrecs
 
     def to_internal_fields(self):

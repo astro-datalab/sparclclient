@@ -32,7 +32,7 @@ rooturl = 'http://localhost:8030/' #@@@
 idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 
 showact = False
-showact = True
+#showact = True
 
 
 class SparclClientTest(unittest.TestCase):
@@ -255,27 +255,20 @@ class SparclClientTest(unittest.TestCase):
 
     def test_missing_0(self):
         """Known missing"""
-        specids= [99,88]
-        missing = self.client.missing_specids(specids)
-        assert sorted(missing) == sorted(specids)
+        uuids= [99,88]
+        missing = self.client.missing_uuids(uuids)
+        assert sorted(missing) == sorted(uuids)
 
     def test_missing_1(self):
         """None missing"""
-        specids = self.client.sample_specids()
-        missing = self.client.missing_specids(specids)
+        #uuids = self.client.sample_uuids()
+        uuids = self.uuids
+
+        missing = self.client.missing_uuids(uuids)
         if showact:
             print(f'missing_1: missing={missing}')
         assert missing == []
 
-    def test_missing_2(self):
-        """None missing, use in other tests"""
-        missing = self.client.missing_specids(self.specids)
-        if len(missing) > 0:
-            print(f'test_missing_2: missing={missing}')
-        #print("missing:", missing)
-        if showact:
-            print(f'missing_2: missing={missing}')
-        assert missing == []
 
     def test_retrieve_0(self):
         """Get spectra using small list of specids."""
@@ -333,13 +326,10 @@ class SparclClientTest(unittest.TestCase):
 
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
-        inc = ['specid']
-        sids = sorted(self.client.sample_specids(samples=1, random=False,
-                                                 dataset_list=drs))
+        uuids = self.uuids
         with self.assertWarns(Warning):
-            records = self.client.retrieve_by_specid(sids+[999],
-                                                     include=inc,
-                                                     dataset_list=drs)
+            records = self.client.retrieve(uuids+[999])
+
 
     @skip('Not required.  EXPERIMENTAL')
     def test_retrieve_5(self):
