@@ -100,12 +100,12 @@ class Fields():
                     dr_fields[dr].append(field)
         return dict(dr_fields)
 
-    def get_hetero_record_lists(self, records):
-        lut = defaultdict(list)  # lut[dr] => records
-        for dr in self.all_drs:
-            for rec in records:
-                lut[rec._dr].append(rec)
-        return lut
+#!    def get_hetero_record_lists(self, records):
+#!        lut = defaultdict(list)  # lut[dr] => records
+#!        for dr in self.all_drs:
+#!            for rec in records:
+#!                lut[rec._dr].append(rec)
+#!        return lut
 
 
 

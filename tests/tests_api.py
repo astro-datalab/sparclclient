@@ -255,8 +255,8 @@ class SparclClientTest(unittest.TestCase):
 
     def test_missing_0(self):
         """Known missing"""
-        uuids= [99,88]
-        missing = self.client.missing_uuids(uuids)
+        uuids= [99,88,777]
+        missing = self.client.missing(self.uuids + uuids)
         assert sorted(missing) == sorted(uuids)
 
     def test_missing_1(self):
@@ -264,7 +264,7 @@ class SparclClientTest(unittest.TestCase):
         #uuids = self.client.sample_uuids()
         uuids = self.uuids
 
-        missing = self.client.missing_uuids(uuids)
+        missing = self.client.missing(uuids)
         if showact:
             print(f'missing_1: missing={missing}')
         assert missing == []

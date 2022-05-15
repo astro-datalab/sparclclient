@@ -481,7 +481,8 @@ class SparclClient():  # was SparclApi()
 
         return Found(res.json(), client=self)
 
-    def missing_uuids(self, uuid_list, countOnly=False, verbose=False):
+    def missing(self, uuid_list, dataset_list=None,
+                countOnly=False, verbose=False):
         """Return the subset of the given uuid_list that is NOT stored
         in the database.
         Args:
@@ -498,16 +499,19 @@ class SparclClient():  # was SparclApi()
             >>> client.missing_uuids(si)
             ['0b1128aa-609e-48f7-ace6-f87a4e2c09ec']
         """
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
+        assert isinstance(dataset_list, (list, set)), (
+            f'DATASET_LIST must be a list. Found {dataset_list}')
 
         verbose = verbose or self.verbose
-        uparams = dict()
+        uparams =dict( dataset_list=','.join(dataset_list))
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/missing/?{qstr}'
+        uuids = list(uuid_list)
         if verbose:
             print(f'Using url="{url}"')
-        res = requests.post(url, json=uuid_list, timeout=self.timeout)
-        if verbose:
-            print(f'res.content="{res.content}"')
+        res = requests.post(url, json=uuids, timeout=self.timeout)
 
         res.raise_for_status()
         if res.status_code != 200:
