@@ -26,8 +26,8 @@ DEFAULT='DEFAULT'
 ALL='ALL'
 drs = ['BOSS-DR16']
 
-rooturl = 'http://localhost:8030/' #@@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://localhost:8030/' #@@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
 
 idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 
