@@ -1,3 +1,7 @@
+"""Containers for results from SPARCL Server.
+These include results of client.retrieve() client.find().
+"""
+
 from collections import OrderedDict, UserList
 import copy
 from sparcl.utils import _AttrDict

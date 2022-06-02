@@ -82,13 +82,14 @@ RESERVED=set([DEFAULT, ALL])
 ###########################
 ### Convenience Functions
 
+# Following can be done with:
+#   set.intersection(*sets)
+#
+#!def intersection(*lists):
+#!    """Return intersection of all LISTS."""
+#!    return set(lists[0]).intersection(*lists[1:])
 
-
-def intersection(*lists):
-    """Return intersection of all LISTS."""
-    return set(lists[0]).intersection(*lists[1:])
-
-def fields_available(records):
+def records_field_list(records):
     """Get list of fields used in records. One list per Data Set.
     Args:
         records (list): List of records (each is a dictionary).
@@ -108,83 +109,83 @@ def fields_available(records):
     fields = {r._dr: sorted(r.keys()) for r in records}
     return fields
 
-def record_examples(records):
-    """Copy one record for each Data Set type.
-    Args:
-        records (list): List of records (each is a dictionary).
-    :param records: List of records (each is a dictionary)
-    :returns: dict[Data_Set] = rec
-    Example:
-      >>> from api.client import record_examples
-      >>> recs = client.sample_records(3)
-      >>> rex = record_examples(recs)
-    Returns:
-        dict: dict[Data_Set] = rec
-    Example:
-        >>> from sparcl.client import record_examples
-        >>> recs = client.sample_records(3)
-        >>> rex = record_examples(recs)
-    """
-    examples = {r.data_release_id: r for r in records}
-    return examples
-
-def get_metadata(records):
-    """Get records of just metadata used in records.
-    Metadata is considered to be any field whose type is a Number or String.
-    Therefore, this will not include vectors, lists, tuples, etc.
-    Args:
-        records (list): List of records (dictionaries).
-    Returns:
-        list(dict): New list of dictionaries. Each dict contains only metadata fields.
-    :param records: List of records (dictionaries)
-    :returns: new list of dictionaries. Each dict contains only metadata fields.
-    Example:
-        >>> from sparcl.client import get_metadata
-        >>> recs = client.sample_records(3)
-        >>> metadata = get_metadata(recs)
-    """
-    md_fields = [k for k,v in records[0].items()
-                 if isinstance(v,Number) or isinstance(v,str)]
-    return [{k:v for k,v in r.items() if k in md_fields} for r in records]
-
-def get_vectordata(records):
-    """Get records of just vector data used in records.
-    Vector data is considered to be any field whose type is a list or tuple.
-    Therefore, this will not include Number or String.
-    Args:
-        records (list): List of records (dictionaries).
-    Returns:
-        list(dict): New list of dictionaries. Each dict contains only vector data fields.
-    Example:
-        >>> from sparcl.client import get_vectordata
-        >>> recs = client.sample_records(3)
-        >>> vectordata = get_vectordata(recs)
-    """
-    vd_fields = []
-    for i in range(len(records)):
-        for k,v in records[i].items():
-            if isinstance(v,list) or isinstance(v,tuple):
-                vd_fields.append(k)
-    return [{k:v for k,v in r.items() if k in vd_fields} for r in records]
-
-def rename_fields(rename_dict, records):
-    """Rename some field names in all given records. EXPERIMENTAL.
-    Args:
-        rename_dict (key,value): The key is the current field name, value is the new field name.
-        records (list): List of records (dictionaries) to transform.
-    Returns:
-        list: Renamed field names in all given records.
-    :param rename_dict: The key is current field name, value is new.
-    :param records: List of records (dictionaries) to transform
-    :returns: new_records
-    Example:
-      >>> from api.client import rename_fields
-      >>> recs = client.sample_records(1)
-      >>> renamed = rename_fields({'ra':'Right_Ascension'},recs)
-    """
-    return [{rename_dict.get(k,k):v for k,v in r.items()}
-            for r in records]
-
+#! def record_examples(records):
+#!     """Copy one record for each Data Set type.
+#!     Args:
+#!         records (list): List of records (each is a dictionary).
+#!     :param records: List of records (each is a dictionary)
+#!     :returns: dict[Data_Set] = rec
+#!     Example:
+#!       >>> from api.client import record_examples
+#!       >>> recs = client.sample_records(3)
+#!       >>> rex = record_examples(recs)
+#!     Returns:
+#!         dict: dict[Data_Set] = rec
+#!     Example:
+#!         >>> from sparcl.client import record_examples
+#!         >>> recs = client.sample_records(3)
+#!         >>> rex = record_examples(recs)
+#!     """
+#!     examples = {r.data_release_id: r for r in records}
+#!     return examples
+#!
+#! def get_metadata(records):
+#!     """Get records of just metadata used in records.
+#!     Metadata is considered to be any field whose type is a Number or String.
+#!     Therefore, this will not include vectors, lists, tuples, etc.
+#!     Args:
+#!         records (list): List of records (dictionaries).
+#!     Returns:
+#!         list(dict): New list of dictionaries. Each dict contains only metadata fields.
+#!     :param records: List of records (dictionaries)
+#!     :returns: new list of dictionaries. Each dict contains only metadata fields.
+#!     Example:
+#!         >>> from sparcl.client import get_metadata
+#!         >>> recs = client.sample_records(3)
+#!         >>> metadata = get_metadata(recs)
+#!     """
+#!     md_fields = [k for k,v in records[0].items()
+#!                  if isinstance(v,Number) or isinstance(v,str)]
+#!     return [{k:v for k,v in r.items() if k in md_fields} for r in records]
+#!
+#! def get_vectordata(records):
+#!     """Get records of just vector data used in records.
+#!     Vector data is considered to be any field whose type is a list or tuple.
+#!     Therefore, this will not include Number or String.
+#!     Args:
+#!         records (list): List of records (dictionaries).
+#!     Returns:
+#!         list(dict): New list of dictionaries. Each dict contains only vector data fields.
+#!     Example:
+#!         >>> from sparcl.client import get_vectordata
+#!         >>> recs = client.sample_records(3)
+#!         >>> vectordata = get_vectordata(recs)
+#!     """
+#!     vd_fields = []
+#!     for i in range(len(records)):
+#!         for k,v in records[i].items():
+#!             if isinstance(v,list) or isinstance(v,tuple):
+#!                 vd_fields.append(k)
+#!     return [{k:v for k,v in r.items() if k in vd_fields} for r in records]
+#!
+#! def rename_fields(rename_dict, records):
+#!     """Rename some field names in all given records. EXPERIMENTAL.
+#!     Args:
+#!         rename_dict (key,value): The key is the current field name, value is the new field name.
+#!         records (list): List of records (dictionaries) to transform.
+#!     Returns:
+#!         list: Renamed field names in all given records.
+#!     :param rename_dict: The key is current field name, value is new.
+#!     :param records: List of records (dictionaries) to transform
+#!     :returns: new_records
+#!     Example:
+#!       >>> from api.client import rename_fields
+#!       >>> recs = client.sample_records(1)
+#!       >>> renamed = rename_fields({'ra':'Right_Ascension'},recs)
+#!     """
+#!     return [{rename_dict.get(k,k):v for k,v in r.items()}
+#!             for r in records]
+#!
 
 
 ###########################
@@ -298,6 +299,9 @@ class SparclClient():  # was SparclApi()
 
     def get_default_fields(self, dataset_list=None):
         """Get fields tagged as 'default' that are in DATASET_LIST.
+        This is the fields used for the DEFAULT value of the include parameter
+        of client.retrieve().
+
         If DATASET_LIST is None (the default),
         get the /intersection/ of 'default' fields across all DATASET_LIST."""
 
@@ -313,24 +317,17 @@ class SparclClient():  # was SparclApi()
 
     def get_all_fields(self, dataset_list=None):
         """Get fields tagged as 'all' that are in DATA_SET.
+        This is the fields used for the ALL value of the include parameter
+        of client.retrieve().
+
         If DATA_SET is None (the default),
         get the /intersection/ of 'all' fields across all DATASET_LIST."""
         common = set(self.fields.common(dataset_list))
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
         return sorted(common.intersection(union))
 
-#!    def get_common_internal(self, science_fields=None, dataset_list=None):
-#!        """Get subset of fields that are all (or selected) DATASET_LIST.
-#!        dataset_list :: list, None=All_Available
-#!        """
-#!
-#!        ds_list = self.fields.all_drs if dataset_list is None else dataset_list
-#!        every = [[self.dr_n2o[dr][fn] for fn in science_fields]
-#!                 for dr in ds_list]
-#!        common = intersection(*every)
-#!        return list(common)
 
-    def common_internal(self, science_fields=None, dataset_list=None):
+    def _common_internal(self, science_fields=None, dataset_list=None):
         if dataset_list is None:
             dataset_list = self.fields.all_drs
         if science_fields is None:
@@ -342,39 +339,41 @@ class SparclClient():  # was SparclApi()
                 flds.add(self.fields._internal_name(sn, dr))
         return common.intersection(flds)
 
-    def get_available_science(self, dataset_list=None):
+    # Return Science Field Names (not Internal)
+    def get_available_fields(self, dataset_list=None):
         """Get subset of fields that are in all (or selected) DATASET_LIST.
+        This may be a bigger list than will be used with the ALL keyword to
+        client.retreive()
+
         dataset_list :: list, None=All_Available
         """
-        ds_list = self.fields.all_drs if dataset_list is None else dataset_list
-
-        #!all_science = chain(*[self.dr_n2o[dr].keys() for dr in ds_list])
-        all_science = self.fields.all_fields
-        return set(all_science)
+        drs = self.fields.all_drs if dataset_list is None else dataset_list
+        every = [set(self.fields.n2o[dr]) for dr in drs]
+        return set.intersection(*every)
 
 
-    def get_field_names(self, data_set):
-        """List field names available for retrieve.
-        Args:
-            data_set (str): Data Set to get the field names of.
-        Returns:
-            list: List of field names.
-        :param data_set: List field names of this Data Set.
-        :returns: list of field names
-        Example:
-            >>> client.get_field_names('DESI-everest')
-        """
-        dr = data_set
-        if dr in self.dr_fields:
-            return list(self.dr_fields[dr].keys())
-        else:
-            print(f'That is not a currently support data_set. '
-                  f'Available data_sets are: '
-                  f"{', '.join(self.dr_fields.keys())}"
-                  )
-            return None
-
-    #!ef orig_field(self, data_set, client_name):
+#!    def get_field_names(self, data_set):
+#!        """List field names available for retrieve.
+#!        Args:
+#!            data_set (str): Data Set to get the field names of.
+#!        Returns:
+#!            list: List of field names.
+#!        :param data_set: List field names of this Data Set.
+#!        :returns: list of field names
+#!        Example:
+#!            >>> client.get_field_names('DESI-everest')
+#!        """
+#!        dr = data_set
+#!        if dr in self.dr_fields:
+#!            return list(self.dr_fields[dr].keys())
+#!        else:
+#!            print(f'That is not a currently support data_set. '
+#!                  f'Available data_sets are: '
+#!                  f"{', '.join(self.dr_fields.keys())}"
+#!                  )
+#!            return None
+#!
+    #!def orig_field(self, data_set, client_name):
     #!   """Get original field name as provided in Data Set.
     #!   Args:
     #!       data_set (str): Name of Data Set.
@@ -408,39 +407,36 @@ class SparclClient():  # was SparclApi()
     #!   #!return self.orig2newLUT[data_set][orig_name]
     #!   return self.dr_o2n[data_set][orig_name]
 
-    def sample_ids(self, samples=5, random=True):
-        pass
-
-    def sample_specids(self, samples=5, data_set=None, random=True, **kwargs):
-        """Return a small list of specids.
-        This is intended to make it easy to get just a few specids to use
-        for experimenting with the rest of the SPARCL API.
-        Args:
-            samples (:obj:`int`, optional): The number of sample specids to get.
-                Defaults to 5.
-           data_set (:obj:`str`, optional): The Data Set from which to get specids.
-               Defaults to None (meaning ANY Data Set).
-           random (:obj:`bool`, optional): Randomize sample by returning specids
-               from any of the Data Sets hosted on SPARC. Defaults to True.
-        Returns:
-            list: List of specids.
-        Example:
-            >>> client.sample_specids(samples=3, data_set='DESI-everest')
-        """
-        uparams = dict(random=bool(random),
-                       samples=int(samples),
-                       dr=data_set)
-        qstr = urlencode(uparams)
-        url = f'{self.apiurl}/sample/?{qstr}'
-        if self.verbose:
-            print(f'Using url="{url}"')
-            print(f'sample_specids(samples={samples}, data_set={data_set}, '
-                  f'random={random}, kwargs={kwargs})')
-
-        response = requests.get(url,  timeout=self.timeout)
-        #! if self.verbose:
-        #!     print(f'Using response.content="{response.content}"')
-        return response.json()
+#!    def sample_specids(self, samples=5, data_set=None, random=True, **kwargs):
+#!        """Return a small list of specids.
+#!        This is intended to make it easy to get just a few specids to use
+#!        for experimenting with the rest of the SPARCL API.
+#!        Args:
+#!            samples (:obj:`int`, optional): The number of sample specids to get.
+#!                Defaults to 5.
+#!           data_set (:obj:`str`, optional): The Data Set from which to get specids.
+#!               Defaults to None (meaning ANY Data Set).
+#!           random (:obj:`bool`, optional): Randomize sample by returning specids
+#!               from any of the Data Sets hosted on SPARC. Defaults to True.
+#!        Returns:
+#!            list: List of specids.
+#!        Example:
+#!            >>> client.sample_specids(samples=3, data_set='DESI-everest')
+#!        """
+#!        uparams = dict(random=bool(random),
+#!                       samples=int(samples),
+#!                       dr=data_set)
+#!        qstr = urlencode(uparams)
+#!        url = f'{self.apiurl}/sample/?{qstr}'
+#!        if self.verbose:
+#!            print(f'Using url="{url}"')
+#!            print(f'sample_specids(samples={samples}, data_set={data_set}, '
+#!                  f'random={random}, kwargs={kwargs})')
+#!
+#!        response = requests.get(url,  timeout=self.timeout)
+#!        #! if self.verbose:
+#!        #!     print(f'Using response.content="{response.content}"')
+#!        return response.json()
 
     @property
     def version(self):
@@ -468,7 +464,7 @@ class SparclClient():  # was SparclApi()
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/find/?{qstr}'
         search = [] if constraints is None else constraints
-        sspec = dict(outfields=list(self.common_internal(outfields)),
+        sspec = dict(outfields=list(self._common_internal(outfields)),
                      search=search)
         res = requests.post(url, json=sspec, timeout=self.timeout)
 
@@ -552,18 +548,18 @@ class SparclClient():  # was SparclApi()
 #!        return ret
 #!        # END missing_specids()
 
-    def _specids2tuples(self, specids, data_set):
-        uparams =dict(dr=data_set)
-        qstr = urlencode(uparams)
-        url = f'{self.apiurl}/specids2tuples/?{qstr}'
-        res = requests.post(url, json=specids, timeout=self.timeout)
+#!    def _specids2tuples(self, specidsg, data_set):
+#!        uparams =dict(dr=data_set)
+#!        qstr = urlencode(uparams)
+#!        url = f'{self.apiurl}/specids2tuples/?{qstr}'
+#!        res = requests.post(url, json=specids, timeout=self.timeout)
 
     def _validate_include(self, include_list, dataset_list):
         if not isinstance(include_list, (list, set)):
             msg = f'Bad INCLUDE_LIST. Must be list. Got {include_list}'
             raise ex.BadInclude(msg)
 
-        available_science = self.get_available_science(
+        available_science = self.get_available_fields(
             dataset_list=dataset_list)
         inc_set = set(include_list)
         unknown = inc_set.difference(available_science)
@@ -583,6 +579,7 @@ class SparclClient():  # was SparclApi()
                  uuid_list,
                  include='DEFAULT',
                  dataset_list=None,
+                 limit=500,
                  verbose=None):
         """Get spectrum by UUID (universally unique identifier) list.
         Args:
@@ -621,8 +618,9 @@ class SparclClient():  # was SparclApi()
 
         self._validate_include(include_list, dataset_list)
 
-        com_include = self.common_internal(include_list, dataset_list)
+        com_include = self._common_internal(include_list, dataset_list)
         uparams =dict(include=','.join(com_include),
+                      limit=limit,
                       dataset_list=','.join(dataset_list))
         qstr = urlencode(uparams)
 
@@ -810,7 +808,8 @@ class SparclClient():  # was SparclApi()
             print(f'{meta["status"]}')
 
         if len(meta['status'].get('warnings',[])) > 0:
-            warn(f"{'; '.join(meta['status'].get('warnings'))}")
+            warn(f"{'; '.join(meta['status'].get('warnings'))}",
+                 stacklevel=2)
 
         #return Results(
         #    [ut._AttrDict(tc.convert(r, rtype, self, include)) # rtype not supported in MVP
@@ -824,53 +823,54 @@ class SparclClient():  # was SparclApi()
 
         return Results([ut._AttrDict(r) for r in records],  client=self)
 
-    def sample_records(self, count, dataset_list=None, include='DEFAULT', **kwargs):
-        """Return list of random records from given DATASET_LIST.
-        Args:
-            count (int): Number of sample records to get from database.
-            dataset_list (:obj:`str`, optional): The Data Set from which to get
-                sample records. Defaults to None (meaning ANY Data Set).
-           include (list, 'DEFAULT', 'ALL'):
-               List of paths to include in each record. Defaults to 'DEFAULT'.
-           dataset_list (str, optional): (default: None means ANY)
-               The Data Set from which to get sample records.
-        Returns:
-            list(dict): List of random records from given DATASET_LIST.
-        Example:
-            >>> samrec = client.sample_records(1, dataset_list='BOSS-DR16')
-            >>> pprint.pprint(samrec,depth=2a)
-            [{'data_release_id': 'BOSS-DR16',
-              'dec_center': 47.193549,
-              'specid': 1429845755960551,
-              'spectra': {...},
-              'updated': '2021-04-28T20:16:20.399464Z'}]
-        """
-        kverb = kwargs.pop('verbose',None)
-        random = kwargs.pop('random',True)
-        verb = self.verbose if kverb is None else kverb
-        if verb:
-            print(f'sample_records(count={count}, dataset_list={dataset_list}, '
-                  f'include={include}, kwargs={kwargs}).')
-        sids = self.sample_specids(count, dataset_list=dataset_list,
-                                   verbose=verb, **kwargs)
-        if dataset_list is None:
-            recs = []
-            for dr in self.fields.all_drs:  # dfLUT.keys():
-                if verb:
-                    print(f'Retrieving from: {dr}')
-                recs.extend(self.retrieve_by_specid(sids,
-                                                    dataset_list=dr,
-                                                    include=include,
-                                                    verbose=verb,
-                                                    **kwargs))
-        else:
-            recs = self.retrieve_by_specid(sids,
-                                           dataset_list=dataset_list,
-                                           include=include,
-                                           verbose=verb, **kwargs)
-        return recs
-        # END sample_records()
 
+#!    def sample_records(self, count, dataset_list=None, include='DEFAULT', **kwargs):
+#!        """Return list of random records from given DATASET_LIST.
+#!        Args:
+#!            count (int): Number of sample records to get from database.
+#!            dataset_list (:obj:`str`, optional): The Data Set from which to get
+#!                sample records. Defaults to None (meaning ANY Data Set).
+#!           include (list, 'DEFAULT', 'ALL'):
+#!               List of paths to include in each record. Defaults to 'DEFAULT'.
+#!           dataset_list (str, optional): (default: None means ANY)
+#!               The Data Set from which to get sample records.
+#!        Returns:
+#!            list(dict): List of random records from given DATASET_LIST.
+#!        Example:
+#!            >>> samrec = client.sample_records(1, dataset_list='BOSS-DR16')
+#!            >>> pprint.pprint(samrec,depth=2a)
+#!            [{'data_release_id': 'BOSS-DR16',
+#!              'dec_center': 47.193549,
+#!              'specid': 1429845755960551,
+#!              'spectra': {...},
+#!              'updated': '2021-04-28T20:16:20.399464Z'}]
+#!        """
+#!        kverb = kwargs.pop('verbose',None)
+#!        random = kwargs.pop('random',True)
+#!        verb = self.verbose if kverb is None else kverb
+#!        if verb:
+#!            print(f'sample_records(count={count}, dataset_list={dataset_list}, '
+#!                  f'include={include}, kwargs={kwargs}).')
+#!        sids = self.sample_specids(count, dataset_list=dataset_list,
+#!                                   verbose=verb, **kwargs)
+#!        if dataset_list is None:
+#!            recs = []
+#!            for dr in self.fields.all_drs:  # dfLUT.keys():
+#!                if verb:
+#!                    print(f'Retrieving from: {dr}')
+#!                recs.extend(self.retrieve_by_specid(sids,
+#!                                                    dataset_list=dr,
+#!                                                    include=include,
+#!                                                    verbose=verb,
+#!                                                    **kwargs))
+#!        else:
+#!            recs = self.retrieve_by_specid(sids,
+#!                                           dataset_list=dataset_list,
+#!                                           include=include,
+#!                                           verbose=verb, **kwargs)
+#!        return recs
+#!        # END sample_records()
+#!
 #!    def normalize_field_names(self, recs):
 #!        """Return copy of records with all field names converted to the names
 #!        used by the Data Set provider.
