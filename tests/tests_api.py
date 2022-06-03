@@ -1,4 +1,4 @@
-# Unit tests for the NOIRLab SPARC API Client
+# Unit tests for the NOIRLab SPARCL API Client
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
 #   python -m unittest  -v tests.tests_api    # VERBOSE
@@ -13,6 +13,7 @@ from pprint import pformat as pf
 from urllib.parse import urlparse
 from unittest.mock import MagicMock
 from unittest.mock import create_autospec
+import os
 # Local Packages
 import sparcl.client
 #from sparcl.client import DEFAULT, ALL
@@ -33,6 +34,7 @@ idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 
 showact = False
 #showact = True
+showact = showact or os.environ.get('showres') == '1'
 
 
 class SparclClientTest(unittest.TestCase):
