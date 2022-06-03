@@ -2,6 +2,7 @@
 import configparser
 import os.path
 
+
 class Conf():
     """
     Configuration parameters for `ada_client`.
@@ -9,7 +10,7 @@ class Conf():
 
     def __init__(self, conf_file=None):
         config = configparser.ConfigParser()
-        conf_files = ['~/sparc.ini','sparcl/sparc.ini']
+        conf_files = ['~/sparc.ini', 'sparcl/sparc.ini']
         if conf_file is None:
             for cf in conf_files:
                 if os.path.exists(os.path.expanduser(cf)):

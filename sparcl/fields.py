@@ -16,30 +16,33 @@ class Fields():
 
         datafields = requests.get(f'{apiurl}/datafields/').json()
 
-        core_list = set([df['newdp']
-                         for df in datafields if df['storage']=='C'])
+        #! core_list = set([df['newdp']
+        #!                  for df in datafields if df['storage']=='C'])
         dr_list = set(df['data_release_id'] for df in datafields)
 
-
-        atts = ['data_release', 'origdp', 'newdp', 'storage', 'default', 'all']
+        #! atts = ['data_release', 'origdp', 'newdp', 'storage',
+        #!         'default', 'all']
         self.datafields = datafields
         # o2n[DR][InternalName] => ScienceName
-        self.o2n = {dr : {df['origdp'] : df['newdp']
-                          for df in datafields if df['data_release_id'] == dr}
+        self.o2n = {dr: {df['origdp']: df['newdp']
+                         for df in datafields
+                         if df['data_release_id'] == dr}
                     for dr in dr_list}
         # o2n[DR][InternalName] => ScienceName
-        self.n2o = {dr : {df['newdp'] : df['origdp']
-                          for df in datafields if df['data_release_id'] == dr}
+        self.n2o = {dr: {df['newdp']: df['origdp']
+                         for df in datafields
+                         if df['data_release_id'] == dr}
                     for dr in dr_list}
         self.all_drs = dr_list
         self.all_fields = set([df['newdp'] for df in datafields])
 
         # Per DataRelease: get Storage, Default, All for each (user) fieldname
         # dr_attrs[DR][newdp] => dict[storage,default,all]
-        self.attrs = {dr : {df['newdp'] : {'storage': df['storage'],
-                                            'default': df['default'],
-                                            'all': df['all']}
-                            for df in datafields if df['data_release_id'] == dr}
+        self.attrs = {dr: {df['newdp']: {'storage': df['storage'],
+                                         'default': df['default'],
+                                         'all': df['all']}
+                           for df in datafields
+                           if df['data_release_id'] == dr}
                       for dr in dr_list}
 
         # Handy structures for field name management in ivars
@@ -109,8 +112,6 @@ class Fields():
 #!            for rec in records:
 #!                lut[rec._dr].append(rec)
 #!        return lut
-
-
 
 #! dfLUT[dr][origPath] => dict[new=newPath,default=bool,store=bool]
 #! lut0 = requests.get(f'{self.apiurl}/fields/').json()

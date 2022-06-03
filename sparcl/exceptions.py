@@ -1,5 +1,6 @@
 import traceback
 
+
 def genSparclException(response, verbose=False):
     """Given status from Server response.json(), which is a dict, generate
     a native SPARCL exception suitable for Science programs."""
@@ -43,32 +44,38 @@ class BaseSparclException(Exception):
 
     def to_dict(self):
         """Convert a SPARCL exception to a python dictionary"""
-        dd = dict(errorMessage = self.error_message,
-                  errorCode = self.error_code)
-        if settings.DEBUG and (self.traceback is not None):
+        dd = dict(errorMessage=self.error_message,
+                  errorCode=self.error_code)
+        if self.traceback is not None:
             dd['traceback'] = self.traceback
         return dd
+
 
 class BadPath(BaseSparclException):
     """A field path starts with a non-core field."""
     error_code = 'BADPATH'
 
+
 class BadQuery(BaseSparclException):
     """Bad find constraints."""
     error_code = 'BADPATH'
 
+
 class BadInclude(BaseSparclException):
     """Include list contains invalid data field(s)."""
     error_code = 'BADINCL'
+
 
 class UnknownServerError(BaseSparclException):
     """Client got a status response from the SPARC Server that we do not
     know how to decode."""
     error_code = 'UNKNOWN'
 
+
 class UnkDr(BaseSparclException):
     """The Data Release is not known or not supported."""
     error_code = 'UNKDR'
+
 
 class ReadTimeout(BaseSparclException):
     """The server did not send any data in the allotted amount of time."""
@@ -80,11 +87,14 @@ class UnknownSparcl(BaseSparclException):
     create and use a new BaseSparcException exception that is more specific."""
     error_code = 'UNKSPARC'
 
+
 class UnknownField(BaseSparclException):
     """Unknown field name for a record"""
     error_code = 'UNKFIELD'
 
-# error_code values should be no bigger than 8 characters 12345678
 
 class ServerConnectionError(BaseSparclException):
     error_code = 'SRVCONER'
+
+
+# error_code values should be no bigger than 8 characters 12345678

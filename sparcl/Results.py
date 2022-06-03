@@ -2,8 +2,8 @@
 These include results of client.retrieve() client.find().
 """
 
-from collections import OrderedDict, UserList
-import copy
+from collections import UserList
+#!import copy
 from sparcl.utils import _AttrDict
 
 
@@ -33,7 +33,7 @@ class Results(UserList):
     def json(self):
         return self.data
 
-    def to_science_fields(self): # from_orig
+    def to_science_fields(self):  # from_orig
         """Convert Internal field names to Science field names.
         SIDE-EFFECT: modifies self.recs """
         newrecs = list()
@@ -64,13 +64,12 @@ class Results(UserList):
         for rec in self.recs:
             dr = rec.get('_dr')
             for new in rec.keys():
-                if orig == '_dr':
+                if new == '_dr':
                     # keep DR around unchanged. We need it to rename back
                     # to Internal Field Names later.
                     continue
-                orig = self.fields._internal_name(new, dr)
-                rec[orig] = rec.pop(new)
-
+                new = self.fields._internal_name(new, dr)
+                rec[new] = rec.pop(new)
 
 
 # For results of retrieve()
@@ -82,7 +81,6 @@ class Retrieved(Results):
 
     def __repr__(self):
         return f'Retrieved Results: {len(self.recs)} records'
-
 
 
 class Found(Results):
