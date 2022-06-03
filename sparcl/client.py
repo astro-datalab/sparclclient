@@ -109,26 +109,6 @@ def records_field_list(records):
     fields = {r._dr: sorted(r.keys()) for r in records}
     return fields
 
-#! def record_examples(records):
-#!     """Copy one record for each Data Set type.
-#!     Args:
-#!         records (list): List of records (each is a dictionary).
-#!     :param records: List of records (each is a dictionary)
-#!     :returns: dict[Data_Set] = rec
-#!     Example:
-#!       >>> from api.client import record_examples
-#!       >>> recs = client.sample_records(3)
-#!       >>> rex = record_examples(recs)
-#!     Returns:
-#!         dict: dict[Data_Set] = rec
-#!     Example:
-#!         >>> from sparcl.client import record_examples
-#!         >>> recs = client.sample_records(3)
-#!         >>> rex = record_examples(recs)
-#!     """
-#!     examples = {r.data_release_id: r for r in records}
-#!     return examples
-#!
 #! def get_metadata(records):
 #!     """Get records of just metadata used in records.
 #!     Metadata is considered to be any field whose type is a Number or String.
