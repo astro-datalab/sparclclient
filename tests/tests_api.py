@@ -312,10 +312,10 @@ class SparclClientTest(unittest.TestCase):
         """Raise exception when unknown field referenced in include"""
         inc2 = ['bad_field_name', 'flux', 'or_mask']
 
-        specids = sorted(self.client.sample_specids(samples=1,
-                                                    dataset_list=drs))
+        #! specids = sorted(self.client.sample_specids(samples=1,
+        #!                                             dataset_list=drs))
         with self.assertRaises(ex.BadInclude):
-            self.client.retrieve_by_specid(specids,
+            self.client.retrieve_by_specid(self.specids,
                                            include=inc2,
                                            dataset_list=drs)
 
