@@ -10,4 +10,4 @@ repos:
     rev: 4.0.1
     hooks:
     -   id: flake8
-        exclude: ^measure|^datareleasetools|^sparcsite/sparc/fixtures
+        exclude: ^source|^tests/expected.py

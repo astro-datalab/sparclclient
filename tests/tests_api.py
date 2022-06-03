@@ -7,28 +7,29 @@
 
 # Python library
 import unittest
-from unittest import skip,mock,skipIf,skipUnless
-import warnings
+from unittest import skip
+#! from unittest mock, skipIf, skipUnless
+#!import warnings
 from pprint import pformat as pf
 from urllib.parse import urlparse
-from unittest.mock import MagicMock
-from unittest.mock import create_autospec
+#!from unittest.mock import MagicMock
+#!from unittest.mock import create_autospec
 import os
 # Local Packages
 import sparcl.client
 #from sparcl.client import DEFAULT, ALL
-from tests.utils import tic,toc
+from tests.utils import tic, toc
 import tests.expected as exp
 import sparcl.exceptions as ex
 # External Packages
 # <none>
 
-DEFAULT='DEFAULT'
-ALL='ALL'
+DEFAULT = 'DEFAULT'
+ALL = 'ALL'
 drs = ['BOSS-DR16']
 
-#rooturl = 'http://localhost:8030/' #@@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/' #@@@
+#rooturl = 'http://localhost:8030/'  # @@@
+rooturl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
 
 idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 
@@ -40,7 +41,7 @@ showact = showact or os.environ.get('showres') == '1'
 class SparclClientTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
 
-    maxDiff = None # too see full values in DIFF on assert failure
+    maxDiff = None  # too see full values in DIFF on assert failure
     #assert_equal.__self__.maxDiff = None
 
     @classmethod
@@ -105,11 +106,11 @@ class SparclClientTest(unittest.TestCase):
             print(f"df_lut actual={pf(actual['BOSS-DR16'])}")
         self.assertDictEqual(actual['BOSS-DR16'],
                              exp.df_lut,
-                             msg = 'Actual to Expected')
+                             msg='Actual to Expected')
 
     #################################
-    ### Convenience Functions
-    ###
+    # ## Convenience Functions
+    # ##
 
     @skip('Not required.  EXPERIMENTAL')
     def test_fields_available(self):
@@ -122,7 +123,7 @@ class SparclClientTest(unittest.TestCase):
             print(f'fields_available: actual={pf(actual)}')
         self.assertEqual(actual,
                          exp.fields_available,
-                         msg = 'Actual to Expected')
+                         msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_record_examples(self):
@@ -132,27 +133,27 @@ class SparclClientTest(unittest.TestCase):
                                              random=False)
         examples = sparcl.client.record_examples(records)
         # Just the gist of the records (key names)
-        actual = {k: sorted(v.keys()) for k,v in examples.items()}
+        actual = {k: sorted(v.keys()) for k, v in examples.items()}
         if showact:
             print(f'record_examples: actual={pf(actual)}')
         self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_get_metadata(self):
-        variant_fields = ['dateobs_center',idfld]
+        variant_fields = ['dateobs_center', idfld]
         sids = [1429933274376612]
         records = self.client.retrieve_by_specid(sids, include=ALL,
                                                  dataset_list=drs)
-        [r.pop('dirpath',None) for r in records]
+        [r.pop('dirpath', None) for r in records]
         actual = sparcl.client.get_metadata(records)
         expected = exp.get_metadata
         for k in variant_fields:
-            actual[0].pop(k,None)
-            expected[0].pop(k,None)
+            actual[0].pop(k, None)
+            expected[0].pop(k, None)
 
         if showact:
             print(f'get_metadata: actual={pf(actual)}')
-        self.assertEqual(actual, expected , msg = 'Actual to Expected')
+        self.assertEqual(actual, expected, msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_get_vectordata(self):
@@ -163,45 +164,49 @@ class SparclClientTest(unittest.TestCase):
         actual = list(sparcl.client.get_vectordata(records)[0].keys())
         if showact:
             print(f'get_vectordata: actual={pf(actual)}')
-        self.assertListEqual(actual, exp.get_vectordata, msg = 'Actual to Expected')
+        self.assertListEqual(actual,
+                             exp.get_vectordata,
+                             msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_rename_fields(self):
         """Local rename fields in records (referenced by new names)"""
-        flds = ['data_set', 'specid', 'dec', 'ra','redshift',
+        flds = ['data_set', 'specid', 'dec', 'ra', 'redshift',
                 'flux', 'ivar', 'loglam']
 
         records = self.client.sample_records(1,
-                                              include=flds,
-                                              dataset_list=drs,
-                                              random=False)
+                                             include=flds,
+                                             dataset_list=drs,
+                                             random=False)
         rdict = dict(dec='y', ra='x', redshift='z', flux='f')
         actual = sparcl.client.rename_fields(rdict, records)
-        self.records_expected(actual,"exp.rename_fields", show=showact)
+        self.records_expected(actual, "exp.rename_fields", show=showact)
 
     @skip('Not required.  EXPERIMENTAL')
     def test_rename_fields_internal(self):
         """Local rename fields in records (referenced by stored names)"""
         flds = ['data_release_id', 'specid',
-                'decr', 'rar','redshift',
-                'flux','ivar','loglam']
+                'decr', 'rar', 'redshift',
+                'flux', 'ivar', 'loglam']
         records = self.client.sample_records(1,
-                                              include=flds,
-                                              dataset_list=drs,
-                                              random=False)
+                                             include=flds,
+                                             dataset_list=drs,
+                                             random=False)
         rdict = {'dec': 'y',
                  'ra': 'x',
-                 'redshift':'z',
+                 'redshift': 'z',
                  'flux': 'f2'}
         actual = sparcl.client.rename_fields(rdict, records)
-        self.records_expected(actual,"exp.rename_fields_internal", show=showact)
+        self.records_expected(actual,
+                              "exp.rename_fields_internal",
+                              show=showact)
 
     ###
     #################################
 
     #################################
-    ### Convenience client Methods
-    ###
+    # ## Convenience client Methods
+    # ##
 
     @skip('Not required.  EXPERIMENTAL')
     def test_get_field_names(self):
@@ -215,7 +220,9 @@ class SparclClientTest(unittest.TestCase):
         actual = self.client.get_field_names('BOSS-DR16')
         if showact:
             print(f'get_field_names_internal: actual={pf(actual)}')
-        self.assertEqual(actual, exp.get_field_names_internal, msg='Actual to Expected')
+        self.assertEqual(actual,
+                         exp.get_field_names_internal,
+                         msg='Actual to Expected')
 
     @skip('Not required.  EXPERIMENTAL')
     def test_orig_field(self):
@@ -226,7 +233,7 @@ class SparclClientTest(unittest.TestCase):
 
     @skip('Not required.  EXPERIMENTAL')
     def test_client_field(self):
-        actual = self.client.client_field('BOSS-DR16','flux')
+        actual = self.client.client_field('BOSS-DR16', 'flux')
         if showact:
             print(f'client_field: actual={pf(actual)}')
         self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
@@ -234,20 +241,19 @@ class SparclClientTest(unittest.TestCase):
     @skip('Not required.  EXPERIMENTAL')
     def test_normalize_field_names(self):
         """Convert all included  field names to internal names"""
-        sids = self.client.sample_specids(1,dataset_list=drs,random=False)
-        recs = self.client.retrieve_by_specid(sids, dataset_list=drs,
-                                     include=['flux','ivar'])
+        sids = self.client.sample_specids(1, dataset_list=drs, random=False)
+        recs = self.client.retrieve_by_specid(sids,
+                                              dataset_list=drs,
+                                              include=['flux', 'ivar'])
         recs_b = self.client.normalize_field_names(recs)
         actual = [sorted(r.keys()) for r in recs_b]
         if showact:
             print(f'normalize_field_names: actual={pf(actual)}')
         self.assertEqual(actual, exp.normalize_field_names,
-                         msg = 'Actual to Expected')
+                         msg='Actual to Expected')
 
-
-    ###
-    #################################
-
+    # ##
+    # ################################
 
     @skip('Not required.  EXPERIMENTAL')
     def test_sample(self):
@@ -257,7 +263,7 @@ class SparclClientTest(unittest.TestCase):
 
     def test_missing_0(self):
         """Known missing"""
-        uuids= [99,88,777]
+        uuids = [99, 88, 777]
         missing = self.client.missing(self.uuids + uuids)
         assert sorted(missing) == sorted(uuids)
 
@@ -271,14 +277,13 @@ class SparclClientTest(unittest.TestCase):
             print(f'missing_1: missing={missing}')
         assert missing == []
 
-
     def test_retrieve_0(self):
         """Get spectra using small list of specids."""
-        name = 'retrieve_0'
-        this = self.test_retrieve_0
+        #!name = 'retrieve_0'
+        #!this = self.test_retrieve_0
 
         res = self.client.retrieve_by_specid(self.specids,
-                                             include=[idfld,'specid'])
+                                             include=[idfld, 'specid'])
         actual = sorted([r['specid'] for r in res.records])
         if showact:
             print(f'retrieve_0: actual={actual}')
@@ -289,7 +294,7 @@ class SparclClientTest(unittest.TestCase):
     def test_retrieve_0b(self):
         """Get spectra using small list of uuids."""
         name = 'retrieve_0b'
-        this = self.test_retrieve_0b
+        #!this = self.test_retrieve_0b
         # uuids from expected.py:retrieve_0
         uuids = self.uuids
 
@@ -310,9 +315,9 @@ class SparclClientTest(unittest.TestCase):
         specids = sorted(self.client.sample_specids(samples=1,
                                                     dataset_list=drs))
         with self.assertRaises(ex.BadInclude):
-            res = self.client.retrieve_by_specid(specids,
-                                                 include=inc2,
-                                                 dataset_list=drs)
+            self.client.retrieve_by_specid(specids,
+                                           include=inc2,
+                                           dataset_list=drs)
 
     #! @skip('Cannot find an example of this edge case occuring')
     #! def test_retrieve_2(self):
@@ -330,8 +335,7 @@ class SparclClientTest(unittest.TestCase):
         """Issue warning when some sids do not exist."""
         uuids = self.uuids
         with self.assertWarns(Warning):
-            records = self.client.retrieve(uuids+[999])
-
+            self.client.retrieve(uuids + [999])
 
     @skip('Not required.  EXPERIMENTAL')
     def test_retrieve_5(self):
@@ -347,7 +351,7 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')
 
     #############################
-    ## BOSS type conversions
+    # ## BOSS type conversions
     @skip('Type conversions removed until redesign')
     def test_retrieve_boss_json(self):
         """(non)Convert to JSON."""
@@ -378,11 +382,11 @@ class SparclClientTest(unittest.TestCase):
             'OR_MASK',
             'SKY',
             'WDISP',
-            ]
+        ]
         #!print(f'clienti={self.client}')
         recs = self.client.sample_records(1,
-                                           dataset_list=drs, rtype='numpy',
-                                           include=arflds, random=False)
+                                          dataset_list=drs, rtype='numpy',
+                                          include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'boss_numpy: actual={pf(actual)}')
@@ -400,10 +404,12 @@ class SparclClientTest(unittest.TestCase):
             'spectra.coadd.OR_MASK',
             'spectra.coadd.SKY',
             'spectra.coadd.WDISP',
-            ]
+        ]
         recs = self.client.sample_records(1,
-                                           dataset_list=drs,rtype='pandas',
-                                           include=arflds, random=False)
+                                          dataset_list=drs,
+                                          rtype='pandas',
+                                          include=arflds,
+                                          random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'boss_pandas: actual={pf(actual)}')
@@ -420,7 +426,7 @@ class SparclClientTest(unittest.TestCase):
             'redshift'
         ]
         recs = self.client.sample_records(1, dataset_list=drs,
-                                           rtype='spectrum1d',
+                                          rtype='spectrum1d',
                                           include=arflds, random=False)
         actual = sorted(recs[0].keys())
         if showact:
@@ -428,12 +434,12 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
 
     #############################
-    ## EVEREST type conversions
+    # ## EVEREST type conversions
     @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_numpy(self):
         """Convert to Numpy."""
         arflds = [
-            'specid', 'ra','dec',
+            'specid', 'ra', 'dec',
             'spectra.b_flux',
             'spectra.b_ivar',
             'spectra.b_mask',
@@ -447,10 +453,11 @@ class SparclClientTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, dataset_list='DESI-everest',
-                                           rtype='numpy',
-                                           include=arflds,
-                                           random=False)
+        recs = self.client.sample_records(1,
+                                          dataset_list='DESI-everest',
+                                          rtype='numpy',
+                                          include=arflds,
+                                          random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'everest_numpy: actual={pf(actual)}')
@@ -473,13 +480,15 @@ class SparclClientTest(unittest.TestCase):
             'spectra.z_mask',
             'spectra.z_wavelength',
         ]
-        recs = self.client.sample_records(1, dataset_list='DESI-everest', rtype='pandas',
-                                          include=arflds, random=False)
+        recs = self.client.sample_records(1,
+                                          dataset_list='DESI-everest',
+                                          rtype='pandas',
+                                          include=arflds,
+                                          random=False)
         actual = sorted(recs[0].keys())
         if showact:
             print(f'everest_pandas: actual={pf(actual)}')
         self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
-
 
     @skip('OBSOLETE dataset. Replace with DES-edr')
     def test_retrieve_everest_spectrum1d(self):
@@ -511,10 +520,10 @@ class SparclClientTest(unittest.TestCase):
     #   list(FitsFile.objects.all().values('ra','dec')[:10])
     def test_find_0(self):
         """Get metadata using search spec."""
-        name = 'find_0'
-        this = self.test_find_0
+        #! name = 'find_0'
+        #! this = self.test_find_0
 
-        outfields = [idfld,'ra','dec']
+        outfields = [idfld, 'ra', 'dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
         constraints = [
             ['ra', 180.0, 240.0],
@@ -528,8 +537,8 @@ class SparclClientTest(unittest.TestCase):
 
     def test_find_1(self):
         """Get metadata using search spec."""
-        outfields = [idfld,'ra','dec']
-        found = self.client.find(outfields, limit=1, sort='id') #@@@
+        outfields = [idfld, 'ra', 'dec']
+        found = self.client.find(outfields, limit=1, sort='id')  # @@@
         actual = sorted(found.records, key=lambda rec: rec[idfld])
         if showact:
             print(f'find_1: actual={pf(actual)}')
@@ -539,8 +548,8 @@ class SparclClientTest(unittest.TestCase):
 
     def test_find_2(self):
         """Get metadata using search spec."""
-        outfields = [idfld,'ra','dec']
-        found = self.client.find(outfields, limit=None, sort='id') #@@@
+        outfields = [idfld, 'ra', 'dec']
+        found = self.client.find(outfields, limit=None, sort='id')  # @@@
         actual = len(found.records)
         if showact:
             print(f'find_2: actual={pf(actual)}')
@@ -550,8 +559,8 @@ class SparclClientTest(unittest.TestCase):
 
     def test_find_3(self):
         """Get metadata using search spec."""
-        outfields = [idfld,'ra','dec']
-        found = self.client.find(outfields, limit=3, sort='id') #@@@
+        outfields = [idfld, 'ra', 'dec']
+        found = self.client.find(outfields, limit=3, sort='id')  # @@@
         actual = sorted(found.records, key=lambda rec: rec[idfld])
         if showact:
             print(f'find_3: actual={pf(actual)}')
