@@ -29,10 +29,10 @@ import sparcl.exceptions as ex
 from sparcl import __version__
 from sparcl.Results import Found, Retrieved
 
-pat_hosts = ['sparc1.datalab.noirlab.edu', 'sparc2.datalab.noirlab.edu']
+pat_hosts = ['sparc1.datalab.noirlab.edu',
+             'sparc2.datalab.noirlab.edu',
+             'astrosparcl.datalab.noirlab.edu']
 idfld = 'uuid'  # Science Field Name for uuid.
-
-#23456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789
 
 # Upload to PyPi:
 #   python3 -m build --wheel
@@ -66,9 +66,10 @@ idfld = 'uuid'  # Science Field Name for uuid.
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
 _PROD = 'https://specserver.noirlab.edu'
+_STAGE = 'http://astrosparcl.datalab.noirlab.edu:8000'
 _PAT = 'http://sparc1.datalab.noirlab.edu:8000'
 _PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
-_DEV = 'http://localhost:8030'
+_DEV = 'http://localhost:8050'
 
 
 #client_version = pkg_resources.require("sparclclient")[0].version
@@ -235,6 +236,9 @@ class SparclClient():  # was SparclApi()
         self.timeout = (self.c_timeout, self.r_timeout)
         #@@@ read timeout should be a function of the POST payload size
 
+        if verbose:
+            print(f'apiurl={self.apiurl}')
+
         # Get API Version
         try:
             verstr = requests.get(
@@ -332,28 +336,27 @@ class SparclClient():  # was SparclApi()
         every = [set(self.fields.n2o[dr]) for dr in drs]
         return set.intersection(*every)
 
-
-#!    def get_field_names(self, data_set):
-#!        """List field names available for retrieve.
-#!        Args:
-#!            data_set (str): Data Set to get the field names of.
-#!        Returns:
-#!            list: List of field names.
-#!        :param data_set: List field names of this Data Set.
-#!        :returns: list of field names
-#!        Example:
-#!            >>> client.get_field_names('DESI-everest')
-#!        """
-#!        dr = data_set
-#!        if dr in self.dr_fields:
-#!            return list(self.dr_fields[dr].keys())
-#!        else:
-#!            print(f'That is not a currently support data_set. '
-#!                  f'Available data_sets are: '
-#!                  f"{', '.join(self.dr_fields.keys())}"
-#!                  )
-#!            return None
-#!
+    #!def get_field_names(self, data_set):
+    #!    """List field names available for retrieve.
+    #!    Args:
+    #!        data_set (str): Data Set to get the field names of.
+    #!    Returns:
+    #!        list: List of field names.
+    #!    :param data_set: List field names of this Data Set.
+    #!    :returns: list of field names
+    #!    Example:
+    #!        >>> client.get_field_names('DESI-everest')
+    #!    """
+    #!    dr = data_set
+    #!    if dr in self.dr_fields:
+    #!        return list(self.dr_fields[dr].keys())
+    #!    else:
+    #!        print(f'That is not a currently support data_set. '
+    #!              f'Available data_sets are: '
+    #!              f"{', '.join(self.dr_fields.keys())}"
+    #!              )
+    #!        return None
+    #!
     #!def orig_field(self, data_set, client_name):
     #!   """Get original field name as provided in Data Set.
     #!   Args:

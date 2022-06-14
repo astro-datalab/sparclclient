@@ -1,28 +1,28 @@
-from collections import OrderedDict
+#!from collections import OrderedDict
 
 
-boss_json = ['_dr',
- 'dec',
- 'ra',
- 'redshift',
- 'specid',
- 'spectra.coadd.FLUX',
- 'spectra.coadd.IVAR']
-
-boss_numpy = ['_dr', 'nparr']
-
-boss_pandas = ['_dr', 'df']
-
-boss_spectrum1d = ['_dr', 'redshift', 'spec1d']
-
-boss_spectrum1d_redshift = 0.570779085159302
-everest_numpy = ['_dr', 'dec', 'nparr', 'ra', 'specid']
-
-everest_pandas = ['_dr', 'b_df', 'r_df', 'z_df']
-
-everest_spectrum1d = ['_dr', 'b_spec1d', 'r_spec1d', 'z_spec1d']
-
-everest_b_spectrum1d_redshift = 0.17526327367673789
+#! boss_json = ['_dr',
+#!  'dec',
+#!  'ra',
+#!  'redshift',
+#!  'specid',
+#!  'spectra.coadd.FLUX',
+#!  'spectra.coadd.IVAR']
+#!
+#! boss_numpy = ['_dr', 'nparr']
+#!
+#! boss_pandas = ['_dr', 'df']
+#!
+#! boss_spectrum1d = ['_dr', 'redshift', 'spec1d']
+#!
+#! boss_spectrum1d_redshift = 0.570779085159302
+#! everest_numpy = ['_dr', 'dec', 'nparr', 'ra', 'specid']
+#!
+#! everest_pandas = ['_dr', 'b_df', 'r_df', 'z_df']
+#!
+#! everest_spectrum1d = ['_dr', 'b_spec1d', 'r_spec1d', 'z_spec1d']
+#!
+#! everest_b_spectrum1d_redshift = 0.17526327367673789
 
 fields_available = {'BOSS-DR16': ['_dr', 'flux', 'uuid', 'wavelength']}
 
@@ -152,85 +152,85 @@ client_field = 'flux'
 
 normalize_field_names = [['_dr', 'flux', 'ivar']]
 
-df_lut_internal=OrderedDict([('FIBERID', {'default': False, 'new': 'FIBERID'}),
-             ('MJD', {'default': False, 'new': 'MJD'}),
-             ('PLATEID', {'default': False, 'new': 'PLATEID'}),
-             ('RUN1D', {'default': False, 'new': 'RUN1D'}),
-             ('RUN2D', {'default': False, 'new': 'RUN2D'}),
-             ('SPECOBJID', {'default': False, 'new': 'SPECOBJID'}),
-             ('_dr', {'default': True, 'new': '_dr'}),
-             ('data_release_id', {'default': False, 'new': 'data_release_id'}),
-             ('datasetgroup_id', {'default': False, 'new': 'datasetgroup_id'}),
-             ('dateobs', {'default': False, 'new': 'dateobs'}),
-             ('dateobs_center', {'default': False, 'new': 'dateobs_center'}),
-             ('dec', {'default': False, 'new': 'dec'}),
-             ('dirpath', {'default': False, 'new': 'dirpath'}),
-             ('exptime', {'default': False, 'new': 'exptime'}),
-             ('extra_files', {'default': False, 'new': 'extra_files'}),
-             ('filename', {'default': False, 'new': 'filename'}),
-             ('filesize', {'default': False, 'new': 'filesize'}),
-             ('flux', {'default': True, 'new': 'flux'}),
-             ('id', {'default': True, 'new': 'id'}),
-             ('instrument_id', {'default': False, 'new': 'instrument_id'}),
-             ('ivar', {'default': False, 'new': 'ivar'}),
-             ('mask', {'default': False, 'new': 'mask'}),
-             ('model', {'default': False, 'new': 'model'}),
-             ('ra', {'default': False, 'new': 'ra'}),
-             ('redshift', {'default': False, 'new': 'redshift'}),
-             ('redshift_err', {'default': False, 'new': 'redshift_err'}),
-             ('redshift_warning',
-              {'default': False, 'new': 'redshift_warning'}),
-             ('site_id', {'default': False, 'new': 'site_id'}),
-             ('sky', {'default': False, 'new': 'sky'}),
-             ('specid', {'default': False, 'new': 'specid'}),
-             ('specprimary', {'default': False, 'new': 'specprimary'}),
-             ('spectype_id', {'default': False, 'new': 'spectype_id'}),
-             ('targetid', {'default': False, 'new': 'targetid'}),
-             ('telescope_id', {'default': False, 'new': 'telescope_id'}),
-             ('wave_sigma', {'default': False, 'new': 'wave_sigma'}),
-             ('wavelength', {'default': True, 'new': 'wavelength'}),
-             ('wavemax', {'default': False, 'new': 'wavemax'}),
-             ('wavemin', {'default': False, 'new': 'wavemin'})])
-
-df_lut=OrderedDict([('FIBERID', {'default': False, 'new': 'FIBERID'}),
-             ('MJD', {'default': False, 'new': 'MJD'}),
-             ('PLATEID', {'default': False, 'new': 'PLATEID'}),
-             ('RUN1D', {'default': False, 'new': 'RUN1D'}),
-             ('RUN2D', {'default': False, 'new': 'RUN2D'}),
-             ('SPECOBJID', {'default': False, 'new': 'SPECOBJID'}),
-             ('_dr', {'default': True, 'new': '_dr'}),
-             ('data_release_id', {'default': False, 'new': 'data_release_id'}),
-             ('datasetgroup_id', {'default': False, 'new': 'datasetgroup_id'}),
-             ('dateobs', {'default': False, 'new': 'dateobs'}),
-             ('dateobs_center', {'default': False, 'new': 'dateobs_center'}),
-             ('dec', {'default': False, 'new': 'dec'}),
-             ('dirpath', {'default': False, 'new': 'dirpath'}),
-             ('exptime', {'default': False, 'new': 'exptime'}),
-             ('extra_files', {'default': False, 'new': 'extra_files'}),
-             ('filename', {'default': False, 'new': 'filename'}),
-             ('filesize', {'default': False, 'new': 'filesize'}),
-             ('flux', {'default': True, 'new': 'flux'}),
-             ('id', {'default': True, 'new': 'id'}),
-             ('instrument_id', {'default': False, 'new': 'instrument_id'}),
-             ('ivar', {'default': False, 'new': 'ivar'}),
-             ('mask', {'default': False, 'new': 'mask'}),
-             ('model', {'default': False, 'new': 'model'}),
-             ('ra', {'default': False, 'new': 'ra'}),
-             ('redshift', {'default': False, 'new': 'redshift'}),
-             ('redshift_err', {'default': False, 'new': 'redshift_err'}),
-             ('redshift_warning',
-              {'default': False, 'new': 'redshift_warning'}),
-             ('site_id', {'default': False, 'new': 'site_id'}),
-             ('sky', {'default': False, 'new': 'sky'}),
-             ('specid', {'default': False, 'new': 'specid'}),
-             ('specprimary', {'default': False, 'new': 'specprimary'}),
-             ('spectype_id', {'default': False, 'new': 'spectype_id'}),
-             ('targetid', {'default': False, 'new': 'targetid'}),
-             ('telescope_id', {'default': False, 'new': 'telescope_id'}),
-             ('wave_sigma', {'default': False, 'new': 'wave_sigma'}),
-             ('wavelength', {'default': True, 'new': 'wavelength'}),
-             ('wavemax', {'default': False, 'new': 'wavemax'}),
-             ('wavemin', {'default': False, 'new': 'wavemin'})])
+#!df_lut_internal=OrderedDict([('FIBERID', {'default': False, 'new': 'FIBERID'}),
+#!             ('MJD', {'default': False, 'new': 'MJD'}),
+#!             ('PLATEID', {'default': False, 'new': 'PLATEID'}),
+#!             ('RUN1D', {'default': False, 'new': 'RUN1D'}),
+#!             ('RUN2D', {'default': False, 'new': 'RUN2D'}),
+#!             ('SPECOBJID', {'default': False, 'new': 'SPECOBJID'}),
+#!             ('_dr', {'default': True, 'new': '_dr'}),
+#!             ('data_release_id', {'default': False, 'new': 'data_release_id'}),
+#!             ('datasetgroup_id', {'default': False, 'new': 'datasetgroup_id'}),
+#!             ('dateobs', {'default': False, 'new': 'dateobs'}),
+#!             ('dateobs_center', {'default': False, 'new': 'dateobs_center'}),
+#!             ('dec', {'default': False, 'new': 'dec'}),
+#!             ('dirpath', {'default': False, 'new': 'dirpath'}),
+#!             ('exptime', {'default': False, 'new': 'exptime'}),
+#!             ('extra_files', {'default': False, 'new': 'extra_files'}),
+#!             ('filename', {'default': False, 'new': 'filename'}),
+#!             ('filesize', {'default': False, 'new': 'filesize'}),
+#!             ('flux', {'default': True, 'new': 'flux'}),
+#!             ('id', {'default': True, 'new': 'id'}),
+#!             ('instrument_id', {'default': False, 'new': 'instrument_id'}),
+#!             ('ivar', {'default': False, 'new': 'ivar'}),
+#!             ('mask', {'default': False, 'new': 'mask'}),
+#!             ('model', {'default': False, 'new': 'model'}),
+#!             ('ra', {'default': False, 'new': 'ra'}),
+#!             ('redshift', {'default': False, 'new': 'redshift'}),
+#!             ('redshift_err', {'default': False, 'new': 'redshift_err'}),
+#!             ('redshift_warning',
+#!              {'default': False, 'new': 'redshift_warning'}),
+#!             ('site_id', {'default': False, 'new': 'site_id'}),
+#!             ('sky', {'default': False, 'new': 'sky'}),
+#!             ('specid', {'default': False, 'new': 'specid'}),
+#!             ('specprimary', {'default': False, 'new': 'specprimary'}),
+#!             ('spectype_id', {'default': False, 'new': 'spectype_id'}),
+#!             ('targetid', {'default': False, 'new': 'targetid'}),
+#!             ('telescope_id', {'default': False, 'new': 'telescope_id'}),
+#!             ('wave_sigma', {'default': False, 'new': 'wave_sigma'}),
+#!             ('wavelength', {'default': True, 'new': 'wavelength'}),
+#!             ('wavemax', {'default': False, 'new': 'wavemax'}),
+#!             ('wavemin', {'default': False, 'new': 'wavemin'})])
+#!
+#!df_lut=OrderedDict([('FIBERID', {'default': False, 'new': 'FIBERID'}),
+#!             ('MJD', {'default': False, 'new': 'MJD'}),
+#!             ('PLATEID', {'default': False, 'new': 'PLATEID'}),
+#!             ('RUN1D', {'default': False, 'new': 'RUN1D'}),
+#!             ('RUN2D', {'default': False, 'new': 'RUN2D'}),
+#!             ('SPECOBJID', {'default': False, 'new': 'SPECOBJID'}),
+#!             ('_dr', {'default': True, 'new': '_dr'}),
+#!             ('data_release_id', {'default': False, 'new': 'data_release_id'}),
+#!             ('datasetgroup_id', {'default': False, 'new': 'datasetgroup_id'}),
+#!             ('dateobs', {'default': False, 'new': 'dateobs'}),
+#!             ('dateobs_center', {'default': False, 'new': 'dateobs_center'}),
+#!             ('dec', {'default': False, 'new': 'dec'}),
+#!             ('dirpath', {'default': False, 'new': 'dirpath'}),
+#!             ('exptime', {'default': False, 'new': 'exptime'}),
+#!             ('extra_files', {'default': False, 'new': 'extra_files'}),
+#!             ('filename', {'default': False, 'new': 'filename'}),
+#!             ('filesize', {'default': False, 'new': 'filesize'}),
+#!             ('flux', {'default': True, 'new': 'flux'}),
+#!             ('id', {'default': True, 'new': 'id'}),
+#!             ('instrument_id', {'default': False, 'new': 'instrument_id'}),
+#!             ('ivar', {'default': False, 'new': 'ivar'}),
+#!             ('mask', {'default': False, 'new': 'mask'}),
+#!             ('model', {'default': False, 'new': 'model'}),
+#!             ('ra', {'default': False, 'new': 'ra'}),
+#!             ('redshift', {'default': False, 'new': 'redshift'}),
+#!             ('redshift_err', {'default': False, 'new': 'redshift_err'}),
+#!             ('redshift_warning',
+#!              {'default': False, 'new': 'redshift_warning'}),
+#!             ('site_id', {'default': False, 'new': 'site_id'}),
+#!             ('sky', {'default': False, 'new': 'sky'}),
+#!             ('specid', {'default': False, 'new': 'specid'}),
+#!             ('specprimary', {'default': False, 'new': 'specprimary'}),
+#!             ('spectype_id', {'default': False, 'new': 'spectype_id'}),
+#!             ('targetid', {'default': False, 'new': 'targetid'}),
+#!             ('telescope_id', {'default': False, 'new': 'telescope_id'}),
+#!             ('wave_sigma', {'default': False, 'new': 'wave_sigma'}),
+#!             ('wavelength', {'default': True, 'new': 'wavelength'}),
+#!             ('wavemax', {'default': False, 'new': 'wavemax'}),
+#!             ('wavemin', {'default': False, 'new': 'wavemin'})])
 
 retrieve_0 = [1429831265344501, 1429831265410037]
 
@@ -326,19 +326,6 @@ find_1 = [{'_dr': 'DESI-edr',
 
 #find_2 = 6   # DEV
 find_2 = 926622 # PAT
-
-#find_3 = [{'_dr': 'DESI-edr',
-#  'dec': 0.806753724416067,
-#  'ra': 183.593362944251,
-#  'uuid': '0b1128aa-609e-48f7-ace6-f87a4e2c09ec'},
-# {'_dr': 'SDSS-DR16',
-#  'dec': 24.243558,
-#  'ra': 196.16943,
-#  'uuid': '18f77947-9716-4f84-841c-14344abf2c33'},
-# {'_dr': 'DESI-edr',
-#  'dec': 0.78380002211077,
-#  'ra': 183.453837126861,
-#  'uuid': '3c875bb6-6d36-4c4d-9653-9d4f25d6a06c'}]
 
 find_3 = [{'_dr': 'DESI-edr',
            'dec': 54.0581773035796,
