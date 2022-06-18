@@ -28,10 +28,11 @@ DEFAULT = 'DEFAULT'
 ALL = 'ALL'
 drs = ['BOSS-DR16']
 
-#rooturl = 'http://localhost:8030/'  # @@@
-rooturl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
+rooturl = 'http://localhost:8050/'  # @@@
+#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
 
 idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
+#idfld = 'id'  # Science Field Name for uuid. Diff val than Internal name.
 
 showact = False
 #showact = True
@@ -56,7 +57,7 @@ class SparclClientTest(unittest.TestCase):
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
-        cls.specids = [1429831265344501, 1429831265410037]
+        cls.specids = [1506512395860731904, 3383388400617889792]
         found = cls.client.find([idfld, 'data_release'], limit=None)
         cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
 
@@ -185,7 +186,7 @@ class SparclClientTest(unittest.TestCase):
     @skip('Not required.  EXPERIMENTAL')
     def test_rename_fields_internal(self):
         """Local rename fields in records (referenced by stored names)"""
-        flds = ['data_release_id', 'specid',
+        flds = ['data_release', 'specid',
                 'decr', 'rar', 'redshift',
                 'flux', 'ivar', 'loglam']
         records = self.client.sample_records(1,
@@ -525,11 +526,8 @@ class SparclClientTest(unittest.TestCase):
 
         outfields = [idfld, 'ra', 'dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
-        constraints = [
-            ['ra', 180.0, 240.0],
-            ['dec', -2.0, +2.0],
-        ]
-        found = self.client.find(outfields, constraints)
+        constraints = {'ra': [180.0, 240.0], 'dec': [-2.0, +2.0]}
+        found = self.client.find(outfields, constraints=constraints)
         actual = found.records[:2]
         if showact:
             print(f'find_0: actual={pf(actual)}')

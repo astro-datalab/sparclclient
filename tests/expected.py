@@ -309,25 +309,33 @@ retrieve_5 = ['FIBERID',
  'wavemin']
 
 
-find_0 = [{'_dr': 'DESI-edr',
-           'dec': -0.556149655765695,
-           'ra': 182.334858783602,
-           'uuid': '00006715-46b5-4d0b-903d-e340d1cced8f'},
-          {'_dr': 'DESI-edr',
-           'dec': 1.89690911150074,
-           'ra': 219.429094254809,
-           'uuid': '00008289-b4a9-44b1-9834-e34a5666059a'}]
+find_0 = [{'_dr': 'BOSS-DR16',
+           'dec': -0.37900273,
+           'ra': 208.02613,
+           'uuid': 'cc49c317-d8c4-4324-9b1d-c3b590e7f8d7'}]
 
-find_1 = [{'_dr': 'DESI-edr',
-           'dec': 54.0581773035796,
-           'ra': 174.578243924582,
-           'uuid': '000005ad-e1b0-4132-b25f-d3aa6acb08de'}]
+find_1 = [{'_dr': 'SDSS-DR16',
+           'dec': 27.081405,
+           'ra': 240.42064,
+           'uuid': '1642a45c-11c5-42ef-8ee6-064169f51e5e'}]
 
+find_2 = 4   # DEV
+#find_2 = 926622 # PAT
 
-#find_2 = 6   # DEV
-find_2 = 926622 # PAT
+find_3 = [{'_dr': 'SDSS-DR16',
+           'dec': 27.081405,
+           'ra': 240.42064,
+           'uuid': '1642a45c-11c5-42ef-8ee6-064169f51e5e'},
+          {'_dr': 'BOSS-DR16',
+           'dec': 28.751204,
+           'ra': 133.46096,
+           'uuid': '4ef1d16b-3a16-4cf2-b533-a91b2795cc79'},
+          {'_dr': 'BOSS-DR16',
+           'dec': -0.37900273,
+           'ra': 208.02613,
+           'uuid': 'cc49c317-d8c4-4324-9b1d-c3b590e7f8d7'}]
 
-find_3 = [{'_dr': 'DESI-edr',
+find_3_pat = [{'_dr': 'DESI-edr',
            'dec': 54.0581773035796,
            'ra': 174.578243924582,
            'uuid': '000005ad-e1b0-4132-b25f-d3aa6acb08de'},

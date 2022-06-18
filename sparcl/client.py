@@ -594,9 +594,9 @@ class SparclClient():  # was SparclApi()
         verbose = self.verbose if verbose is None else verbose
 
         if (include == DEFAULT) or (include is None):
-            include_list = self.get_default_fields(dataset_list)
+            include_list = self.get_default_fields(dataset_list=dataset_list)
         elif include == ALL:
-            include_list = self.get_all_fields(dataset_list)
+            include_list = self.get_all_fields(dataset_list=dataset_list)
         else:
             include_list = include
         #! print(f'dbg0: include={include} include_list={include_list} '
@@ -681,10 +681,10 @@ class SparclClient():  # was SparclApi()
                            dataset_list=None,
                            verbose=False):
         if dataset_list is None:
-            constraints = [['specid', *specid_list]]
+            constraints = {'specid': specid_list}
         else:
-            constraints = [['specid', *specid_list],
-                           ['data_release_id', dataset_list]]
+            constraints = {'specid': specid_list,
+                           'data_release': dataset_list}
         found = self.find([idfld], constraints=constraints)
         if verbose:
             print(f'Found {found.count} matches.')
