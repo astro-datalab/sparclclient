@@ -2,23 +2,55 @@
 """
 
 # Python Standard Library
-from warnings import warn
+#!from warnings import warn
 from collections import defaultdict
 # External Packages
 import requests
 
 
-# Derived from a single query
-class Fields():
+def validate_fields(datafields):
+    # datafields is simply:
+    #   DataField.objects.all().values(*atts)
+
+    drs = set([df['data_release'] for df in datafields])
+    core = {df['origdp']: df['newdp']
+            for df in datafields if df['storage'] == 'C'}
+
+    o2n = {dr: {df['origdp']: df['newdp']
+                for df in datafields
+                if df['data_release'] == dr}
+           for dr in drs}
+
+    for dr, df in o2n.items():
+        #  1-1 mapping origdp <-> newdp across all DR
+        if len(set(df.values())) != len(df):
+            msg = (f'Data Release={dr} does not have a one-to-one mapping '
+                   f'between Original and Science field names.')
+            raise Exception(msg)
+
+        #  Same set of core origdp and newdp across all DR
+        if not all([df[k] == core[k] for k in core.keys()]):
+            msg = (f'DataFields do not have the same '
+                   f'Science field name for core values across all Data Sets. '
+                   )
+            raise Exception(msg)
+
+    return True
+
+
+class Fields():  # Derived from a single query
     """Lookup of Field Names"""
 
     def __init__(self, apiurl):
 
+        # [rec, ...]
+        # where rec is dict containing keys:
+        # 'data_release', 'origdp', 'newdp', 'storage', 'default', 'all'
         datafields = requests.get(f'{apiurl}/datafields/').json()
 
-        #! core_list = set([df['newdp']
-        #!                  for df in datafields if df['storage']=='C'])
-        dr_list = set(df['data_release_id'] for df in datafields)
+        validate_fields(datafields)
+
+        dr_list = set(df['data_release'] for df in datafields)
 
         #! atts = ['data_release', 'origdp', 'newdp', 'storage',
         #!         'default', 'all']
@@ -26,15 +58,16 @@ class Fields():
         # o2n[DR][InternalName] => ScienceName
         self.o2n = {dr: {df['origdp']: df['newdp']
                          for df in datafields
-                         if df['data_release_id'] == dr}
+                         if df['data_release'] == dr}
                     for dr in dr_list}
-        # o2n[DR][InternalName] => ScienceName
+        # n2o[DR][ScienceName] => InternalName
         self.n2o = {dr: {df['newdp']: df['origdp']
                          for df in datafields
-                         if df['data_release_id'] == dr}
+                         if df['data_release'] == dr}
                     for dr in dr_list}
         self.all_drs = dr_list
         self.all_fields = set([df['newdp'] for df in datafields])
+        self.datafields = datafields
 
         # Per DataRelease: get Storage, Default, All for each (user) fieldname
         # dr_attrs[DR][newdp] => dict[storage,default,all]
@@ -42,14 +75,14 @@ class Fields():
                                          'default': df['default'],
                                          'all': df['all']}
                            for df in datafields
-                           if df['data_release_id'] == dr}
+                           if df['data_release'] == dr}
                       for dr in dr_list}
 
         # Handy structures for field name management in ivars
-        warn('''Implementation ignores that fact that a
-        single Science Field Name might map to MULTIPLE Internal Field Names
-        within a single Data Set.  If this is the case (see Admin)
-        results may be unpredictable!!!''', stacklevel=2)
+        #! warn('''Implementation ignores that fact that a
+        #! single Science Field Name might map to MULTIPLE Internal Field Names
+        #! within a single Data Set.  If this is the case (see Admin)
+        #! results may be unpredictable!!!''', stacklevel=2)
 
     @property
     def all_datasets(self):

@@ -65,7 +65,6 @@ idfld = 'uuid'  # Science Field Name for uuid.
 # dataall = client.retrieve(specids,columns=allc)
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
-_PROD = 'https://specserver.noirlab.edu'
 _STAGE = 'http://astrosparcl.datalab.noirlab.edu:8000'
 _PAT = 'http://sparc1.datalab.noirlab.edu:8000'
 _PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
@@ -215,7 +214,8 @@ class SparclClient():  # was SparclApi()
 
     KNOWN_GOOD_API_VERSION = 6.0  # @@@ Change this on Server version increment
 
-    def __init__(self, url=_PAT,
+    def __init__(self, *,
+                 url=_PAT,
                  verbose=False,
                  #!@@@internal_names=False, # override field renaming
                  connect_timeout=1.1,    # seconds
@@ -241,10 +241,10 @@ class SparclClient():  # was SparclApi()
 
         # Get API Version
         try:
-            verstr = requests.get(
-                f'{self.apiurl}/version/', timeout=self.timeout).content
+            endpoint = f'{self.apiurl}/version/'
+            verstr = requests.get(endpoint, timeout=self.timeout).content
         except requests.ConnectionError as err:
-            msg = f'Could not connect to {self.rooturl}. {str(err)}'
+            msg = f'Could not connect to {endpoint}. {str(err)}'
             if urlparse(url).hostname in pat_hosts:
                 msg += 'Did you enable VPN?'
             raise ex.ServerConnectionError(msg) from None  # disable chaining
@@ -283,7 +283,7 @@ class SparclClient():  # was SparclApi()
     def all_datasets(self):
         return self.fields.all_drs
 
-    def get_default_fields(self, dataset_list=None):
+    def get_default_fields(self, *, dataset_list=None):
         """Get fields tagged as 'default' that are in DATASET_LIST.
         This is the fields used for the DEFAULT value of the include parameter
         of client.retrieve().
@@ -301,7 +301,7 @@ class SparclClient():  # was SparclApi()
         union = self.fields.default_retrieve_fields(dataset_list=dataset_list)
         return sorted(common.intersection(union))
 
-    def get_all_fields(self, dataset_list=None):
+    def get_all_fields(self, *, dataset_list=None):
         """Get fields tagged as 'all' that are in DATA_SET.
         This is the fields used for the ALL value of the include parameter
         of client.retrieve().
@@ -312,7 +312,24 @@ class SparclClient():  # was SparclApi()
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
         return sorted(common.intersection(union))
 
-    def _common_internal(self, science_fields=None, dataset_list=None):
+    def validate_science_fields(self, science_fields, *, dataset_list=None):
+        """Raise exception if any field name in SCIENCE_FIELDS is
+        not registered in at least one of DATASET_LIST."""
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
+        all = set(self.fields.common(dataset_list=dataset_list))
+        unk = set(science_fields) - all
+        if len(unk) > 0:
+            drs = self.fields.all_drs if dataset_list is None else dataset_list
+            msg = (f'Unknown fields \"{",".join(unk)}\" given '
+                   f'for DataSets {",".join(drs)}. '
+                   f'Allowed fields are: {",".join(all)}. ')
+            raise ex.UnknownField(msg)
+        return True
+
+    def _common_internal(self, *, science_fields=None, dataset_list=None):
+        self.validate_science_fields(science_fields, dataset_list=dataset_list)
+
         if dataset_list is None:
             dataset_list = self.fields.all_drs
         if science_fields is None:
@@ -325,7 +342,7 @@ class SparclClient():  # was SparclApi()
         return common.intersection(flds)
 
     # Return Science Field Names (not Internal)
-    def get_available_fields(self, dataset_list=None):
+    def get_available_fields(self, *, dataset_list=None):
         """Get subset of fields that are in all (or selected) DATASET_LIST.
         This may be a bigger list than will be used with the ALL keyword to
         client.retreive()
@@ -409,16 +426,30 @@ class SparclClient():  # was SparclApi()
             self.apiversion = float(response.content)
         return self.apiversion
 
-    def find(self, outfields, constraints=None, limit=500, sort=None):
+    def find(self, outfields, *,
+             constraints={},  # dict(fname) = [op, param, ...]
+             dataset_list=None,
+             limit=500,
+             sort=None):
         """sort :: comma seperated list of fields to sort by"""
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
+        self.validate_science_fields(outfields, dataset_list=dataset_list)
+        dr = list(dataset_list)[0]
+        if len(constraints) > 0:
+            self.validate_science_fields(constraints.keys(),
+                                         dataset_list=dataset_list)
+            constraints = {self.fields._internal_name(k, dr): v
+                           for k, v in constraints.items()}
         uparams = dict(limit=limit,)
         if sort is not None:
             uparams['sort'] = sort
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/find/?{qstr}'
-        search = [] if constraints is None else constraints
-        sspec = dict(outfields=list(self._common_internal(outfields)),
-                     search=search)
+        outfields = [self.fields._internal_name(s, dr) for s in outfields]
+        search = [[k] + v for k, v in constraints.items()]
+        sspec = dict(outfields=outfields, search=search)
+        #!print(f'DBG find: outfields={outfields} search={search}')
         res = requests.post(url, json=sspec, timeout=self.timeout)
 
         if res.status_code != 200:
@@ -430,7 +461,7 @@ class SparclClient():  # was SparclApi()
 
         return Found(res.json(), client=self)
 
-    def missing(self, uuid_list, dataset_list=None,
+    def missing(self, uuid_list, *, dataset_list=None,
                 countOnly=False, verbose=False):
         """Return the subset of the given uuid_list that is NOT stored
         in the database.
@@ -531,6 +562,7 @@ class SparclClient():  # was SparclApi()
 
     def retrieve(self,  # noqa: C901
                  uuid_list,
+                 *,
                  include='DEFAULT',
                  dataset_list=None,
                  limit=500,
@@ -572,7 +604,9 @@ class SparclClient():  # was SparclApi()
 
         self._validate_include(include_list, dataset_list)
 
-        com_include = self._common_internal(include_list, dataset_list)
+        com_include = self._common_internal(
+            science_fields=include_list,
+            dataset_list=dataset_list)
         uparams = dict(include=','.join(com_include),
                        limit=limit,
                        dataset_list=','.join(dataset_list))
@@ -642,6 +676,7 @@ class SparclClient():  # was SparclApi()
 
     def retrieve_by_specid(self,
                            specid_list,
+                           *,
                            include='DEFAULT',
                            dataset_list=None,
                            verbose=False):
