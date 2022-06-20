@@ -29,9 +29,20 @@ def validate_fields(datafields):
             raise Exception(msg)
 
         #  Same set of core origdp and newdp across all DR
-        if not all([df[k] == core[k] for k in core.keys()]):
+        #!if not all([df.get(k) == core.get(k) for k in core.keys()]):
+        #!    msg = (f'DataFields do not have the same '
+        #!           f'Science field name for core values across all '
+        #!           f'Data Sets. '
+        #!           )
+        #!    raise Exception(msg)
+        acore = defaultdict(list)  # ambiguous core fields(more than one value)
+        for k in core.keys():
+            if df.get(k) != core.get(k):
+                acore[k].append(df.get(k))
+        if len(acore) > 0:
             msg = (f'DataFields do not have the same '
                    f'Science field name for core values across all Data Sets. '
+                   f'{dict(acore)}'
                    )
             raise Exception(msg)
 

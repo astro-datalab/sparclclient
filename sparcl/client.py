@@ -32,7 +32,6 @@ from sparcl.Results import Found, Retrieved
 pat_hosts = ['sparc1.datalab.noirlab.edu',
              'sparc2.datalab.noirlab.edu',
              'astrosparcl.datalab.noirlab.edu']
-idfld = 'uuid'  # Science Field Name for uuid.
 
 # Upload to PyPi:
 #   python3 -m build --wheel
@@ -685,6 +684,11 @@ class SparclClient():  # was SparclApi()
         else:
             constraints = {'specid': specid_list,
                            'data_release': dataset_list}
+
+        # Science Field Name for uuid.
+        dr = list(self.fields.all_drs)[0]
+        idfld = self.fields._science_name('id', dr)
+
         found = self.find([idfld], constraints=constraints)
         if verbose:
             print(f'Found {found.count} matches.')
