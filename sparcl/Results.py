@@ -93,5 +93,8 @@ class Found(Results):
         return f'Find Results: {len(self.recs)} records'
 
     @property
-    def ids(self, idfld='uuid'):
+    def ids(self):
+        dr = list(self.fields.all_drs)[0]
+        idfld = self.fields._science_name('id', dr)
+
         return [d.get(idfld) for d in self.recs]

@@ -545,18 +545,18 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
     def test_find_2(self):
-        """Get metadata using search spec."""
+        """Limit=None. """
         outfields = [idfld, 'ra', 'dec']
         found = self.client.find(outfields, limit=None, sort='id')  # @@@
         actual = len(found.records)
         if showact:
             print(f'find_2: actual={pf(actual)}')
-            self.assertEqual(actual,
-                             exp.find_2,
-                             msg='Actual to Expected')
+        self.assertEqual(actual,
+                         exp.find_2,
+                         msg='Actual to Expected')
 
     def test_find_3(self):
-        """Get metadata using search spec."""
+        """Limit=3."""
         outfields = [idfld, 'ra', 'dec']
         found = self.client.find(outfields, limit=3, sort='id')  # @@@
         actual = sorted(found.records, key=lambda rec: rec[idfld])
@@ -564,4 +564,15 @@ class SparclClientTest(unittest.TestCase):
             print(f'find_3: actual={pf(actual)}')
         self.assertEqual(actual,
                          sorted(exp.find_3, key=lambda rec: rec[idfld]),
+                         msg='Actual to Expected')
+
+    def test_find_4(self):
+        """Check found.ids"""
+        outfields = [idfld, 'ra', 'dec']
+        found = self.client.find(outfields, limit=3, sort='id')  # @@@
+        actual = sorted(found.ids)
+        if showact:
+            print(f'find_4: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         sorted(exp.find_4),
                          msg='Actual to Expected')

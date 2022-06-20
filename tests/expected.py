@@ -348,4 +348,6 @@ find_3_pat = [{'_dr': 'DESI-edr',
            'ra': 322.51088,
            'uuid': '00002089-eaf2-44fc-948e-d90210bca3da'}]
 
-find_6 = []
+find_4 = ['1642a45c-11c5-42ef-8ee6-064169f51e5e',
+          '4ef1d16b-3a16-4cf2-b533-a91b2795cc79',
+          'cc49c317-d8c4-4324-9b1d-c3b590e7f8d7']
