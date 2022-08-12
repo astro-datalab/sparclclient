@@ -19,8 +19,12 @@ def genSparclException(response, verbose=False):
         return BadQuery(status.get('errorMessage'))
     elif status.get('errorCode') == 'UNKFIELD':
         return UnknownField(status.get('errorMessage'))
+    elif status.get('errorCode') == 'BADCONST':
+        return BadSearchConstraint(status.get('errorMessage'))
     else:
-        return UnknownServerError(status.get('errorMessage'))
+        return UnknownServerError(
+            f"{status.get('errorMessage')} "
+            f"[{status.get('errorCode')}]")
 
 
 class BaseSparclException(Exception):
@@ -95,6 +99,10 @@ class UnknownField(BaseSparclException):
 
 class ServerConnectionError(BaseSparclException):
     error_code = 'SRVCONER'
+
+
+class BadSearchConstraint(BaseSparclException):
+    error_code = 'BADSCONS'
 
 
 # error_code values should be no bigger than 8 characters 12345678

@@ -1,8 +1,6 @@
 """Get Field names associated with various SPARCL conditions.
 """
-
 # Python Standard Library
-#!from warnings import warn
 from collections import defaultdict
 # External Packages
 import requests
@@ -28,13 +26,6 @@ def validate_fields(datafields):
                    f'between Original and Science field names.')
             raise Exception(msg)
 
-        #  Same set of core origdp and newdp across all DR
-        #!if not all([df.get(k) == core.get(k) for k in core.keys()]):
-        #!    msg = (f'DataFields do not have the same '
-        #!           f'Science field name for core values across all '
-        #!           f'Data Sets. '
-        #!           )
-        #!    raise Exception(msg)
         acore = defaultdict(list)  # ambiguous core fields(more than one value)
         for k in core.keys():
             if df.get(k) != core.get(k):
@@ -63,8 +54,6 @@ class Fields():  # Derived from a single query
 
         dr_list = set(df['data_release'] for df in datafields)
 
-        #! atts = ['data_release', 'origdp', 'newdp', 'storage',
-        #!         'default', 'all']
         self.datafields = datafields
         # o2n[DR][InternalName] => ScienceName
         self.o2n = {dr: {df['origdp']: df['newdp']
@@ -88,12 +77,6 @@ class Fields():  # Derived from a single query
                            for df in datafields
                            if df['data_release'] == dr}
                       for dr in dr_list}
-
-        # Handy structures for field name management in ivars
-        #! warn('''Implementation ignores that fact that a
-        #! single Science Field Name might map to MULTIPLE Internal Field Names
-        #! within a single Data Set.  If this is the case (see Admin)
-        #! results may be unpredictable!!!''', stacklevel=2)
 
     @property
     def all_datasets(self):
@@ -149,48 +132,3 @@ class Fields():  # Derived from a single query
                 if field in self.n2o[dr]:
                     dr_fields[dr].append(field)
         return dict(dr_fields)
-
-#!    def get_hetero_record_lists(self, records):
-#!        lut = defaultdict(list)  # lut[dr] => records
-#!        for dr in self.all_drs:
-#!            for rec in records:
-#!                lut[rec._dr].append(rec)
-#!        return lut
-
-#! dfLUT[dr][origPath] => dict[new=newPath,default=bool,store=bool]
-#! lut0 = requests.get(f'{self.apiurl}/fields/').json()
-#! lut1 = OrderedDict(sorted(lut0.items()))
-#! self.dfLUT = {k:OrderedDict(sorted(d.items())) for k,d in lut1.items()}
-
-
-#! # default[dr] => newFieldName, ...
-#! self.default = dict(
-#!     (dr, [d['new'] for orig,d in v.items() if d['default']])
-#!     for dr,v in self.dfLUT.items())
-#!
-#! # orig2newLUT[dr][orig] = new
-#! self.orig2newLUT = dict((dr,dict((orig,d['new'])
-#!                                  for orig,d in v.items()))
-#!                         for dr,v in self.dfLUT.items())
-#! # new2origLUT[dr][new] = orig
-#! self.new2origLUT = dict((dr,dict((d['new'],orig)
-#!                                  for orig,d in v.items()))
-#!                         for dr,v in self.dfLUT.items())
-#!
-#! # dict[drName] = [fieldName, ...]
-#! self.dr_fields = dict((dr,v) for dr,v in self.new2origLUT.items())
-#!
-#! dsflds = [self.dr_fields[dr].values()
-#!           for dr in self.dr_fields.keys()]
-#! self.common_fields = set.intersection(*[set(l) for l in dsflds])
-
-#! dr_default = {dr : {new
-#!                     for new,v in dr_attrs[dr].items()
-#!                     if v['default']} for dr in dr_list}
-#! dr_all = {dr : {new
-#!                     for new,v in dr_attrs[dr].items()
-#!                     if v['all']} for dr in dr_list}
-#!
-#! # Fields (new) common to ALL DRs
-#! common = set.intersection(*[set(dr_n2o[dr].keys())
-#!                             for dr in dr_n2o.keys()])

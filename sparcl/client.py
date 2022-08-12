@@ -5,18 +5,10 @@ This module interfaces to the SPARC-Server to get spectra data.
 ############################################
 # Python Standard Library
 from urllib.parse import urlencode, urlparse
-#!from enum import Enum, auto
-#!from pprint import pformat as pf
-#!from pathlib import Path, PosixPath
 from warnings import warn
-#!import json
-#!import pickle
-#!from collections.abc import MutableMapping
-#!from collections import OrderedDict, UserList
-#!import pkg_resources
-#!from numbers import Number
-#!from collections import defaultdict
-#!from itertools import chain
+import pickle
+#!from pathlib import Path
+import tempfile
 ############################################
 # External Packages
 import requests
@@ -159,7 +151,7 @@ def records_field_list(records):
 #!     Returns:
 #!         list: Renamed field names in all given records.
 #!     :param rename_dict: The key is current field name, value is new.
-#!     :param records: List of records (dictionaries) to transform
+#!     :param records: List vof records (dictionaries) to transform
 #!     :returns: new_records
 #!     Example:
 #!       >>> from api.client import rename_fields
@@ -214,7 +206,7 @@ class SparclClient():  # was SparclApi()
     KNOWN_GOOD_API_VERSION = 7.0  # @@@ Change this on Server version increment
 
     def __init__(self, *,
-                 url=_PAT,
+                 url=_STAGE,
                  verbose=False,
                  #!@@@internal_names=False, # override field renaming
                  connect_timeout=1.1,    # seconds
@@ -562,9 +554,12 @@ class SparclClient():  # was SparclApi()
     def retrieve(self,  # noqa: C901
                  uuid_list,
                  *,
+                 svc='spectras',  # 'retrieve',
+                 format='pkl',    # 'json',
                  include='DEFAULT',
                  dataset_list=None,
                  limit=500,
+                 chunk=500,
                  verbose=None):
         """Get spectrum by UUID (universally unique identifier) list.
         Args:
@@ -608,10 +603,13 @@ class SparclClient():  # was SparclApi()
             dataset_list=dataset_list)
         uparams = dict(include=','.join(com_include),
                        limit=limit,
+                       chunk_len=chunk,
+                       format=format,
                        dataset_list=','.join(dataset_list))
         qstr = urlencode(uparams)
 
-        url = f'{self.apiurl}/retrieve/?{qstr}'
+        #!url = f'{self.apiurl}/retrieve/?{qstr}'
+        url = f'{self.apiurl}/{svc}/?{qstr}'
         if verbose:
             print(f'Using url="{url}"')
             ut.tic()
@@ -640,6 +638,7 @@ class SparclClient():  # was SparclApi()
         except Exception as err:  # fall through
             raise ex.UnknownSparcl(err)
 
+        #!print(f'DBG: retrieve-3 res={res} len(content)={len(res.content)}')
         if verbose:
             elapsed = ut.toc()
             print(f'Got response to post in {elapsed} seconds')
@@ -652,7 +651,18 @@ class SparclClient():  # was SparclApi()
             raise ex.genSparclException(res, verbose=verbose)
 
         #!meta,*records = res.json()
-        results = res.json()
+        if format == 'json':
+            results = res.json()
+        elif format == 'pkl':
+            with tempfile.TemporaryFile(mode='w+b') as fp:
+                for idx, chunk in enumerate(res.iter_content(chunk_size=None)):
+                    fp.write(chunk)
+                    fp.seek(0)
+                results = pickle.load(fp)
+        else:
+            results = res.json()
+
+        print(f'len(client.results)={len(results)}')
         meta = results[0]
         if verbose:
             count = len(results) - 1
