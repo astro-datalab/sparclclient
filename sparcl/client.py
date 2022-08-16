@@ -56,9 +56,9 @@ pat_hosts = ['sparc1.datalab.noirlab.edu',
 # dataall = client.retrieve(specids,columns=allc)
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
-_STAGE = 'http://astrosparcl.datalab.noirlab.edu:8000'
-_PAT = 'http://sparc1.datalab.noirlab.edu:8000'
-_PAT2 = 'http://sparc2.datalab.noirlab.edu:8000'
+_STAGE = 'https://astrosparcl.datalab.noirlab.edu'
+_PAT = 'https://sparc1.datalab.noirlab.edu'
+_PAT2 = 'https://sparc2.datalab.noirlab.edu'
 _DEV = 'http://localhost:8050'
 
 
@@ -587,7 +587,7 @@ class SparclClient():  # was SparclApi()
 
         verbose = self.verbose if verbose is None else verbose
 
-        if (include == DEFAULT) or (include is None):
+        if (include == DEFAULT) or (include is None) or include == []:
             include_list = self.get_default_fields(dataset_list=dataset_list)
         elif include == ALL:
             include_list = self.get_all_fields(dataset_list=dataset_list)
