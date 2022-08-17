@@ -18,6 +18,12 @@ class Results(UserList):
         self.to_science_fields()
         self.hdr['Count'] = len(self.recs)
 
+    # https://docs.python.org/3/library/collections.html#collections.deque.clear
+    def clear(self):
+        super().clear()
+        self.hdr = {}
+        self.recs = []
+
     @property
     def info(self):
         return self.hdr
