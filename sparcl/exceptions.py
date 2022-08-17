@@ -97,6 +97,11 @@ class UnknownField(BaseSparclException):
     error_code = 'UNKFIELD'
 
 
+class NoCommonIdField(BaseSparclException):
+    """The field name for Science id field is not common to all Data Sets"""
+    error_code = 'IDNOTCOM'
+
+
 class ServerConnectionError(BaseSparclException):
     error_code = 'SRVCONER'
 

@@ -417,12 +417,23 @@ class SparclClient():  # was SparclApi()
             self.apiversion = float(response.content)
         return self.apiversion
 
-    def find(self, outfields, *,
+    def find(self, outfields=None, *,
              constraints={},  # dict(fname) = [op, param, ...]
              dataset_list=None,
              limit=500,
              sort=None):
         """sort :: comma seperated list of fields to sort by"""
+        # Let "outfields" default to ['id']; but fld may have been renamed
+        if outfields is None:
+            dslist = list(self.fields.all_datasets)
+            idfld = self.fields._science_name('id', dslist[0])
+            if idfld not in self.fields.common():
+                msg = (f'The "id" field ("{idfld}" is not common to all '
+                       f'current Data Sets ({(", ").join(dslist)}) '
+                       f'so we cannot use the default outfields="{idfld}".'
+                       )
+                raise ex.NoCommonIdField(msg)
+            outfields = [idfld]
         if dataset_list is None:
             dataset_list = self.fields.all_drs
         self.validate_science_fields(outfields, dataset_list=dataset_list)
