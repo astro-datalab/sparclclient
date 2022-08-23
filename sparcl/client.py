@@ -1,7 +1,7 @@
 """Client module for SPARCL.
 This module interfaces to the SPARC-Server to get spectra data.
 """
-
+# python -m unittest tests.tests_api
 ############################################
 # Python Standard Library
 from urllib.parse import urlencode, urlparse
@@ -20,6 +20,7 @@ import sparcl.exceptions as ex
 #!import sparcl.type_conversion as tc
 from sparcl import __version__
 from sparcl.Results import Found, Retrieved
+
 
 pat_hosts = ['sparc1.datalab.noirlab.edu',
              'sparc2.datalab.noirlab.edu',
@@ -56,10 +57,10 @@ pat_hosts = ['sparc1.datalab.noirlab.edu',
 # dataall = client.retrieve(specids,columns=allc)
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
-_STAGE = 'https://astrosparcl.datalab.noirlab.edu'
-_PAT = 'https://sparc1.datalab.noirlab.edu'
-_PAT2 = 'https://sparc2.datalab.noirlab.edu'
-_DEV = 'http://localhost:8050'
+_PROD  = 'https://astrosparcl.datalab.noirlab.edu'  # noqa: E221
+_STAGE = 'https://sparclstage.datalab.noirlab.edu'  # noqa: E221
+_PAT   = 'https://sparc1.datalab.noirlab.edu'       # noqa: E221
+_DEV   = 'http://localhost:8050'                    # noqa: E221
 
 
 #client_version = pkg_resources.require("sparclclient")[0].version
@@ -99,68 +100,6 @@ def records_field_list(records):
     """
     fields = {r._dr: sorted(r.keys()) for r in records}
     return fields
-
-#! def get_metadata(records):
-#!     """Get records of just metadata used in records.
-#!     Metadata is considered to be any field whose type is a Number or String.
-#!     Therefore, this will not include vectors, lists, tuples, etc.
-#!     Args:
-#!         records (list): List of records (dictionaries).
-#!     Returns:
-#!       list(dict): New list of dictionaries. Each dict contains
-#!       only metadata fields.
-#!     :param records: List of records (dictionaries)
-#!     :returns: new list of dictionaries. Each dict contains only
-#!               metadata fields.
-#!     Example:
-#!         >>> from sparcl.client import get_metadata
-#!         >>> recs = client.sample_records(3)
-#!         >>> metadata = get_metadata(recs)
-#!     """
-#!     md_fields = [k for k,v in records[0].items()
-#!                  if isinstance(v,Number) or isinstance(v,str)]
-#!     return [{k:v for k,v in r.items() if k in md_fields} for r in records]
-#!
-#! def get_vectordata(records):
-#!     """Get records of just vector data used in records.
-#!     Vector data is considered to be any field whose type is a list or tuple.
-#!     Therefore, this will not include Number or String.
-#!     Args:
-#!         records (list): List of records (dictionaries).
-#!     Returns:
-#!         list(dict): New list of dictionaries. Each dict contains only
-#!         vector data fields.
-#!     Example:
-#!         >>> from sparcl.client import get_vectordata
-#!         >>> recs = client.sample_records(3)
-#!         >>> vectordata = get_vectordata(recs)
-#!     """
-#!     vd_fields = []
-#!     for i in range(len(records)):
-#!         for k,v in records[i].items():
-#!             if isinstance(v,list) or isinstance(v,tuple):
-#!                 vd_fields.append(k)
-#!     return [{k:v for k,v in r.items() if k in vd_fields} for r in records]
-#!
-#! def rename_fields(rename_dict, records):
-#!     """Rename some field names in all given records. EXPERIMENTAL.
-#!     Args:
-#!         rename_dict (key,value): The key is the current field name,
-#!         value is the new field name.
-#!         records (list): List of records (dictionaries) to transform.
-#!     Returns:
-#!         list: Renamed field names in all given records.
-#!     :param rename_dict: The key is current field name, value is new.
-#!     :param records: List vof records (dictionaries) to transform
-#!     :returns: new_records
-#!     Example:
-#!       >>> from api.client import rename_fields
-#!       >>> recs = client.sample_records(1)
-#!       >>> renamed = rename_fields({'ra':'Right_Ascension'},recs)
-#!     """
-#!     return [{rename_dict.get(k,k):v for k,v in r.items()}
-#!             for r in records]
-#!
 
 
 ###########################
@@ -206,9 +145,8 @@ class SparclClient():  # was SparclApi()
     KNOWN_GOOD_API_VERSION = 8.0  # @@@ Change this on Server version increment
 
     def __init__(self, *,
-                 url=_STAGE,
+                 url=_PROD,
                  verbose=False,
-                 #!@@@internal_names=False, # override field renaming
                  connect_timeout=1.1,    # seconds
                  read_timeout=90 * 60):  # seconds
         """Create client instance.
@@ -303,7 +241,7 @@ class SparclClient():  # was SparclApi()
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
         return sorted(common.intersection(union))
 
-    def validate_science_fields(self, science_fields, *, dataset_list=None):
+    def _validate_science_fields(self, science_fields, *, dataset_list=None):
         """Raise exception if any field name in SCIENCE_FIELDS is
         not registered in at least one of DATASET_LIST."""
         if dataset_list is None:
@@ -319,7 +257,8 @@ class SparclClient():  # was SparclApi()
         return True
 
     def _common_internal(self, *, science_fields=None, dataset_list=None):
-        self.validate_science_fields(science_fields, dataset_list=dataset_list)
+        self._validate_science_fields(science_fields,
+                                      dataset_list=dataset_list)
 
         if dataset_list is None:
             dataset_list = self.fields.all_drs
@@ -343,61 +282,6 @@ class SparclClient():  # was SparclApi()
         drs = self.fields.all_drs if dataset_list is None else dataset_list
         every = [set(self.fields.n2o[dr]) for dr in drs]
         return set.intersection(*every)
-
-    #!def get_field_names(self, data_set):
-    #!    """List field names available for retrieve.
-    #!    Args:
-    #!        data_set (str): Data Set to get the field names of.
-    #!    Returns:
-    #!        list: List of field names.
-    #!    :param data_set: List field names of this Data Set.
-    #!    :returns: list of field names
-    #!    Example:
-    #!        >>> client.get_field_names('DESI-everest')
-    #!    """
-    #!    dr = data_set
-    #!    if dr in self.dr_fields:
-    #!        return list(self.dr_fields[dr].keys())
-    #!    else:
-    #!        print(f'That is not a currently support data_set. '
-    #!              f'Available data_sets are: '
-    #!              f"{', '.join(self.dr_fields.keys())}"
-    #!              )
-    #!        return None
-    #!
-    #!def orig_field(self, data_set, client_name):
-    #!   """Get original field name as provided in Data Set.
-    #!   Args:
-    #!       data_set (str): Name of Data Set.
-    #!       client_name (str): Field name used in Client methods.
-    #!   Returns:
-    #!       str: Original field name.
-    #!   :param data_set: Name of Data Set
-    #!   :param client_name: Field name used in Client methods.
-    #!   :returns: Original field name
-    #!   Example:
-    #!       >>> client.orig_field('BOSS-DR16', 'flux')
-    #!       'spectra.coadd.FLUX'
-    #!   """
-    #!   # new2origLUT[dr][new] = orig
-    #!   return self.new2origLUT[data_set][client_name]
-    #!
-    #!ef client_field(self, data_set, orig_name):
-    #!   """Get field name used in Client methods.
-    #!   Args:
-    #!       data_set (str): Name of Data Set.
-    #!       orig_name (str): Original field name as provided in Data Set.
-    #!   Returns:
-    #!       str: Client field name.
-    #!   :param data_set: Name of Data Set
-    #!   :param orig_name: Original field name as provided in Data Set.
-    #!   :returns: Client field name
-    #!   Example:
-    #!       >>> client.client_field('BOSS-DR16', 'spectra.coadd.FLUX')
-    #!       'flux'
-    #!   """
-    #!   #!return self.orig2newLUT[data_set][orig_name]
-    #!   return self.dr_o2n[data_set][orig_name]
 
     @property
     def version(self):
@@ -436,11 +320,11 @@ class SparclClient():  # was SparclApi()
             outfields = [idfld]
         if dataset_list is None:
             dataset_list = self.fields.all_drs
-        self.validate_science_fields(outfields, dataset_list=dataset_list)
+        self._validate_science_fields(outfields, dataset_list=dataset_list)
         dr = list(dataset_list)[0]
         if len(constraints) > 0:
-            self.validate_science_fields(constraints.keys(),
-                                         dataset_list=dataset_list)
+            self._validate_science_fields(constraints.keys(),
+                                          dataset_list=dataset_list)
             constraints = {self.fields._internal_name(k, dr): v
                            for k, v in constraints.items()}
         uparams = dict(limit=limit,)
@@ -503,45 +387,12 @@ class SparclClient():  # was SparclApi()
         return ret
         # END missing_uuids()
 
-#!    def missing_specids(self, specid_list, countOnly=False, verbose=False):
-#!        """Return the subset of the given specid list that is NOT stored
-#!        in the database.
-#!        Args:
-#!           specid_list (list): List of specids.
-#!           countOnly (:obj:`bool`, optional): Set to True to return only a
-#!               count of the missing specids from the list. Defaults to False.
-#!           verbose (:obj:`bool`, optional): Set to True for in-depth return
-#!               statement.
-#!               Defaults to False.
-#!        Returns:
-#!            list: The subset of the given specid list that is NOT stored
-#!                in the database.
-#!        Example:
-#!            >>> si = [1858907533188556800, 6171312851359387648]
-#!            >>> client.missing_specids(si)
-#!            [1858907533188556800, 6171312851359387648]
-#!        """
-#!
-#!        verbose = verbose or self.verbose
-#!        uparams = dict()
-#!        qstr = urlencode(uparams)
-#!        url = f'{self.apiurl}/missing/?{qstr}'
-#!        if verbose:
-#!            print(f'Using url="{url}"')
-#!        res = requests.post(url, json=specid_list, timeout=self.timeout)
-#!        res.raise_for_status()
-#!        if res.status_code != 200:
-#!            raise Exception(res)
-#!        ret =  res.json()
-#!        return ret
-#!        # END missing_specids()
-
-#!    def _specids2tuples(self, specidsg, data_set):
-#!        uparams =dict(dr=data_set)
-#!        qstr = urlencode(uparams)
-#!        url = f'{self.apiurl}/specids2tuples/?{qstr}'
-#!        res = requests.post(url, json=specids, timeout=self.timeout)
-
+    # Include fields are Science (not internal) names. But the mapping
+    # of Internal to Science name depends on DataSet.  Its possible
+    # for a field (Science name) to be valid in one DataSet but not
+    # another.  For the include_list to be valid, all fields must be
+    # valid Science field names for all DS in given dataset_list.
+    # (defaults to all DataSets ingested)
     def _validate_include(self, include_list, dataset_list):
         if not isinstance(include_list, (list, set)):
             msg = f'Bad INCLUDE_LIST. Must be list. Got {include_list}'
@@ -665,10 +516,15 @@ class SparclClient():  # was SparclApi()
         if format == 'json':
             results = res.json()
         elif format == 'pkl':
+            # Read chunked binary file (representing pickle file) from
+            # server response. Load pickle into python data structure.
+            # Python structure is list of records where first element
+            # is a header.
             with tempfile.TemporaryFile(mode='w+b') as fp:
                 for idx, chunk in enumerate(res.iter_content(chunk_size=None)):
                     fp.write(chunk)
-                    fp.seek(0)
+                # Position to start of file for pickle reading (load)
+                fp.seek(0)
                 results = pickle.load(fp)
         else:
             results = res.json()

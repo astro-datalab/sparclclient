@@ -28,11 +28,11 @@ DEFAULT = 'DEFAULT'
 ALL = 'ALL'
 drs = ['BOSS-DR16']
 
-rooturl = 'http://localhost:8050/'  # @@@
-#rooturl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
+serverurl = 'http://localhost:8050/'  # @@@
+#serverurl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
 
-idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
-#idfld = 'id'  # Science Field Name for uuid. Diff val than Internal name.
+#!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
+idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
 
 showact = False
 #showact = True
@@ -53,7 +53,7 @@ class SparclClientTest(unittest.TestCase):
 
         #! cls.clienti # Internal field names
         #! cls.client2 # Renamed, Science field names
-        cls.client = sparcl.client.SparclClient(url=rooturl)
+        cls.client = sparcl.client.SparclClient(url=serverurl)
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -62,12 +62,12 @@ class SparclClientTest(unittest.TestCase):
         cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
 
         print(f'Running Client tests against Server: '
-              f'{urlparse(rooturl).netloc}')
+              f'{urlparse(serverurl).netloc}')
 
     @classmethod
     def tearDownClass(cls):
         pass
-        #! print(f'\n## Times on: {urlparse(rooturl).netloc.split(".")[0]}'
+        #! print(f'\n## Times on: {urlparse(serverurl).netloc.split(".")[0]}'
         #!       ' (TestName, NumRecs, Description)')
         #! for k,v in cls.timing.items():
         #!     print(f'##   {k}: elapsed={v:.1f} secs;'
@@ -290,7 +290,7 @@ class SparclClientTest(unittest.TestCase):
             print(f'retrieve_0: actual={actual}')
 
         #!print(f'DBG gotspecids={gotspecids} specids={specids}')
-        self.assertEqual(actual, self.specids, msg='Actual to Expected')
+        self.assertEqual(actual, exp.retrieve_0, msg='Actual to Expected')
 
     def test_retrieve_0b(self):
         """Get spectra using small list of uuids."""
@@ -518,7 +518,8 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
     # To get suitable constraints (Pothier, DEV, in sparc-shell):
-    #   list(FitsFile.objects.all().values('ra','dec')[:10])
+    #   sorted(FitsFile.objects.all().values('ra','dec'),
+    #          key=lambda r: r['dec'])
     def test_find_0(self):
         """Get metadata using search spec."""
         #! name = 'find_0'
@@ -526,7 +527,7 @@ class SparclClientTest(unittest.TestCase):
 
         outfields = [idfld, 'ra', 'dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
-        constraints = {'ra': [180.0, 240.0], 'dec': [-2.0, +2.0]}
+        constraints = {'ra': [246.0, 247.0], 'dec': [+34.7, +34.8]}
         found = self.client.find(outfields, constraints=constraints)
         actual = found.records[:2]
         if showact:

@@ -1,30 +1,8 @@
-#!from collections import OrderedDict
+#!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
+idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
 
 
-#! boss_json = ['_dr',
-#!  'dec',
-#!  'ra',
-#!  'redshift',
-#!  'specid',
-#!  'spectra.coadd.FLUX',
-#!  'spectra.coadd.IVAR']
-#!
-#! boss_numpy = ['_dr', 'nparr']
-#!
-#! boss_pandas = ['_dr', 'df']
-#!
-#! boss_spectrum1d = ['_dr', 'redshift', 'spec1d']
-#!
-#! boss_spectrum1d_redshift = 0.570779085159302
-#! everest_numpy = ['_dr', 'dec', 'nparr', 'ra', 'specid']
-#!
-#! everest_pandas = ['_dr', 'b_df', 'r_df', 'z_df']
-#!
-#! everest_spectrum1d = ['_dr', 'b_spec1d', 'r_spec1d', 'z_spec1d']
-#!
-#! everest_b_spectrum1d_redshift = 0.17526327367673789
-
-fields_available = {'BOSS-DR16': ['_dr', 'flux', 'uuid', 'wavelength']}
+fields_available = {'BOSS-DR16': ['_dr', 'flux', idfld, 'wavelength']}
 
 record_examples = {'BOSS-DR16': ['_dr',
                'data_release_id',
@@ -59,7 +37,7 @@ get_metadata  = [{'FIBERID': 892,
   'spectype_id': 'STAR',
   'targetid': 0,
   'telescope_id': 'sloan25m',
-  'uuid': 'bf0b1583-2d27-4b66-b2c7-7e7177e25c01',
+  idfld: 'bf0b1583-2d27-4b66-b2c7-7e7177e25c01',
   'wavemax': 10356.189453125,
   'wavemin': 3601.63745117188,
   'z': -0.00413607759401202}]
@@ -232,9 +210,9 @@ normalize_field_names = [['_dr', 'flux', 'ivar']]
 #!             ('wavemax', {'default': False, 'new': 'wavemax'}),
 #!             ('wavemin', {'default': False, 'new': 'wavemin'})])
 
-retrieve_0 = [1429831265344501, 1429831265410037]
+retrieve_0 = [1506512395860731904]
 
-retrieve_0b = ['_dr', 'flux', 'uuid', 'wavelength']
+retrieve_0b = ['_dr', 'flux', idfld, 'wavelength']
 
 retrieve_4 = ['FIBERID',
  'MJD',
@@ -263,7 +241,7 @@ retrieve_4 = ['FIBERID',
  'spectype_id',
  'targetid',
  'telescope_id',
- 'uuid',
+ idfld,
  'wave_sigma',
  'wavelength',
  'wavemax',
@@ -309,45 +287,49 @@ retrieve_5 = ['FIBERID',
  'wavemin']
 
 
-find_0 = [{'_dr': 'BOSS-DR16',
-           'dec': -0.37900273,
-           'ra': 208.02613,
-           'uuid': 'cc49c317-d8c4-4324-9b1d-c3b590e7f8d7'}]
+find_0 = [{'_dr': 'SDSS-DR16',
+  'dec': 34.77458,
+  'id': 'd4ab98d4-0485-4246-9678-373964f0d29a',
+  'ra': 246.70983},
+ {'_dr': 'SDSS-DR16',
+  'dec': 34.752141,
+  'id': 'f49aa604-35ad-4701-b701-ccbd2b3ec5f2',
+  'ra': 246.79026}]
 
 find_1 = [{'_dr': 'SDSS-DR16',
-           'dec': 27.081405,
-           'ra': 240.42064,
-           'uuid': '1642a45c-11c5-42ef-8ee6-064169f51e5e'}]
+  'dec': 35.039381,
+  'id': '000547a1-8536-4b47-937b-2f595710fe09',
+  'ra': 248.1914}]
 
-find_2 = 4   # DEV
+find_2 = 640  # DEV
 #find_2 = 926622 # PAT
 
 find_3 = [{'_dr': 'SDSS-DR16',
-           'dec': 27.081405,
-           'ra': 240.42064,
-           'uuid': '1642a45c-11c5-42ef-8ee6-064169f51e5e'},
-          {'_dr': 'BOSS-DR16',
-           'dec': 28.751204,
-           'ra': 133.46096,
-           'uuid': '4ef1d16b-3a16-4cf2-b533-a91b2795cc79'},
-          {'_dr': 'BOSS-DR16',
-           'dec': -0.37900273,
-           'ra': 208.02613,
-           'uuid': 'cc49c317-d8c4-4324-9b1d-c3b590e7f8d7'}]
+  'dec': 35.039381,
+  'id': '000547a1-8536-4b47-937b-2f595710fe09',
+  'ra': 248.1914},
+ {'_dr': 'SDSS-DR16',
+  'dec': 36.323288,
+  'id': '01af637c-2d98-4902-b2d3-076a06a01dbd',
+  'ra': 247.89899},
+ {'_dr': 'SDSS-DR16',
+  'dec': 35.816782,
+  'id': '01ba6c0d-2588-4f4e-830e-e68f9f718cf7',
+  'ra': 247.39428}]
 
 find_3_pat = [{'_dr': 'DESI-edr',
            'dec': 54.0581773035796,
            'ra': 174.578243924582,
-           'uuid': '000005ad-e1b0-4132-b25f-d3aa6acb08de'},
+           idfld: '000005ad-e1b0-4132-b25f-d3aa6acb08de'},
           {'_dr': 'SDSS-DR16',
            'dec': 43.635286,
            'ra': 145.1597,
-           'uuid': '000008b3-e3ad-4e40-9fc1-feb18a42227c'},
+           idfld: '000008b3-e3ad-4e40-9fc1-feb18a42227c'},
           {'_dr': 'BOSS-DR16',
            'dec': 0.46353569,
            'ra': 322.51088,
-           'uuid': '00002089-eaf2-44fc-948e-d90210bca3da'}]
+           idfld: '00002089-eaf2-44fc-948e-d90210bca3da'}]
 
-find_4 = ['1642a45c-11c5-42ef-8ee6-064169f51e5e',
-          '4ef1d16b-3a16-4cf2-b533-a91b2795cc79',
-          'cc49c317-d8c4-4324-9b1d-c3b590e7f8d7']
+find_4 = ['000547a1-8536-4b47-937b-2f595710fe09',
+          '01af637c-2d98-4902-b2d3-076a06a01dbd',
+          '01ba6c0d-2588-4f4e-830e-e68f9f718cf7']
