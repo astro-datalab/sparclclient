@@ -1,6 +1,9 @@
 # Unit tests for the NOIRLab SPARCL API Client
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
+#  Run against DEV server.
+#   serverurl=http://localhost:8050 python -m unittest tests.tests_api
+
 #   python -m unittest  -v tests.tests_api    # VERBOSE
 #   python -m unittest tests.tests_api.SparclClientTest
 #   python -m unittest tests.tests_api.SparclClientTest.test_find_3
@@ -28,8 +31,9 @@ DEFAULT = 'DEFAULT'
 ALL = 'ALL'
 drs = ['BOSS-DR16']
 
-serverurl = 'http://localhost:8050/'  # @@@
-#serverurl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
+DEV1 = 'http://localhost:8050'
+PAT1 = 'https://sparc1.datalab.noirlab.edu'
+serverurl = os.environ.get('serverurl', PAT1)
 
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
@@ -51,6 +55,9 @@ class SparclClientTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
+        print(f'Running Client tests against Server: '
+              f'{urlparse(serverurl).netloc}')
+
         #! cls.clienti # Internal field names
         #! cls.client2 # Renamed, Science field names
         cls.client = sparcl.client.SparclClient(url=serverurl)
@@ -60,9 +67,6 @@ class SparclClientTest(unittest.TestCase):
         cls.specids = [1506512395860731904, 3383388400617889792]
         found = cls.client.find([idfld, 'data_release'], limit=None)
         cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
-
-        print(f'Running Client tests against Server: '
-              f'{urlparse(serverurl).netloc}')
 
     @classmethod
     def tearDownClass(cls):
@@ -351,147 +355,7 @@ class SparclClientTest(unittest.TestCase):
             print(f'retrieve_5: actual={pf(actual)}')
         self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')
 
-    #############################
-    # ## BOSS type conversions
-    @skip('Type conversions removed until redesign')
-    def test_retrieve_boss_json(self):
-        """(non)Convert to JSON."""
-        flds = ['dec',
-                'ra',
-                'redshift',
-                'specid',
-                'flux',
-                'ivar']
-        recs = self.client.sample_records(1,
-                                          random=False,
-                                          include=flds,
-                                          dataset_list=drs)
-        actual = sorted(recs[0].keys())
-        if showact:
-            print(f'boss_json: actual={pf(actual)}')
-        self.assertEqual(actual, exp.boss_json, msg='Actual to Expected')
-
-    @skip('Type conversions removed until redesign')
-    def test_retrieve_boss_numpy(self):
-        """Convert to Numpy."""
-        arflds = [
-            'mask',
-            'flux',
-            'ivar',
-            'LOGLAM',
-            'MODEL',
-            'OR_MASK',
-            'SKY',
-            'WDISP',
-        ]
-        #!print(f'clienti={self.client}')
-        recs = self.client.sample_records(1,
-                                          dataset_list=drs, rtype='numpy',
-                                          include=arflds, random=False)
-        actual = sorted(recs[0].keys())
-        if showact:
-            print(f'boss_numpy: actual={pf(actual)}')
-        self.assertEqual(actual, exp.boss_numpy, msg='Actual to Expected')
-
-    @skip('Type conversions removed until redesign')
-    def test_retrieve_boss_pandas(self):
-        """Convert to Pandas."""
-        arflds = [
-            'spectra.coadd.AND_MASK',
-            'spectra.coadd.FLUX',
-            'spectra.coadd.IVAR',
-            'spectra.coadd.LOGLAM',
-            'spectra.coadd.MODEL',
-            'spectra.coadd.OR_MASK',
-            'spectra.coadd.SKY',
-            'spectra.coadd.WDISP',
-        ]
-        recs = self.client.sample_records(1,
-                                          dataset_list=drs,
-                                          rtype='pandas',
-                                          include=arflds,
-                                          random=False)
-        actual = sorted(recs[0].keys())
-        if showact:
-            print(f'boss_pandas: actual={pf(actual)}')
-        self.assertEqual(actual, exp.boss_pandas, msg='Actual to Expected')
-
-    @skip('Type conversions removed until redesign')
-    def test_retrieve_boss_spectrum1d(self):
-        """Convert to Spectrum1D."""
-        arflds = [
-            'spectra.coadd.FLUX',
-            'spectra.coadd.IVAR',
-            'spectra.coadd.LOGLAM',
-            'spectra.coadd.AND_MASK',
-            'redshift'
-        ]
-        recs = self.client.sample_records(1, dataset_list=drs,
-                                          rtype='spectrum1d',
-                                          include=arflds, random=False)
-        actual = sorted(recs[0].keys())
-        if showact:
-            print(f'boss_spectrum1d: actual={pf(actual)}')
-        self.assertEqual(actual, exp.boss_spectrum1d, msg='Actual to Expected')
-
-    #############################
-    # ## EVEREST type conversions
-    @skip('OBSOLETE dataset. Replace with DES-edr')
-    def test_retrieve_everest_numpy(self):
-        """Convert to Numpy."""
-        arflds = [
-            'specid', 'ra', 'dec',
-            'spectra.b_flux',
-            'spectra.b_ivar',
-            'spectra.b_mask',
-            'spectra.b_wavelength',
-            'spectra.r_flux',
-            'spectra.r_ivar',
-            'spectra.r_mask',
-            'spectra.r_wavelength',
-            'spectra.z_flux',
-            'spectra.z_ivar',
-            'spectra.z_mask',
-            'spectra.z_wavelength',
-        ]
-        recs = self.client.sample_records(1,
-                                          dataset_list='DESI-everest',
-                                          rtype='numpy',
-                                          include=arflds,
-                                          random=False)
-        actual = sorted(recs[0].keys())
-        if showact:
-            print(f'everest_numpy: actual={pf(actual)}')
-        self.assertEqual(actual, exp.everest_numpy, msg='Actual to Expected')
-
-    @skip('OBSOLETE dataset. Replace with DES-edr')
-    def test_retrieve_everest_pandas(self):
-        """Convert to Pandas."""
-        arflds = [
-            'spectra.b_flux',
-            'spectra.b_ivar',
-            'spectra.b_mask',
-            'spectra.b_wavelength',
-            'spectra.r_flux',
-            'spectra.r_ivar',
-            'spectra.r_mask',
-            'spectra.r_wavelength',
-            'spectra.z_flux',
-            'spectra.z_ivar',
-            'spectra.z_mask',
-            'spectra.z_wavelength',
-        ]
-        recs = self.client.sample_records(1,
-                                          dataset_list='DESI-everest',
-                                          rtype='pandas',
-                                          include=arflds,
-                                          random=False)
-        actual = sorted(recs[0].keys())
-        if showact:
-            print(f'everest_pandas: actual={pf(actual)}')
-        self.assertEqual(actual, exp.everest_pandas, msg='Actual to Expected')
-
-    @skip('OBSOLETE dataset. Replace with DES-edr')
+    @skip('OBSOLETE dataset. Replace with DESI-edr')
     def test_retrieve_everest_spectrum1d(self):
         """Convert to Spectrum1D."""
         arflds = [

@@ -529,7 +529,6 @@ class SparclClient():  # was SparclApi()
         else:
             results = res.json()
 
-        print(f'len(client.results)={len(results)}')
         meta = results[0]
         if verbose:
             count = len(results) - 1
