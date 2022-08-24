@@ -81,25 +81,25 @@ RESERVED = set([DEFAULT, ALL])
 #!    """Return intersection of all LISTS."""
 #!    return set(lists[0]).intersection(*lists[1:])
 
-def records_field_list(records):
-    """Get list of fields used in records. One list per Data Set.
-    Args:
-        records (list): List of records (each is a dictionary).
-    Returns:
-        dict: dict[Data_Set] = [field_name1, ...]
-    :param records: List of records (each is a dictionary)
-    :returns: dict[Data_Set] = [field_name1, ...]
-    Example:
-      >>> from api.client import fields_available
-      >>> recs = client.sample_records(3)
-      >>> flds = fields_available(recs)
-    Example:
-        >>> from sparcl.client import fields_available
-        >>> recs = client.sample_records(3)
-        >>> flds = fields_available(recs)
-    """
-    fields = {r._dr: sorted(r.keys()) for r in records}
-    return fields
+#! def records_field_list(records):
+#!    """Get list of fields used in records. One list per Data Set.
+#!   Args:
+#!      records (list): List of records (each is a dictionary).
+#!    Returns:
+#!        dict: dict[Data_Set] = [field_name1, ...]
+#!    :param records: List of records (each is a dictionary)
+#!    :returns: dict[Data_Set] = [field_name1, ...]
+#!    Example:
+#!      >>> from api.client import fields_available
+#!      >>> recs = client.sample_records(3)
+#!      >>> flds = fields_available(recs)
+#!    Example:
+#!        >>> from sparcl.client import fields_available
+#!        >>> recs = client.sample_records(3)
+#!        >>> flds = fields_available(recs)
+#!    """
+#!    fields = {r._dr: sorted(r.keys()) for r in records}
+#!    return fields
 
 
 ###########################
