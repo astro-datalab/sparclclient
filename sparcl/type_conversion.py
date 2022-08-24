@@ -52,7 +52,8 @@ class Rtype(Enum):
 
 
 class Convert(ABC):
-    """Convert JSON record to mix of plain python and selected data record type.
+    """Convert JSON record to mix of plain python
+       and selected data record type.
     """
 
     @abstractmethod
