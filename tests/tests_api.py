@@ -28,8 +28,8 @@ DEFAULT = 'DEFAULT'
 ALL = 'ALL'
 drs = ['BOSS-DR16']
 
-serverurl = 'http://localhost:8050/'  # @@@
-#serverurl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
+#serverurl = 'http://localhost:8050/'  # @@@
+serverurl = 'http://sparc1.datalab.noirlab.edu:8000/'  # @@@
 
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
@@ -95,112 +95,27 @@ class SparclClientTest(unittest.TestCase):
     #!        f'< (1 + expected)'
     #!        )
 
-    @skip('Not required.  EXPERIMENTAL')
-    def test_df_lut(self):
-        """Make sure the Data Field LookUp Table is as we expected.
-        Many tests depend on this.  If the underlying DataField SPARC table
-        was changed accidentally, reset it. Otherwise, change tests to
-        accomodate the new DataFields.
-        """
-        actual = self.client.dfLUT
-        if showact:
-            print(f"df_lut actual={pf(actual['BOSS-DR16'])}")
-        self.assertDictEqual(actual['BOSS-DR16'],
-                             exp.df_lut,
-                             msg='Actual to Expected')
-
     #################################
     # ## Convenience Functions
     # ##
 
-    @skip('Not required.  EXPERIMENTAL')
-    def test_fields_available(self):
-        """Fields available in a specific record set."""
-        records = self.client.sample_records(1,
-                                             dataset_list=drs,
-                                             random=False)
-        actual = sparcl.client.fields_available(records)
+    def test_get_all_fields(self):
+        """Get the intersection of all fields that are tagged as 'all'."""
+        actual = self.client.get_all_fields()
         if showact:
-            print(f'fields_available: actual={pf(actual)}')
+            print(f'get_all_fields: actual={pf(actual)}')
         self.assertEqual(actual,
-                         exp.fields_available,
+                         exp.all_fields,
                          msg='Actual to Expected')
 
-    @skip('Not required.  EXPERIMENTAL')
-    def test_record_examples(self):
-        """Get one record for each Structure type. DEFAULT set."""
-        records = self.client.sample_records(1,
-                                             dataset_list=drs,
-                                             random=False)
-        examples = sparcl.client.record_examples(records)
-        # Just the gist of the records (key names)
-        actual = {k: sorted(v.keys()) for k, v in examples.items()}
+    def test_get_default_fields(self):
+        """Get the intersection of all fields that are tagged as 'default'."""
+        actual = self.client.get_default_fields()
         if showact:
-            print(f'record_examples: actual={pf(actual)}')
-        self.assertEqual(actual, exp.record_examples, msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_get_metadata(self):
-        variant_fields = ['dateobs_center', idfld]
-        sids = [1429933274376612]
-        records = self.client.retrieve_by_specid(sids, include=ALL,
-                                                 dataset_list=drs)
-        [r.pop('dirpath', None) for r in records]
-        actual = sparcl.client.get_metadata(records)
-        expected = exp.get_metadata
-        for k in variant_fields:
-            actual[0].pop(k, None)
-            expected[0].pop(k, None)
-
-        if showact:
-            print(f'get_metadata: actual={pf(actual)}')
-        self.assertEqual(actual, expected, msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_get_vectordata(self):
-        sids = [1429933274376612]
-        ink = ['loglam', 'flux', 'and_mask', 'ivar', 'ra', 'dec', 'specid']
-        records = self.client.retrieve_by_specid(sids, include=ink,
-                                                 dataset_list=drs)
-        actual = list(sparcl.client.get_vectordata(records)[0].keys())
-        if showact:
-            print(f'get_vectordata: actual={pf(actual)}')
-        self.assertListEqual(actual,
-                             exp.get_vectordata,
-                             msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_rename_fields(self):
-        """Local rename fields in records (referenced by new names)"""
-        flds = ['data_set', 'specid', 'dec', 'ra', 'redshift',
-                'flux', 'ivar', 'loglam']
-
-        records = self.client.sample_records(1,
-                                             include=flds,
-                                             dataset_list=drs,
-                                             random=False)
-        rdict = dict(dec='y', ra='x', redshift='z', flux='f')
-        actual = sparcl.client.rename_fields(rdict, records)
-        self.records_expected(actual, "exp.rename_fields", show=showact)
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_rename_fields_internal(self):
-        """Local rename fields in records (referenced by stored names)"""
-        flds = ['data_release', 'specid',
-                'decr', 'rar', 'redshift',
-                'flux', 'ivar', 'loglam']
-        records = self.client.sample_records(1,
-                                             include=flds,
-                                             dataset_list=drs,
-                                             random=False)
-        rdict = {'dec': 'y',
-                 'ra': 'x',
-                 'redshift': 'z',
-                 'flux': 'f2'}
-        actual = sparcl.client.rename_fields(rdict, records)
-        self.records_expected(actual,
-                              "exp.rename_fields_internal",
-                              show=showact)
+            print(f'get_default_fields: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.default_fields,
+                         msg='Actual to Expected')
 
     ###
     #################################
@@ -208,59 +123,8 @@ class SparclClientTest(unittest.TestCase):
     #################################
     # ## Convenience client Methods
     # ##
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_get_field_names(self):
-        actual = self.client.get_field_names('BOSS-DR16')
-        if showact:
-            print(f'get_field_names: actual={pf(actual)}')
-        self.assertEqual(actual, exp.get_field_names, msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_get_field_names_internal(self):
-        actual = self.client.get_field_names('BOSS-DR16')
-        if showact:
-            print(f'get_field_names_internal: actual={pf(actual)}')
-        self.assertEqual(actual,
-                         exp.get_field_names_internal,
-                         msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_orig_field(self):
-        actual = self.client.orig_field('BOSS-DR16', 'flux')
-        if showact:
-            print(f'orig_field: actual={pf(actual)}')
-        self.assertEqual(actual, exp.orig_field, msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_client_field(self):
-        actual = self.client.client_field('BOSS-DR16', 'flux')
-        if showact:
-            print(f'client_field: actual={pf(actual)}')
-        self.assertEqual(actual, exp.client_field, msg='Actual to Expected')
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_normalize_field_names(self):
-        """Convert all included  field names to internal names"""
-        sids = self.client.sample_specids(1, dataset_list=drs, random=False)
-        recs = self.client.retrieve_by_specid(sids,
-                                              dataset_list=drs,
-                                              include=['flux', 'ivar'])
-        recs_b = self.client.normalize_field_names(recs)
-        actual = [sorted(r.keys()) for r in recs_b]
-        if showact:
-            print(f'normalize_field_names: actual={pf(actual)}')
-        self.assertEqual(actual, exp.normalize_field_names,
-                         msg='Actual to Expected')
-
     # ##
     # ################################
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_sample(self):
-        specids = self.client.sample_specids()
-        #print(f'DBG: specids={specids}')
-        assert len(specids) == 5
 
     def test_missing_0(self):
         """Known missing"""
@@ -337,19 +201,6 @@ class SparclClientTest(unittest.TestCase):
         uuids = self.uuids
         with self.assertWarns(Warning):
             self.client.retrieve(uuids + [999])
-
-    @skip('Not required.  EXPERIMENTAL')
-    def test_retrieve_5(self):
-        """Get record samples with their internal (original) field names."""
-        records = self.client.sample_records(1,
-                                             include=ALL,
-                                             dataset_list=drs,
-                                             random=False)
-        actual = sorted(records[0].keys())
-        actual.remove('_dr')
-        if showact:
-            print(f'retrieve_5: actual={pf(actual)}')
-        self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')
 
     #############################
     # ## BOSS type conversions
@@ -527,7 +378,7 @@ class SparclClientTest(unittest.TestCase):
 
         outfields = [idfld, 'ra', 'dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
-        constraints = {'ra': [246.0, 247.0], 'dec': [+34.7, +34.8]}
+        constraints = {'ra': [137.0, 138.0], 'dec': [+63.0, +64.0]}
         found = self.client.find(outfields, constraints=constraints)
         actual = found.records[:2]
         if showact:
