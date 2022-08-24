@@ -99,19 +99,23 @@ class SparclClientTest(unittest.TestCase):
     # ## Convenience Functions
     # ##
 
-    @skip('Not required.  EXPERIMENTAL')
-    def test_fields_available(self):
-        """Fields available in a specific record set."""
-        records = self.client.sample_records(1,
-                                             dataset_list=drs,
-                                             random=False)
-        actual = sparcl.client.fields_available(records)
+    def test_get_all_fields(self):
+        """Get the intersection of all fields that are tagged as 'all'."""
+        actual = self.client.get_all_fields()
         if showact:
-            print(f'fields_available: actual={pf(actual)}')
+            print(f'get_all_fields: actual={pf(actual)}')
         self.assertEqual(actual,
-                         exp.fields_available,
+                         exp.all_fields,
                          msg='Actual to Expected')
 
+    def test_get_default_fields(self):
+        """Get the intersection of all fields that are tagged as 'default'."""
+        actual = self.client.get_default_fields()
+        if showact:
+            print(f'get_default_fields: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.default_fields,
+                         msg='Actual to Expected')
 
     ###
     #################################

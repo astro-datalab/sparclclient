@@ -1,8 +1,42 @@
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
 
+all_fields = ['MJD',
+ 'RUN2D',
+ 'data_release',
+ 'datasetgroup',
+ 'dateobs',
+ 'dateobs_center',
+ 'dec',
+ 'dirpath',
+ 'exptime',
+ 'extra_files',
+ 'filename',
+ 'filesize',
+ 'flux',
+ 'id',
+ 'instrument',
+ 'ivar',
+ 'mask',
+ 'model',
+ 'ra',
+ 'redshift',
+ 'redshift_err',
+ 'redshift_warning',
+ 'site',
+ 'sky',
+ 'specid',
+ 'specprimary',
+ 'spectype',
+ 'targetid',
+ 'telescope',
+ 'updated',
+ 'wave_sigma',
+ 'wavelength',
+ 'wavemax',
+ 'wavemin']
 
-fields_available = {'BOSS-DR16': ['_dr', 'flux', idfld, 'wavelength']}
+default_fields = ['flux', 'id', 'wavelength']
 
 #retrieve_0 = [1506512395860731904]
 retrieve_0 = [3383388400617889792]  # PAT
