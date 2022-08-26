@@ -10,7 +10,7 @@
 
 # Python library
 import unittest
-#!from unittest import skip
+from unittest import skip
 #! from unittest mock, skipIf, skipUnless
 #!import warnings
 from pprint import pformat as pf
@@ -32,9 +32,12 @@ DEFAULT = 'DEFAULT'
 ALL = 'ALL'
 drs = ['BOSS-DR16']
 
-DEV1 = 'http://localhost:8050'
-PAT1 = 'https://sparc1.datalab.noirlab.edu'
-serverurl = os.environ.get('serverurl', PAT1)
+_DEV1  = 'http://localhost:8050'                    # noqa: E221
+_PAT1  = 'https://sparc1.datalab.noirlab.edu'       # noqa: E221
+_STAGE = 'https://sparclstage.datalab.noirlab.edu'  # noqa: E221
+_PROD  = 'https://astrosparcl.datalab.noirlab.edu'  # noqa: E221
+
+serverurl = os.environ.get('serverurl', _PAT1)
 DEV_SERVERS = ['http://localhost:8050', ]
 if serverurl in DEV_SERVERS:
     exp = exp_dev
@@ -62,8 +65,8 @@ class SparclClientTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
-        print(f'Running Client tests against Server: '
-              f'"{urlparse(serverurl).netloc}" comparing to {exp}\n'
+        print(f'Running Client tests\n\t against Server: '
+              f'"{urlparse(serverurl).netloc}"\n\t comparing to {exp}\n'
               )
 
         #! cls.clienti # Internal field names
@@ -73,8 +76,10 @@ class SparclClientTest(unittest.TestCase):
         cls.doc = dict()
         cls.count = dict()
         cls.specids = [1506512395860731904, 3383388400617889792]
-        found = cls.client.find([idfld, 'data_release'], limit=None)
-        cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
+        #!found = cls.client.find([idfld, 'data_release'], limit=None)
+        #!cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
+        cls.uuids = cls.client.find([idfld, 'data_release'],
+                                    sort='id', limit=3).ids
 
     @classmethod
     def tearDownClass(cls):
@@ -246,6 +251,7 @@ class SparclClientTest(unittest.TestCase):
                          sorted(exp.find_1, key=lambda rec: rec[idfld]),
                          msg='Actual to Expected')
 
+    @skip('Takes too long for regression tests when used on big database.')
     def test_find_2(self):
         """Limit=None. """
         outfields = [idfld, 'ra', 'dec']
