@@ -335,13 +335,10 @@ class SparclClient():  # was SparclApi()
         outfields = [self.fields._internal_name(s, dr) for s in outfields]
         search = [[k] + v for k, v in constraints.items()]
         sspec = dict(outfields=outfields, search=search)
-        #!print(f'DBG find: outfields={outfields} search={search}')
         res = requests.post(url, json=sspec, timeout=self.timeout)
 
         if res.status_code != 200:
-            #!print(f'DBG: res.content={res.content}') #@@@
             if self.verbose and ('traceback' in res.json()):
-                #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(res, verbose=self.verbose)
 
@@ -385,7 +382,7 @@ class SparclClient():  # was SparclApi()
             raise Exception(res)
         ret = res.json()
         return ret
-        # END missing_uuids()
+        # END missing()
 
     # Include fields are Science (not internal) names. But the mapping
     # of Internal to Science name depends on DataSet.  Its possible
@@ -455,8 +452,6 @@ class SparclClient():  # was SparclApi()
             include_list = self.get_all_fields(dataset_list=dataset_list)
         else:
             include_list = include
-        #! print(f'dbg0: include={include} include_list={include_list} '
-        #!       f'dataset_list={dataset_list}')
 
         self._validate_include(include_list, dataset_list)
 
@@ -500,19 +495,14 @@ class SparclClient():  # was SparclApi()
         except Exception as err:  # fall through
             raise ex.UnknownSparcl(err)
 
-        #!print(f'DBG: retrieve-3 res={res} len(content)={len(res.content)}')
         if verbose:
             elapsed = ut.toc()
             print(f'Got response to post in {elapsed} seconds')
         if res.status_code != 200:
-            #!print(f'DBG: res.content={res.content}') #@@@
             if verbose and ('traceback' in res.json()):
-                #!print(f'DBG: res.json={res.json()}')
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
-            #!raise ex.genSparclException(**res.json())
             raise ex.genSparclException(res, verbose=verbose)
 
-        #!meta,*records = res.json()
         if format == 'json':
             results = res.json()
         elif format == 'pkl':
@@ -541,12 +531,6 @@ class SparclClient():  # was SparclApi()
             warn(f"{'; '.join(meta['status'].get('warnings'))}",
                  stacklevel=2)
 
-        #! return Results( # @@@ Removed type conversion!!!
-        #!     [ut._AttrDict(tc.convert(r, rtype, self, include))
-        #!      for r in records],
-        #!     client=self)
-        #!return Retrieved([ut._AttrDict(r) for r in records],  client=self)
-        #!print(f'dbg9: len(results)={len(results)}')
         return Retrieved(results, client=self)
 
     def retrieve_by_specid(self,

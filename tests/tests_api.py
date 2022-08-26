@@ -22,7 +22,8 @@ import os
 import sparcl.client
 #from sparcl.client import DEFAULT, ALL
 from tests.utils import tic, toc
-import tests.expected as exp
+import tests.expected as exp_pat
+import tests.expected_dev1 as exp_dev
 import sparcl.exceptions as ex
 # External Packages
 # <none>
@@ -34,6 +35,12 @@ drs = ['BOSS-DR16']
 DEV1 = 'http://localhost:8050'
 PAT1 = 'https://sparc1.datalab.noirlab.edu'
 serverurl = os.environ.get('serverurl', PAT1)
+DEV_SERVERS = ['http://localhost:8050', ]
+if serverurl in DEV_SERVERS:
+    exp = exp_dev
+else:
+    exp = exp_pat
+
 
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
@@ -56,7 +63,8 @@ class SparclClientTest(unittest.TestCase):
         # the Client is at least one major version behind.
 
         print(f'Running Client tests against Server: '
-              f'{urlparse(serverurl).netloc}')
+              f'"{urlparse(serverurl).netloc}" comparing to {exp}\n'
+              )
 
         #! cls.clienti # Internal field names
         #! cls.client2 # Renamed, Science field names
@@ -107,7 +115,7 @@ class SparclClientTest(unittest.TestCase):
         """Get the intersection of all fields that are tagged as 'all'."""
         actual = self.client.get_all_fields()
         if showact:
-            print(f'get_all_fields: actual={pf(actual)}')
+            print(f'all_fields: actual={pf(actual)}')
         self.assertEqual(actual,
                          exp.all_fields,
                          msg='Actual to Expected')
@@ -206,9 +214,6 @@ class SparclClientTest(unittest.TestCase):
         with self.assertWarns(Warning):
             self.client.retrieve(uuids + [999])
 
-    # To get suitable constraints (Pothier, DEV, in sparc-shell):
-    #   sorted(FitsFile.objects.all().values('ra','dec'),
-    #          key=lambda r: r['dec'])
     def test_find_0(self):
         """Get metadata using search spec."""
         #! name = 'find_0'
@@ -216,7 +221,14 @@ class SparclClientTest(unittest.TestCase):
 
         outfields = [idfld, 'ra', 'dec']
         # from list(FitsFile.objects.all().values('ra','dec'))
-        constraints = {'ra': [137.0, 138.0], 'dec': [+63.0, +64.0]}
+
+        # To get suitable constraints (in sparc-shell on Server):
+        #   sorted(FitsFile.objects.all().values('ra','dec'),
+        #          key=lambda r: r['dec'])
+        if serverurl in DEV_SERVERS:
+            constraints = {'ra': [246.0, 247.0], 'dec': [+34.7, +34.8]}
+        else:
+            constraints = {'ra': [137.0, 138.0], 'dec': [+63.0, +64.0]}
         found = self.client.find(outfields, constraints=constraints)
         actual = found.records[:2]
         if showact:

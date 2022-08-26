@@ -83,7 +83,6 @@ class Fields():  # Derived from a single query
         return self.all_drs
 
     def _science_name(self, internal_name, dataset):
-        #!print(f'DBG _science_name: dr={dataset} name={internal_name}')
         return self.o2n[dataset].get(internal_name)
 
     def _internal_name(self, science_name, dataset):

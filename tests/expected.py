@@ -1,3 +1,5 @@
+# For PAT hosts
+
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
 
