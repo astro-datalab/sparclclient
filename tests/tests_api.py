@@ -1,12 +1,14 @@
 # Unit tests for the NOIRLab SPARCL API Client
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
-#  Run against DEV server.
-#   serverurl=http://localhost:8050 python -m unittest tests.tests_api
-
-#   python -m unittest  -v tests.tests_api    # VERBOSE
-#   python -m unittest tests.tests_api.SparclClientTest
-#   python -m unittest tests.tests_api.SparclClientTest.test_find_3
+#
+#  ### Run against DEV server.
+#  serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  showres=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#
+# python -m unittest  -v tests.tests_api    # VERBOSE
+# python -m unittest tests.tests_api.SparclClientTest
+# python -m unittest tests.tests_api.SparclClientTest.test_find_3
 
 # Python library
 import unittest
