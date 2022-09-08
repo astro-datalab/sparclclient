@@ -110,30 +110,24 @@ class SparclClient():  # was SparclApi()
     When using this to report a bug, set verbose to True. Also print
     your instance of this.  The results will include important info
     about the Client and Server that is usefule to Developers.
-    :param url: Base URL of SPARC Server
-    :param verbose: (True,[False]) Default verbosity for all client methods.
-    :param verbose: (True,[False]) True:: override field renaming
-    :param connect_timeout [1.1]: Number of seconds to wait to establish
-               connection with server.
-    :param read_timeout [5400]: Number of seconds to wait for server to send
-               a response. (generally time to wait for first byte)
+
     Args:
-        url (str): Base URL of SPARC Server.
+        url (:obj:`str`, optional): Base URL of SPARC Server. Defaults
+            to 'https://astrosparcl.datalab.noirlab.edu'.
 
         verbose (:obj:`bool`, optional): Default verbosity is set to
-        False for all client methods.
+            False for all client methods.
 
         connect_timeout (:obj:`float`, optional): Number of seconds to
-            wait to establish connection with server.  Defaults to
+            wait to establish connection with server. Defaults to
             1.1.
 
         read_timeout (:obj:`float`, optional): Number of seconds to
-            wait for server to send a response.  Generally time to
+            wait for server to send a response. Generally time to
             wait for first byte. Defaults to 5400.
 
     Example:
-        >>> client = SparclClient(verbose=True)
-        >>> print(client)
+        >>> client = sparcl.client.SparclClient()
 
     Raises:
         Exception: Object creation compares the version from the
@@ -214,11 +208,23 @@ class SparclClient():  # was SparclApi()
 
     def get_default_fields(self, *, dataset_list=None):
         """Get fields tagged as 'default' that are in DATASET_LIST.
-        This is the fields used for the DEFAULT value of the include parameter
-        of client.retrieve().
+        These are the fields used for the DEFAULT value of the include
+        parameter of client.retrieve().
 
-        If DATASET_LIST is None (the default),
-        get the /intersection/ of 'default' fields across all DATASET_LIST."""
+        Args:
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to get the default fields. Defaults to None, which
+                will return the intersection of default fields in all
+                data sets hosted on the SPARC database.
+
+        Returns:
+            List of fields tagged as 'default' from DATASET_LIST.
+
+        Example:
+            >>> client = sparcl.client.SparclClient()
+            >>> client.get_default_fields()
+
+        """
 
         if dataset_list is None:
             dataset_list = self.fields.all_drs
@@ -231,12 +237,25 @@ class SparclClient():  # was SparclApi()
         return sorted(common.intersection(union))
 
     def get_all_fields(self, *, dataset_list=None):
-        """Get fields tagged as 'all' that are in DATA_SET.
-        This is the fields used for the ALL value of the include parameter
+        """Get fields tagged as 'all' that are in DATASET_LIST.
+        These are the fields used for the ALL value of the include parameter
         of client.retrieve().
 
-        If DATA_SET is None (the default),
-        get the /intersection/ of 'all' fields across all DATASET_LIST."""
+        Args:
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to get all fields. Defaults to None, which
+                will return the intersection of all fields in all
+                data sets hosted on the SPARC database.
+
+        Returns:
+            List of fields tagged as 'all' from DATASET_LIST.
+
+        Example:
+            >>> client = sparcl.client.SparclClient()
+            >>> client.get_all_fields()
+
+        """
+
         common = set(self.fields.common(dataset_list))
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
         return sorted(common.intersection(union))
@@ -275,10 +294,23 @@ class SparclClient():  # was SparclApi()
     def get_available_fields(self, *, dataset_list=None):
         """Get subset of fields that are in all (or selected) DATASET_LIST.
         This may be a bigger list than will be used with the ALL keyword to
-        client.retreive()
+        client.retreive().
 
-        dataset_list :: list, None=All_Available
+        Args:
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to get available fields. Defaults to None, which
+                will return the intersection of all available fields in
+                all data sets hosted on the SPARC database.
+
+        Returns:
+            Set of fields available from data sets in DATASET_LIST.
+
+        Example:
+            >>> client = sparcl.client.SparclClient()
+            >>> client.get_available_fields()
+
         """
+
         drs = self.fields.all_drs if dataset_list is None else dataset_list
         every = [set(self.fields.n2o[dr]) for dr in drs]
         return set.intersection(*every)
@@ -288,12 +320,16 @@ class SparclClient():  # was SparclApi()
         """Return version of Server Rest API used by this client.
         If the Rest API changes such that the Major version increases,
         a new version of this module will likely need to be used.
+
         Returns:
-            float: API version.
+            API version (:obj:`float`).
+
         Example:
-            >>> SparclClient('http://localhost:8030').version
-            1.0
+            >>> client = sparcl.client.SparclClient()
+            >>> client.version()
+
         """
+
         if self.apiversion is None:
             response = requests.get(f'{self.apiurl}/version',
                                     timeout=self.timeout,
@@ -306,7 +342,40 @@ class SparclClient():  # was SparclApi()
              dataset_list=None,
              limit=500,
              sort=None):
-        """sort :: comma seperated list of fields to sort by"""
+        """Find records in the SPARC database.
+
+        Args:
+            outfields (:obj:`list`, optional): List of fields to return.
+                Only CORE fields may be passed to this parameter.
+                Defaults to None, which will return only the id and _dr
+                fields.
+            constraints (:obj:`dict`, optional): Key-Value pairs of
+                constraints to place on the record selection. The Key
+                part of the Key-Value pair is the field name and the
+                Value part of the Key-Value pair is a list of values.
+                Defaults to None.
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to find records. Defaults to None, which
+                will find records in all data sets hosted on the SPARC
+                database.
+            limit (:obj:`int`, optional): Maximum number of records to
+                return. Defaults to 500.
+            sort (:obj:`list`, optional): Comma separated list of fields
+                to sort by. Defaults to None.
+
+        Returns:
+            A sparcl.Results.Found object, which is a list of dictionaries
+            where each dictionary is a record.
+
+        Example:
+            >>> client = sparcl.client.SparclClient()
+            >>> outs = ['id', 'ra', 'dec']
+            >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
+            >>> found = client.find(outfields=outs, constraints=cons)
+            >>> found.records
+
+        """
+
         # Let "outfields" default to ['id']; but fld may have been renamed
         if outfields is None:
             dslist = list(self.fields.all_datasets)
@@ -346,23 +415,30 @@ class SparclClient():  # was SparclApi()
 
     def missing(self, uuid_list, *, dataset_list=None,
                 countOnly=False, verbose=False):
-        """Return the subset of the given uuid_list that is NOT stored
-        in the database.
+        """Return the subset of ids in the given uuid_list that are NOT stored
+        in the SPARC database.
+
         Args:
-           uuid_list (list): List of uuids.
-           countOnly (:obj:`bool`, optional): Set to True to return only
-               a count of the missing uuids from the list. Defaults to False.
-           verbose (:obj:`bool`, optional): Set to True for in-depth return
-               statement.
-               Defaults to False.
+            uuid_list (:obj:`list`): List of ids.
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to find missing ids. Defaults to None, meaning all
+                data sets hosted on the SPARC database.
+            countOnly (:obj:`bool`, optional): Set to True to return only
+                a count of the missing ids from the uuid_list. Defaults to
+                False.
+            verbose (:obj:`bool`, optional): Set to True for in-depth return
+                statement. Defaults to False.
+
         Returns:
-            list: The subset of the given uuid_list that is NOT stored in the
-                database.
+            A list of the subset of ids in the given uuid_list that are NOT
+            stored in the SPARC database.
+
         Example:
-            >>> si = ['0b1128aa-609e-48f7-ace6-f87a4e2c09ec']
-            >>> client.missing_uuids(si)
-            ['0b1128aa-609e-48f7-ace6-f87a4e2c09ec']
+            >>> client = sparcl.client.SparclClient()
+            >>> ids = ['ddbb57ee-8e90-4a0d-823b-0f5d97028076',]
+            >>> client.missing(ids)
         """
+
         if dataset_list is None:
             dataset_list = self.fields.all_drs
         assert isinstance(dataset_list, (list, set)), (
@@ -420,25 +496,38 @@ class SparclClient():  # was SparclApi()
                  limit=500,
                  chunk=500,
                  verbose=None):
-        """Get spectrum by UUID (universally unique identifier) list.
+        """Retrieve spectra records from the SPARC database by list of ids.
+
         Args:
-           uuid_list (list): List of uuids.
-
-           dataset_list:: list, None  @@@
-
-           include (list, 'DEFAULT', 'ALL'): List of field names to
-              include in each record. (default: 'DEFAULT') verbose
-              (boolean, optional): (default: False)
-              SPECIAL CASES: field not in ALL DS @@@
+            uuid_list (:obj:`list`): List of ids.
+            svc (:obj:`str`, optional): Defaults to 'spectras'.
+            format (:obj:`str`, optional): Defaults to 'pkl'.
+            include (:obj:`list`, optional): List of field names to include
+                in each record. Defaults to 'DEFAULT', which will return
+                the fields tagged as 'default'.
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to retrieve spectra data. Defaults to None, meaning all
+                data sets hosted on the SPARC database.
+            limit (:obj:`int`, optional): Maximum number of records to
+                return. Defaults to 500.
+            chunk (:obj:`int`, optional): Size of chunks to break list into.
+                Defaults to 500.
+            verbose (:obj:`bool`, optional): Set to True for in-depth return
+                statement. Defaults to False.
 
         Returns:
-           List of records. Each record is a dictionary of named fields.
+            A sparcl.Results.Retrieved object, which is a list of dictionaries
+            where each dictionary is a record.
 
         Example:
-           >>> ids = ['c3fd34b2-3d47-4bb5-8cd6-e7d1787b81d3',]
-           >>> res = client.retrieve(ids, include=['flux'])
+            >>> client = sparcl.client.SparclClient()
+            >>> ids = ['000017b6-56a2-4f87-8828-3a3409ba1083',]
+            >>> inc = ['id', 'flux', 'wavelength', 'model']
+            >>> ret = client.retrieve(uuid_list=ids, include=inc)
+            >>> ret.records
 
         """
+
         if dataset_list is None:
             dataset_list = self.fields.all_drs
         assert isinstance(dataset_list, (list, set)), (
@@ -539,6 +628,32 @@ class SparclClient():  # was SparclApi()
                            include='DEFAULT',
                            dataset_list=None,
                            verbose=False):
+        """Retrieve spectra records from the SPARC database by list of specids.
+
+        Args:
+            specid_list (:obj:`list`): List of specids.
+            include (:obj:`list`, optional): List of field names to include
+                in each record. Defaults to 'DEFAULT', which will return
+                the fields tagged as 'default'.
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to retrieve spectra data. Defaults to None, meaning all
+                data sets hosted on the SPARC database.
+            verbose (:obj:`bool`, optional): Set to True for in-depth return
+                statement. Defaults to False.
+
+        Returns:
+            A sparcl.Results.Retrieved object, which is a list of dictionaries
+            where each dictionary is a record.
+
+        Example:
+            >>> client = sparcl.client.SparclClient()
+            >>> sids = [5840097619402313728, -8985592895187431424]
+            >>> inc = ['specid', 'flux', 'wavelength', 'model']
+            >>> ret = client.retrieve_by_specid(specid_list=sids, include=inc)
+            >>> ret.records
+
+        """
+
         if dataset_list is None:
             constraints = {'specid': specid_list}
         else:
