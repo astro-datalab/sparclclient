@@ -349,17 +349,21 @@ class SparclClient():  # was SparclApi()
                 Only CORE fields may be passed to this parameter.
                 Defaults to None, which will return only the id and _dr
                 fields.
+
             constraints (:obj:`dict`, optional): Key-Value pairs of
                 constraints to place on the record selection. The Key
                 part of the Key-Value pair is the field name and the
                 Value part of the Key-Value pair is a list of values.
                 Defaults to None.
+
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to find records. Defaults to None, which
                 will find records in all data sets hosted on the SPARC
                 database.
+
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500.
+
             sort (:obj:`list`, optional): Comma separated list of fields
                 to sort by. Defaults to None.
 
@@ -420,12 +424,15 @@ class SparclClient():  # was SparclApi()
 
         Args:
             uuid_list (:obj:`list`): List of ids.
+
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to find missing ids. Defaults to None, meaning all
                 data sets hosted on the SPARC database.
+
             countOnly (:obj:`bool`, optional): Set to True to return only
                 a count of the missing ids from the uuid_list. Defaults to
                 False.
+
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
 
@@ -437,6 +444,7 @@ class SparclClient():  # was SparclApi()
             >>> client = sparcl.client.SparclClient()
             >>> ids = ['ddbb57ee-8e90-4a0d-823b-0f5d97028076',]
             >>> client.missing(ids)
+
         """
 
         if dataset_list is None:
@@ -500,18 +508,25 @@ class SparclClient():  # was SparclApi()
 
         Args:
             uuid_list (:obj:`list`): List of ids.
+
             svc (:obj:`str`, optional): Defaults to 'spectras'.
+
             format (:obj:`str`, optional): Defaults to 'pkl'.
+
             include (:obj:`list`, optional): List of field names to include
                 in each record. Defaults to 'DEFAULT', which will return
                 the fields tagged as 'default'.
+
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
                 data sets hosted on the SPARC database.
+
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500.
+
             chunk (:obj:`int`, optional): Size of chunks to break list into.
                 Defaults to 500.
+
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
 
@@ -632,12 +647,15 @@ class SparclClient():  # was SparclApi()
 
         Args:
             specid_list (:obj:`list`): List of specids.
+
             include (:obj:`list`, optional): List of field names to include
                 in each record. Defaults to 'DEFAULT', which will return
                 the fields tagged as 'default'.
+
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
                 data sets hosted on the SPARC database.
+
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
 
