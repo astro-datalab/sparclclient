@@ -1,5 +1,5 @@
 sparcl
-===
+======
 
 .. toctree::
    :maxdepth: 4
