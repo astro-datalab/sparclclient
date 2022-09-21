@@ -2,6 +2,17 @@
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
+##### How to test Readthedocs documentation locally?
+## Install Sphinx.
+# : pip install sphinx
+#
+## Build your docs:
+# : sphinx-build -a doc /tmp/mydocs
+#
+## Open the html file in your browser, for example:
+# file:///tmp/jsonrpcserver/index.html
+
+
 # Required
 version: 2
 

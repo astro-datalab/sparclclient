@@ -1,3 +1,7 @@
+# List of packages to import when "from sparcl import *" is used
+__all__ = ["client"]
+
+
 # See semantic versioning
 
 # BUT PyPi requires honoring versions like this:
