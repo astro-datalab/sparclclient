@@ -1,0 +1,17 @@
+#pandas==1.3.3 # ==1.2.3
+psutil==5.8.0  # for benchmarks
+#! speedtest # for benchmarks
+# packaging   # for noaodatalab
+Sphinx==4.1.2
+sphinx-rtd-theme==0.5.2
+#specutils==1.3.1
+# jupyter-lab --ip=0.0.0.0
+# jupyterlab # =3.1.17
+#matplotlib==3.4.3
+#!sparclclient==0.3.9
+pre-commit
+build
+pip
+setuptools
+wheel
+twine
