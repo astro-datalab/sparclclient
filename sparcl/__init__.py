@@ -22,4 +22,4 @@ __all__ = ["client"]
 # must mach: [N!]N(.N)*[{a|b|rc}N][.postN][.devN]
 # Example of a correct version string: '0.4.0a3.dev35'
 #__version__ = '0.4.0a3.dev36'
-__version__ = '0.4.0b1.dev7'
+__version__ = '0.4.0b1.dev8'
