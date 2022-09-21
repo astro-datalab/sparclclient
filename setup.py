@@ -9,7 +9,7 @@ from sparcl import __version__
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("requirements.txt") as f:
+with open("requirements-client.txt") as f:
     install_require = f.read().splitlines()
 
 setuptools.setup(
@@ -17,11 +17,11 @@ setuptools.setup(
     #version="0.3.19",
     version=__version__, # see sparcl/__init__.py
     author="NOIRLab DataLab",
-    author_email="datalab@noirlab.edu",
+    author_email="datalab-spectro@noirlab.edu",
     description="A client for getting spectra data from NOIRLab.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/noaodatalab/sparclclient",
+    url="https://github.com/astro-datalab/sparclclient",
     project_urls={
         "Documentation":"https://sparclclient.readthedocs.io/en/latest/",
         },
