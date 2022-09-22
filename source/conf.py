@@ -47,6 +47,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
+    'sphinx_mdinclude',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -62,8 +63,11 @@ language = 'y'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['../sparcl/benchmarks/']
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+autosummary_generate = True
 
 # -- Options for HTML output -------------------------------------------------
 

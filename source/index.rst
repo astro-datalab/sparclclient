@@ -9,13 +9,20 @@ This documents the Python Client for SPARCL
 | Release: |release|
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
-   modules
+   sparcl
+
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
+* :ref:`search`
+
+License
+=======
+
+.. mdinclude:: ../LICENSE

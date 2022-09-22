@@ -1,7 +1,9 @@
-sparcl
-======
+sparcl2
+=======
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
-   sparcl
+   sparcl.client
+   sparcl.exceptions
+   sparcl.Results

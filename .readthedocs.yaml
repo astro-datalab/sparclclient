@@ -2,15 +2,18 @@
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
-##### How to test Readthedocs documentation locally?
-## Install Sphinx.
-# : pip install sphinx
+####### How to test Readthedocs documentation locally?
+###
+### Install Sphinx.
+# pip install sphinx
 #
-## Build your docs:
-# : sphinx-build -a doc /tmp/mydocs
+### Build your docs:
+#
+# cd ~/sandbox/sparclclient/source
+# sphinx-build -T -E -b html -d ../build/doctrees -D language=en . ../build/html
 #
 ## Open the html file in your browser, for example:
-# file:///tmp/jsonrpcserver/index.html
+# file:///home/myusername/sandbox/sparclclient/build/html/index.html
 
 
 # Required
