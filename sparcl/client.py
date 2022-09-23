@@ -22,9 +22,9 @@ from sparcl import __version__
 from sparcl.Results import Found, Retrieved
 
 
-pat_hosts = ['sparc1.datalab.noirlab.edu',
-             'sparc2.datalab.noirlab.edu',
-             'astrosparcl.datalab.noirlab.edu']
+_pat_hosts = ['sparc1.datalab.noirlab.edu',
+              'sparc2.datalab.noirlab.edu',
+              'astrosparcl.datalab.noirlab.edu']
 
 # Upload to PyPi:
 #   python3 -m build --wheel
@@ -168,7 +168,7 @@ class SparclClient():  # was SparclApi()
             verstr = requests.get(endpoint, timeout=self.timeout).content
         except requests.ConnectionError as err:
             msg = f'Could not connect to {endpoint}. {str(err)}'
-            if urlparse(url).hostname in pat_hosts:
+            if urlparse(url).hostname in _pat_hosts:
                 msg += 'Did you enable VPN?'
             raise ex.ServerConnectionError(msg) from None  # disable chaining
 
@@ -365,7 +365,7 @@ class SparclClient():  # was SparclApi()
                 return. Defaults to 500.
 
             sort (:obj:`list`, optional): Comma separated list of fields
-                to sort by. Defaults to None.
+                to sort by. Defaults to None. (no sorting)
 
         Returns:
             A sparcl.Results.Found object, which is a list of dictionaries
