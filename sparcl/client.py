@@ -48,7 +48,7 @@ _pat_hosts = ['sparc1.datalab.noirlab.edu',
 # specids = [394069118933821440, 1355741587413428224, 1355617892355303424,
 #   1355615143576233984, 1355661872820414464, 1355755331308775424,
 #   1355716848401803264]
-# client = api.api.SparclClient(url='http://localhost:8030/sparc')
+# client = client.SparclClient(url='http://localhost:8030/sparc')
 # client.retrieve(specids)[0].keys() # >> dict_keys(['flux','loglam'])
 #
 # data0 = client.retrieve(specids,columns='flux')
@@ -80,26 +80,6 @@ RESERVED = set([DEFAULT, ALL])
 #!def intersection(*lists):
 #!    """Return intersection of all LISTS."""
 #!    return set(lists[0]).intersection(*lists[1:])
-
-#! def records_field_list(records):
-#!    """Get list of fields used in records. One list per Data Set.
-#!   Args:
-#!      records (list): List of records (each is a dictionary).
-#!    Returns:
-#!        dict: dict[Data_Set] = [field_name1, ...]
-#!    :param records: List of records (each is a dictionary)
-#!    :returns: dict[Data_Set] = [field_name1, ...]
-#!    Example:
-#!      >>> from api.client import fields_available
-#!      >>> recs = client.sample_records(3)
-#!      >>> flds = fields_available(recs)
-#!    Example:
-#!        >>> from sparcl.client import fields_available
-#!        >>> recs = client.sample_records(3)
-#!        >>> flds = fields_available(recs)
-#!    """
-#!    fields = {r._dr: sorted(r.keys()) for r in records}
-#!    return fields
 
 
 ###########################

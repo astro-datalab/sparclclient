@@ -17,7 +17,6 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 
-#!from sparcl.client import client_version
 from sparcl import __version__
 
 
@@ -49,6 +48,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_mdinclude',
 ]
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

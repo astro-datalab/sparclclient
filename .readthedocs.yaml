@@ -7,10 +7,10 @@
 ### Install Sphinx.
 # pip install sphinx
 #
-### Build your docs:
+### Build your docs: (with venv active)
 #
-# cd ~/sandbox/sparclclient/source
-# sphinx-build -T -E -b html -d ../build/doctrees -D language=en . ../build/html
+# cd ~/sandbox/sparclclient
+# make html
 #
 ## Open the html file in your browser, for example:
 # file:///home/myusername/sandbox/sparclclient/build/html/index.html

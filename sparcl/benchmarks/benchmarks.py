@@ -17,7 +17,7 @@ from pprint import pformat
 # External packages
 import psutil
 # Local packages
-from ..client import SparclApi
+from ..client import SparclClient
 from ..utils import tic, toc, here_now
 
 #rooturl = 'http://localhost:8030/' #@@@
@@ -35,7 +35,7 @@ def human_size(num, units=['b', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']):
 def run_retrieve(specids, columns=None, xfer='p', verbose=True):
     #!print(f'Retrieving {len(specids):,} spectra')
     psutil.cpu_percent()  # begin interval
-    client = SparclApi(url=rooturl)
+    client = SparclClient(url=rooturl)
     result = dict(numcols=len(columns), numspecids=len(specids))
     if verbose:
         print(f'Experiment: {pformat(result)}')
@@ -63,7 +63,7 @@ def run_paged_retrieve(specids, columns=None, xfer='p',
     """Do 1 more more PAGE size retrieves to get data for all specids"""
     print(f'Paged Retrieve of {len(specids):,} spectra')
     psutil.cpu_percent()  # begin interval
-    client = SparclApi(url=rooturl)
+    client = SparclClient(url=rooturl)
     result = dict(numcols=len(columns),
                   numspecids=len(specids),
                   xfer=xfer,
