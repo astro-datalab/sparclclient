@@ -31,7 +31,8 @@ _pat_hosts = ['sparc1.datalab.noirlab.edu',
 #   twine upload dist/*
 
 # Use Google Style Python Docstrings so autogen of Sphinx doc works:
-#  https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google
+#  https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
+#  https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 #
 # Use sphinx-doc emacs minor mode to insert docstring skeleton.
 # C-c M-d in function/method def
@@ -334,7 +335,9 @@ class SparclClient():  # was SparclApi()
                 constraints to place on the record selection. The Key
                 part of the Key-Value pair is the field name and the
                 Value part of the Key-Value pair is a list of values.
-                Defaults to None.
+                Defaults to no constraints. This will return all records in the
+                database subject to restrictions imposed by the ``limit``
+                parameter.
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to find records. Defaults to None, which
@@ -348,8 +351,7 @@ class SparclClient():  # was SparclApi()
                 to sort by. Defaults to None. (no sorting)
 
         Returns:
-            A sparcl.Results.Found object, which is a list of dictionaries
-            where each dictionary is a record.
+            :class:`~sparcl.Results.Found`: Contains header and records.
 
         Example:
             >>> client = sparcl.client.SparclClient()
@@ -511,8 +513,7 @@ class SparclClient():  # was SparclApi()
                 statement. Defaults to False.
 
         Returns:
-            A sparcl.Results.Retrieved object, which is a list of dictionaries
-            where each dictionary is a record.
+            :class:`~sparcl.Results.Retrieved`: Contains header and records.
 
         Example:
             >>> client = sparcl.client.SparclClient()
@@ -640,8 +641,7 @@ class SparclClient():  # was SparclApi()
                 statement. Defaults to False.
 
         Returns:
-            A sparcl.Results.Retrieved object, which is a list of dictionaries
-            where each dictionary is a record.
+            :class:`~sparcl.Results.Retrieved`: Contains header and records.
 
         Example:
             >>> client = sparcl.client.SparclClient()

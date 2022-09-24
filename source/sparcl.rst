@@ -22,4 +22,5 @@ sparcl.Results module
 
 .. automodule:: sparcl.Results
    :members:
+   :inherited-members:
    :show-inheritance:

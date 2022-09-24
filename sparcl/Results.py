@@ -20,28 +20,34 @@ class Results(UserList):
 
     # https://docs.python.org/3/library/collections.html#collections.deque.clear
     def clear(self):
+        """Delete the contents of this collection."""
         super().clear()
         self.hdr = {}
         self.recs = []
 
     @property
     def info(self):
+        """Info about this collection.
+        e.g. Warnings, parameters used to get the collection, etc."""
         return self.hdr
 
     @property
     def count(self):
+        """Number of records in this collection."""
+        return self.hdr['Count']
         return self.hdr['Count']
 
     @property
     def records(self):
+        """Records in this collection. Each record is a dictionary."""
         return self.recs
 
     def json(self):
         return self.data
 
+    # Convert Internal field names to Science field names.
+    # SIDE-EFFECT: modifies self.recs
     def to_science_fields(self):  # from_orig
-        """Convert Internal field names to Science field names.
-        SIDE-EFFECT: modifies self.recs """
         newrecs = list()
         for rec in self.recs:
             newrec = dict()
@@ -61,8 +67,8 @@ class Results(UserList):
                 newrecs.append(_AttrDict(newrec))
         self.recs = newrecs
 
+    # Convert Science field names to Internal field names.
     def to_internal_fields(self):
-        """Convert Science field names to Internal field names."""
         for rec in self.recs:
             dr = rec.get('_dr')
             for new in rec.keys():
@@ -76,7 +82,7 @@ class Results(UserList):
 
 # For results of retrieve()
 class Retrieved(Results):
-    """Hold results of 'client.retrieve()"""
+    """Holds spectra records (and header)."""
 
     def __init__(self, dict_list, client=None):
         super().__init__(dict_list, client=client)
@@ -86,7 +92,7 @@ class Retrieved(Results):
 
 
 class Found(Results):
-    """@@@ NEEDS DOCUMENTATION !!!"""
+    """Holds metadata records (and header)."""
 
     def __init__(self, dict_list, client=None):
         super().__init__(dict_list, client=client)
@@ -96,6 +102,7 @@ class Found(Results):
 
     @property
     def ids(self):
+        """List of unique identifiers of matched records."""
         dr = list(self.fields.all_drs)[0]
         idfld = self.fields._science_name('id', dr)
 
