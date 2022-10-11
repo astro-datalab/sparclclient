@@ -5,7 +5,7 @@ These include results of client.retrieve() client.find().
 from collections import UserList
 #!import copy
 from sparcl.utils import _AttrDict
-from sparcl.gather_2d import bin_spectra_records
+#from sparcl.gather_2d import bin_spectra_records
 
 
 class Results(UserList):
@@ -91,29 +91,29 @@ class Retrieved(Results):
     def __repr__(self):
         return f'Retrieved Results: {len(self.recs)} records'
 
-    def bin_spectra(self):
-        """Align flux from all records by common wavelength bin.
-
-        A value of nan is used where a record does not contain a flux
-        value for a specific bin.
-
-        Returns:
-           flux: 2d numpy array with shape (numRecords, numWavelengthBins)
-                 Flux value for each record, each bin
-           wavs: 1d numpy array with shape (numWavelengthBins)
-                 Wavelength values for each bin
-
-        Example:
-            >>> client = sparcl.client.SparclClient()
-            >>> found = client.find(
-                            constraints={"data_release": ['BOSS-DR16']},
-                            limit=10)
-            >>> got = client.retrieve(found.ids)
-            >>> flux2d,wavs = got.bin_spectra()
-
-        """
-        flux2d, wavs = bin_spectra_records(self.recs)
-        return flux2d, wavs
+#!    def bin_spectra(self):
+#!        """Align flux from all records by common wavelength bin.
+#!
+#!        A value of nan is used where a record does not contain a flux
+#!        value for a specific bin.
+#!
+#!        Returns:
+#!           flux: 2d numpy array with shape (numRecords, numWavelengthBins)
+#!                 Flux value for each record, each bin
+#!           wavs: 1d numpy array with shape (numWavelengthBins)
+#!                 Wavelength values for each bin
+#!
+#!        Example:
+#!            >>> client = sparcl.client.SparclClient()
+#!            >>> found = client.find(
+#!                            constraints={"data_release": ['BOSS-DR16']},
+#!                            limit=10)
+#!            >>> got = client.retrieve(found.ids)
+#!            >>> flux2d,wavs = got.bin_spectra()
+#!
+#!        """
+#!        flux2d, wavs = bin_spectra_records(self.recs)
+#!        return flux2d, wavs
 
 
 class Found(Results):
