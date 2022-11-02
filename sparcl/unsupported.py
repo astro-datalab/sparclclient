@@ -19,7 +19,7 @@ import sparcl.exceptions as ex
 _STAGE = 'https://sparclstage.datalab.noirlab.edu'  # noqa: E221
 _PAT   = 'https://sparc1.datalab.noirlab.edu'       # noqa: E221
 
-drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-edr']
+drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
 
 
 def retrieve(ids, include=['id'], dataset_list=['BOSS-DR16'],
