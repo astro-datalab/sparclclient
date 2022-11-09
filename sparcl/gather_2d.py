@@ -14,15 +14,18 @@ import sparcl.client
 
 
 # Per paper, should be able to pass all flux in one call to spectres
+# https://arxiv.org/pdf/1705.05165.pdf
 # Perhaps users would rather the bins uniform (1,5,20 Angstroms?)
+def resample_flux(records, wavstep=1):
+    smallest = math.floor(min([min(r.wavelength) for r in records]))
+    largest = math.ceil(max([max(r.wavelength) for r in records]))
 
-def bin_spectra_records(records):
-    smallest = min([min(r.wavelength) for r in records])
-    largest = max([max(r.wavelength) for r in records])
-    range = math.ceil(largest - smallest)
-    new_wavs = np.fromfunction(lambda i: i + smallest, [range], dtype=int)
+    #!wrange = largest - smallest
+    #new_wavs = np.fromfunction(lambda i: i + smallest, (wrange,), dtype=int)
+    #flux_2d = np.ones([len(records), wrange])
 
-    flux_2d = np.ones([len(records), range])
+    new_wavs = np.array(range(smallest, largest + 1, wavstep))
+    flux_2d = np.full([len(records), len(new_wavs)], None, dtype=float)
 
     for idx, rec in enumerate(records):
         flux_2d[idx] = spectres.spectres(new_wavs,
@@ -37,7 +40,7 @@ def tt0(numrecs=20):
     found = client.find(constraints=dict(data_release=['BOSS-DR16']),
                         limit=numrecs)
     got = client.retrieve(found.ids)
-    flux_2d, new_wavs = bin_spectra_records(got.records)
+    flux_2d, new_wavs = resample_flux(got.records)
     return flux_2d, new_wavs
 
 
@@ -147,7 +150,13 @@ def flux_grid(records, grid, offsets, precision=None):
     return ar
 
 
-def tt(numrecs=20, dr='BOSS-DR16', precision=7):
+def flux_records(records, precision=None):
+    grid, offsets = wavelength_grid_offsets(records, precision=precision)
+    ar = flux_grid(records, grid, offsets, precision=precision)
+    return ar, grid
+
+
+def tt(numrecs=9, dr='BOSS-DR16', precision=7):
     # Get sample of NUMRECS records from DR DataSet.
     client = sparcl.client.SparclClient()
     found = client.find(constraints=dict(data_release=[dr]),
@@ -155,10 +164,10 @@ def tt(numrecs=20, dr='BOSS-DR16', precision=7):
     got = client.retrieve(found.ids)
     records = got.records
 
-    grid, offsets = wavelength_grid_offsets(records, precision=precision)
-    print(f'Built grid len={len(grid)} '
-          f'offsets({len(offsets)})[:5]={list(offsets.values())[:5]}')
-    #return records, grid, offsets
-    ar = flux_grid(records, grid, offsets, precision=precision)
+    #! grid, offsets = wavelength_grid_offsets(records, precision=precision)
+    #! print(f'Built grid len={len(grid)} '
+    #!       f'offsets({len(offsets)})[:5]={list(offsets.values())[:5]}')
+    #! ar = flux_grid(records, grid, offsets, precision=precision)
+    ar, grid = flux_records(records, precision=precision)
     return ar, grid  # ar (numRecs,len(grid))
 # with np.printoptions(threshold=np.inf, linewidth=210, formatter=dict(float=lambda v: f'{v: > 7.3f}')): print(ar.T)  # noqa: E501

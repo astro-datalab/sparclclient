@@ -651,6 +651,15 @@ class SparclClient():  # was SparclApi()
             >>> ret.records
 
         """
+        #!specid_list = list(specid_list)
+        assert isinstance(specid_list, list), (
+            f'The "specid_list" parameter must be a python list. '
+            f'You used a value of type {type(specid_list)}.')
+        assert len(specid_list) > 0, (
+            f'The "specid_list" parameter value must be a non-empty list')
+        assert isinstance(specid_list[0], int), (
+            f'The "specid_list" parameter must be a python list of INTEGERS. '
+            f'You used an element value of type {type(specid_list[0])}.')
 
         if dataset_list is None:
             constraints = {'specid': specid_list}

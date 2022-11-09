@@ -24,4 +24,4 @@ __all__ = ["client"]
 #__version__ = '0.4.0b1.dev8'
 #__version__ = '0.4.0b1.dev10'
 #__version__ = '1.0.0'
-__version__ = '1.0.0b1.dev2'
+__version__ = '1.0.0b1.dev7'
