@@ -22,6 +22,10 @@ from sparcl import __version__
 from sparcl.Results import Found, Retrieved
 
 
+MAX_CONNECT_TIMEOUT = 3.1    # seconds
+MAX_READ_TIMEOUT = 90 * 60   # seconds
+
+
 _pat_hosts = ['sparc1.datalab.noirlab.edu',
               'sparc2.datalab.noirlab.edu',
               'astrosparcl.datalab.noirlab.edu']
@@ -131,8 +135,10 @@ class SparclClient():  # was SparclApi()
         self.apiversion = None
         self.verbose = verbose
         #!self.internal_names = internal_names
-        self.c_timeout = float(connect_timeout)  # seconds
-        self.r_timeout = float(read_timeout)     # seconds
+        self.c_timeout = min(MAX_CONNECT_TIMEOUT,
+                             float(connect_timeout))  # seconds
+        self.r_timeout = min(MAX_READ_TIMEOUT,  # seconds
+                             float(read_timeout))
 
         # require response within this num seconds
         # https://2.python-requests.org/en/master/user/advanced/#timeouts
