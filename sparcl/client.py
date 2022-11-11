@@ -627,6 +627,8 @@ class SparclClient():  # was SparclApi()
     def retrieve_by_specid(self,
                            specid_list,
                            *,
+                           svc='spectras',  # 'retrieve',
+                           format='pkl',    # 'json',
                            include='DEFAULT',
                            dataset_list=None,
                            verbose=False):
@@ -681,6 +683,8 @@ class SparclClient():  # was SparclApi()
         if verbose:
             print(f'Found {found.count} matches.')
         res = self.retrieve(found.ids,
+                            svc=svc,
+                            format=format,
                             include=include,
                             dataset_list=dataset_list,
                             verbose=verbose)
