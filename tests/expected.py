@@ -9,11 +9,7 @@ all_fields = ['MJD',
               'dateobs',
               'dateobs_center',
               'dec',
-              'dirpath',
               'exptime',
-              'extra_files',
-              'filename',
-              'filesize',
               'flux',
               'id',
               'instrument',
@@ -31,18 +27,17 @@ all_fields = ['MJD',
               'spectype',
               'targetid',
               'telescope',
-              'updated',
               'wave_sigma',
               'wavelength',
               'wavemax',
               'wavemin']
 
-default_fields = ['flux', 'id', 'wavelength']
+default_fields = ['dec', 'flux', 'id', 'ra', 'specid', 'wavelength']
 
 #retrieve_0 = [1506512395860731904]
 retrieve_0 = [3383388400617889792]  # PAT
 
-retrieve_0b = ['_dr', 'flux', idfld, 'wavelength']
+retrieve_0b = ['_dr', 'dec', 'flux', idfld, 'ra', 'specid', 'wavelength']
 
 retrieve_4 = ['FIBERID',
               'MJD',

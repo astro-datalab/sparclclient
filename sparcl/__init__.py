@@ -28,4 +28,5 @@ __all__ = ["client"]
 #__version__ = '1.0.0b1.dev8'
 #__version__ = '1.0.0b1.dev9'
 #__version__ = '1.0.1b2.dev1'
-__version__ = '1.1rc1'
+#__version__ = '1.1rc1'
+__version__ = '1.1rc2'
