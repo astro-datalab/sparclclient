@@ -326,7 +326,7 @@ class SparclClient():  # was SparclApi()
 
     def find(self, outfields=None, *,
              constraints={},  # dict(fname) = [op, param, ...]
-             dataset_list=None,
+             #dataset_list=None,
              limit=500,
              sort=None):
         """Find records in the SPARC database.
@@ -345,11 +345,6 @@ class SparclClient():  # was SparclApi()
                 database subject to restrictions imposed by the ``limit``
                 parameter.
 
-            dataset_list (:obj:`list`, optional): List of data sets from
-                which to find records. Defaults to None, which
-                will find records in all data sets hosted on the SPARC
-                database.
-
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500.
 
@@ -365,8 +360,11 @@ class SparclClient():  # was SparclApi()
             >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
             >>> found = client.find(outfields=outs, constraints=cons)
             >>> found.records
-
         """
+        # dataset_list (:obj:`list`, optional): List of data sets from
+        #     which to find records. Defaults to None, which
+        #     will find records in all data sets hosted on the SPARC
+        #     database.
 
         # Let "outfields" default to ['id']; but fld may have been renamed
         if outfields is None:
@@ -379,8 +377,9 @@ class SparclClient():  # was SparclApi()
                        )
                 raise ex.NoCommonIdField(msg)
             outfields = [idfld]
-        if dataset_list is None:
-            dataset_list = self.fields.all_drs
+        #! if dataset_list is None:
+        #!     dataset_list = self.fields.all_drs
+        dataset_list = self.fields.all_drs
         self._validate_science_fields(outfields, dataset_list=dataset_list)
         dr = list(dataset_list)[0]
         if len(constraints) > 0:
