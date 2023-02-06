@@ -6,7 +6,7 @@ from collections import UserList
 #!import copy
 from sparcl.utils import _AttrDict
 #from sparcl.gather_2d import bin_spectra_records
-
+import sparcl.exceptions as ex
 
 class Results(UserList):
 
@@ -80,6 +80,39 @@ class Results(UserList):
                 new = self.fields._internal_name(new, dr)
                 rec[new] = rec.pop(new)
 
+    def reorder(self, ids_og):
+        """
+        Reorder the retrieved records to be in the same
+        order as the original IDs passed to client.retrieve().
+
+        Args:
+            ids_og (:obj:`list`): List of UUIDs.
+
+        Returns:
+            reordered (:class:`~sparcl.Results.Retrieved`): Contains header and reordered records.
+            # none_idx (:obj:`list`): List of indices where record is None.
+
+        """
+        # Get the ids or specids from retrieved records
+        if type(ids_og[0]) == str:
+            ids_re = [f['id'] for f in self.recs]
+        elif type(ids_og[0]) == int:
+            ids_re = [f['specid'] for f in self.recs]
+        # Enumerate the original ids
+        dict_og = {x:i for i,x in enumerate(ids_og)}
+        # Enumerate the retrieved ids
+        dict_re = {x:i for i,x in enumerate(ids_re)}
+        # Get the indices of the original ids. Set to None if not found
+        idx = [dict_re.get(key,None) for key in dict_og.keys()]
+        # Get the indices of None values
+        none_idx = [i for i,v in enumerate(idx) if v == None]
+        # Reorder the retrieved records
+        reordered = [self.recs[i] for i in idx if i != None]
+        for i in none_idx:
+            reordered.insert(i,{'id':None, '_dr':None})
+        reordered.insert(0, self.hdr)
+
+        return Results(reordered, client=self.client)
 
 # For results of retrieve()
 class Retrieved(Results):

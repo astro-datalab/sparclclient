@@ -109,5 +109,8 @@ class ServerConnectionError(BaseSparclException):
 class BadSearchConstraint(BaseSparclException):
     error_code = 'BADSCONS'
 
+class MissingRecord(BaseSparclException):
+    """Missing record from results"""
+    error_code = 'NORECORD'
 
 # error_code values should be no bigger than 8 characters 12345678

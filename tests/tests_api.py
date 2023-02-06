@@ -78,10 +78,15 @@ class SparclClientTest(unittest.TestCase):
         cls.doc = dict()
         cls.count = dict()
         cls.specids = [1506512395860731904, 3383388400617889792]
+        cls.specids2 = [-5970393627659841536, 8712441763707768832, 3497074051921321984]
         #!found = cls.client.find([idfld, 'data_release'], limit=None)
         #!cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
         cls.uuids = cls.client.find([idfld, 'data_release'],
                                     sort='id', limit=3).ids
+        cls.uuids2 = cls.client.find([idfld, 'data_release'],
+                                    sort='data_release', limit=3).ids
+        cls.uuids3 = cls.uuids2[1:3]
+        cls.uuids3.insert(1,'00001ebf-d030-4d59-97e5-060c47202897')
 
     @classmethod
     def tearDownClass(cls):
@@ -286,3 +291,54 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(actual,
                          sorted(exp.find_4),
                          msg='Actual to Expected')
+
+    def test_reorder_1(self):
+        """Reorder retrieved records by UUID."""
+        name = 'reorder_1'
+        uuids = self.uuids2
+
+        tic()
+        res = self.client.retrieve(uuids)
+        self.timing[name] = toc()
+        res2 = res.reorder(uuids)
+        actual = [f['id'] for f in res2.records]
+        if showact:
+            print(f'reorder_1: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.reorder_1,
+                         msg='Actual to Expected')
+
+    def test_reorder_2(self):
+        """Reorder retrieved records by specid."""
+        name = 'reorder_2'
+        specids = self.specids2
+
+        tic()
+        res = self.client.retrieve_by_specid(specids)
+        self.timing[name] = toc()
+        res2 = res.reorder(specids)
+        actual = [f['specid'] for f in res2.records]
+        if showact:
+            print(f'reorder_2: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.reorder_2,
+                         msg='Actual to Expected')
+
+    def test_reorder_3(self):
+        """Reorder records when ID is missing from database."""
+        name = 'reorder_3'
+        uuids = self.uuids3
+        print(f"uuids: {uuids}")
+
+        tic()
+        res = self.client.retrieve(uuids)
+        self.timing[name] = toc()
+        res2 = res.reorder(uuids)
+        print(f"res2: {res2}")
+        #actual = [f['id'] for f in res2.records]
+        #print(f"actual: {actual}")
+        #if showact:
+        #    print(f'reorder_1: actual={pf(actual)}')
+        #self.assertEqual(actual,
+        #                 exp.reorder_1,
+        #                 msg='Actual to Expected')
