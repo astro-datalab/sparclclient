@@ -3,8 +3,7 @@
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
 idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
 
-all_fields = ['MJD',
-              'data_release',
+all_fields = ['data_release',
               'datasetgroup',
               'dateobs',
               'dateobs_center',
@@ -15,6 +14,7 @@ all_fields = ['MJD',
               'instrument',
               'ivar',
               'mask',
+              'mjd',
               'model',
               'ra',
               'redshift',
@@ -134,6 +134,14 @@ find_4 = ['00000ce3-d15b-4ef5-952b-5790e96af5d7',
           '00001c4b-c0b7-4098-bb85-59f37b81af93',
           '00001f94-96b1-4f2d-8d1d-1a47a89fe105']
 
-reorder_1 = ['f77143fd-89d8-4c92-ad61-8826cfa1bfe2', '54715e2a-427d-4090-981d-5137e4f5ff21', '690e9fae-35f1-436f-90f6-258499fc74d7']
+reorder_1a = ['f77143fd-89d8-4c92-ad61-8826cfa1bfe2',
+              '54715e2a-427d-4090-981d-5137e4f5ff21',
+              '690e9fae-35f1-436f-90f6-258499fc74d7']
 
-reorder_2 = [-5970393627659841536, 8712441763707768832, 3497074051921321984]
+reorder_1b = [-5970393627659841536, 8712441763707768832, 3497074051921321984]
+
+reorder_2a = ['54715e2a-427d-4090-981d-5137e4f5ff21',
+              None,
+              '690e9fae-35f1-436f-90f6-258499fc74d7']
+
+reorder_2b = [-5970393627659841536, 8712441763707768832, None]

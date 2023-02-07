@@ -109,8 +109,16 @@ class ServerConnectionError(BaseSparclException):
 class BadSearchConstraint(BaseSparclException):
     error_code = 'BADSCONS'
 
-class MissingRecord(BaseSparclException):
-    """Missing record from results"""
+
+class NoRecords(BaseSparclException):
+    """Results did not contain any records"""
     error_code = 'NORECORD'
+
+
+class NoIDs(BaseSparclException):
+    """The length of the list of original IDs passed to the reorder
+       method was zero"""
+    error_code = 'NOIDS'
+
 
 # error_code values should be no bigger than 8 characters 12345678
