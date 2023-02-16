@@ -6,6 +6,8 @@ from collections import UserList
 #!import copy
 from sparcl.utils import _AttrDict
 #from sparcl.gather_2d import bin_spectra_records
+import sparcl.exceptions as ex
+from warnings import warn
 
 
 class Results(UserList):
@@ -17,7 +19,6 @@ class Results(UserList):
         self.client = client
         self.fields = client.fields
         self.to_science_fields()
-        self.hdr['Count'] = len(self.recs)
 
     # https://docs.python.org/3/library/collections.html#collections.deque.clear
     def clear(self):
@@ -35,8 +36,7 @@ class Results(UserList):
     @property
     def count(self):
         """Number of records in this collection."""
-        return self.hdr['Count']
-        return self.hdr['Count']
+        return len(self.recs)
 
     @property
     def records(self):
@@ -79,6 +79,66 @@ class Results(UserList):
                     continue
                 new = self.fields._internal_name(new, dr)
                 rec[new] = rec.pop(new)
+
+    def reorder(self, ids_og):
+        """
+        Reorder the retrieved records to be in the same
+        order as the original IDs passed to client.retrieve().
+
+        Args:
+            ids_og (:obj:`list`): List of UUIDs.
+
+        Returns:
+            reordered (:class:`~sparcl.Results.Retrieved`): Contains header and
+                                                            reordered records.
+            # none_idx (:obj:`list`): List of indices where record is None.
+
+        """
+        if len(ids_og) <= 0:
+            msg = (f'The list of IDs passed to the reorder method '
+                   f'does not contain any IDs or specIDs.')
+            raise ex.NoIDs(msg)
+        elif len(self.recs) <= 0:
+            msg = (f'The retrieved or found results did not '
+                   f'contain any records.')
+            raise ex.NoRecords(msg)
+        else:
+            # Get the ids or specids from retrieved records
+            if type(ids_og[0]) == str:
+                ids_re = [f['id'] for f in self.recs]
+            elif type(ids_og[0]) == int:
+                ids_re = [f['specid'] for f in self.recs]
+            # Enumerate the original ids
+            dict_og = {x: i for i, x in enumerate(ids_og)}
+            # Enumerate the retrieved ids
+            dict_re = {x: i for i, x in enumerate(ids_re)}
+            # Get the indices of the original ids. Set to None if not found
+            idx = [dict_re.get(key, None) for key in dict_og.keys()]
+            # Get the indices of None values
+            none_idx = [i for i, v in enumerate(idx) if v is None]
+            # Reorder the retrieved records
+            reordered = [self.recs[i] for i in idx if i is not None]
+            # Insert dummy record(s) if applicable
+            dummy_record = "{'id': None, 'specid': None, '_dr': 'SDSS-DR16'}"
+            for i in none_idx:
+                reordered.insert(i, {'id': None, 'specid': None,
+                                     '_dr': 'SDSS-DR16'})
+            reordered.insert(0, self.hdr)
+            meta = reordered[0]
+            if len(none_idx) > 0:
+                msg = (f'{len(none_idx)} IDs or specIDs were not found in '
+                       f'the database. Use "client.missing()" '
+                       f'to get a list of the unavailable IDs. '
+                       f'To maintain correct reordering, a dummy '
+                       f'record has been placed at the indices '
+                       f'where no record was found. Those '
+                       f'indices are: {none_idx}. The dummy '
+                       f'record will appear as follows: '
+                       f'{dummy_record}. ')
+                meta['status'].update({'warnings': [msg]})
+                warn(msg, stacklevel=2)
+
+        return Results(reordered, client=self.client)
 
 
 # For results of retrieve()
