@@ -120,20 +120,23 @@ class Results(UserList):
             reordered = [self.recs[i] for i in idx if i is not None]
             # Insert dummy record(s) if applicable
             dummy_record = "{'id': None, 'specid': None, '_dr': 'SDSS-DR16'}"
-            if len(none_idx) > 0:
-                warn(f'{len(none_idx)} IDs or specIDs were not found in '
-                     f'the database. Use "client.missing()" '
-                     f'to get a list of the unavailable IDs. '
-                     f'To maintain correct reordering, a dummy '
-                     f'record has been placed at the indices '
-                     f'where no record was found. Those '
-                     f'indices are: {none_idx}. The dummy '
-                     f'record will appear as follows: '
-                     f'{dummy_record}. ')
             for i in none_idx:
                 reordered.insert(i, {'id': None, 'specid': None,
                                      '_dr': 'SDSS-DR16'})
             reordered.insert(0, self.hdr)
+            meta = reordered[0]
+            if len(none_idx) > 0:
+                msg = (f'{len(none_idx)} IDs or specIDs were not found in '
+                       f'the database. Use "client.missing()" '
+                       f'to get a list of the unavailable IDs. '
+                       f'To maintain correct reordering, a dummy '
+                       f'record has been placed at the indices '
+                       f'where no record was found. Those '
+                       f'indices are: {none_idx}. The dummy '
+                       f'record will appear as follows: '
+                       f'{dummy_record}. ')
+                meta['status'].update({'warnings': [msg]})
+                warn(msg, stacklevel=2)
 
         return Results(reordered, client=self.client)
 
