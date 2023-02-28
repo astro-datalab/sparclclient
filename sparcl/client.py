@@ -377,8 +377,6 @@ class SparclClient():  # was SparclApi()
                        )
                 raise ex.NoCommonIdField(msg)
             outfields = [idfld]
-        #! if dataset_list is None:
-        #!     dataset_list = self.fields.all_drs
         dataset_list = self.fields.all_drs
         self._validate_science_fields(outfields, dataset_list=dataset_list)
         dr = list(dataset_list)[0]
