@@ -114,6 +114,10 @@ class NoRecords(BaseSparclException):
     """Results did not contain any records"""
     error_code = 'NORECORD'
 
+class TooManyRecords(BaseSparclException):
+    """Too many records asked for in RETRIEVE"""
+    error_code = 'TOOMANYR'
+
 
 class NoIDs(BaseSparclException):
     """The length of the list of original IDs passed to the reorder

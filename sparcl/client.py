@@ -24,6 +24,7 @@ from sparcl.Results import Found, Retrieved
 
 MAX_CONNECT_TIMEOUT = 3.1    # seconds
 MAX_READ_TIMEOUT = 90 * 60   # seconds
+MAX_NUM_RECORDS_RETRIEVED = int(2e4)
 
 
 _pat_hosts = ['sparc1.datalab.noirlab.edu',
@@ -542,6 +543,17 @@ class SparclClient():  # was SparclApi()
             include_list = include
 
         self._validate_include(include_list, dataset_list)
+
+        req_num = min(len(uuid_list), (limit or len(uuid_list)))
+        print(f'DBG: req_num = {req_num}'
+              f'  len(uuid_list)={len(uuid_list)}'
+              f'  limit={limit}' )
+        if (req_num  >  MAX_NUM_RECORDS_RETRIEVED):
+            msg = (f'Too many records asked for with client.retrieve().'
+                   f'  {len(uuid_list)} IDs provided,'
+                   f'  limit={limit}.'
+                   f'  But the maximim allowed is {MAX_NUM_RECORDS_RETRIEVED}')
+            raise ex.TooManyRecords(msg)
 
         com_include = self._common_internal(
             science_fields=include_list,
