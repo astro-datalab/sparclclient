@@ -23,8 +23,9 @@ from sparcl.Results import Found, Retrieved
 
 
 MAX_CONNECT_TIMEOUT = 3.1    # seconds
-MAX_READ_TIMEOUT = 90 * 60   # seconds
-MAX_NUM_RECORDS_RETRIEVED = int(2e4)
+MAX_READ_TIMEOUT = 150 * 60   # seconds
+MAX_NUM_RECORDS_RETRIEVED = int(2e4)  # Minimum Hard Limit = 20,000
+#!MAX_NUM_RECORDS_RETRIEVED = int(5e4) #@@@ Reduce !!!
 
 
 _pat_hosts = ['sparc1.datalab.noirlab.edu',
@@ -545,14 +546,16 @@ class SparclClient():  # was SparclApi()
         self._validate_include(include_list, dataset_list)
 
         req_num = min(len(uuid_list), (limit or len(uuid_list)))
-        print(f'DBG: req_num = {req_num}'
-              f'  len(uuid_list)={len(uuid_list)}'
-              f'  limit={limit}' )
+        #!print(f'DBG: req_num = {req_num}'
+        #!      f'  len(uuid_list)={len(uuid_list)}'
+        #!      f'  limit={limit}'
+        #!      f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED}')
         if (req_num  >  MAX_NUM_RECORDS_RETRIEVED):
             msg = (f'Too many records asked for with client.retrieve().'
-                   f'  {len(uuid_list)} IDs provided,'
+                   f'  {len(uuid_list):,d} IDs provided,'
                    f'  limit={limit}.'
-                   f'  But the maximim allowed is {MAX_NUM_RECORDS_RETRIEVED}')
+                   f'  But the maximim allowed is'
+                   f' {MAX_NUM_RECORDS_RETRIEVED:,d}.')
             raise ex.TooManyRecords(msg)
 
         com_include = self._common_internal(
@@ -599,6 +602,7 @@ class SparclClient():  # was SparclApi()
             elapsed = ut.toc()
             print(f'Got response to post in {elapsed} seconds')
         if res.status_code != 200:
+            # @@@ FAILS on invalid JSON. Maybe not json at all !!!
             if verbose and ('traceback' in res.json()):
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(res, verbose=verbose)
