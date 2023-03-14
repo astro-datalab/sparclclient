@@ -24,7 +24,7 @@ from sparcl.Results import Found, Retrieved
 
 MAX_CONNECT_TIMEOUT = 3.1    # seconds
 MAX_READ_TIMEOUT = 150 * 60   # seconds
-MAX_NUM_RECORDS_RETRIEVED = int(2e4)  # Minimum Hard Limit = 20,000
+MAX_NUM_RECORDS_RETRIEVED = int(25e3)  # Minimum Hard Limit = 25,000
 #!MAX_NUM_RECORDS_RETRIEVED = int(5e4) #@@@ Reduce !!!
 
 
