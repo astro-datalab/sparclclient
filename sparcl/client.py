@@ -24,7 +24,7 @@ from sparcl.Results import Found, Retrieved
 
 MAX_CONNECT_TIMEOUT = 3.1    # seconds
 MAX_READ_TIMEOUT = 150 * 60   # seconds
-MAX_NUM_RECORDS_RETRIEVED = int(25e3)  # Minimum Hard Limit = 25,000
+MAX_NUM_RECORDS_RETRIEVED = int(2e4)  # Minimum Hard Limit = 25,000
 #!MAX_NUM_RECORDS_RETRIEVED = int(5e4) #@@@ Reduce !!!
 
 
@@ -546,10 +546,10 @@ class SparclClient():  # was SparclApi()
         self._validate_include(include_list, dataset_list)
 
         req_num = min(len(uuid_list), (limit or len(uuid_list)))
-        #!print(f'DBG: req_num = {req_num}'
-        #!      f'  len(uuid_list)={len(uuid_list)}'
-        #!      f'  limit={limit}'
-        #!      f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED}')
+        print(f'DBG: req_num = {req_num}'
+              f'  len(uuid_list)={len(uuid_list)}'
+              f'  limit={limit}'
+              f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED}')
         if (req_num  >  MAX_NUM_RECORDS_RETRIEVED):
             msg = (f'Too many records asked for with client.retrieve().'
                    f'  {len(uuid_list):,d} IDs provided,'
