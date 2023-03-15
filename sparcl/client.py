@@ -24,7 +24,7 @@ from sparcl.Results import Found, Retrieved
 
 MAX_CONNECT_TIMEOUT = 3.1    # seconds
 MAX_READ_TIMEOUT = 150 * 60   # seconds
-MAX_NUM_RECORDS_RETRIEVED = int(2e4)  # Minimum Hard Limit = 25,000
+MAX_NUM_RECORDS_RETRIEVED = int(24e3)  # Minimum Hard Limit = 25,000
 #!MAX_NUM_RECORDS_RETRIEVED = int(5e4) #@@@ Reduce !!!
 
 
@@ -546,15 +546,15 @@ class SparclClient():  # was SparclApi()
         self._validate_include(include_list, dataset_list)
 
         req_num = min(len(uuid_list), (limit or len(uuid_list)))
-        #! print(f'DBG: req_num = {req_num}'
-        #!       f'  len(uuid_list)={len(uuid_list)}'
+        #! print(f'DBG: req_num = {req_num:,d}'
+        #!       f'  len(uuid_list)={len(uuid_list):,d}'
         #!       f'  limit={limit}'
-        #!       f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED}')
+        #!       f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED:,d}')
         if (req_num  >  MAX_NUM_RECORDS_RETRIEVED):
             msg = (f'Too many records asked for with client.retrieve().'
                    f'  {len(uuid_list):,d} IDs provided,'
                    f'  limit={limit}.'
-                   f'  But the maximim allowed is'
+                   f'  But the maximum allowed is'
                    f' {MAX_NUM_RECORDS_RETRIEVED:,d}.')
             raise ex.TooManyRecords(msg)
 
@@ -562,7 +562,7 @@ class SparclClient():  # was SparclApi()
             science_fields=include_list,
             dataset_list=dataset_list)
         uparams = dict(include=','.join(com_include),
-                       limit=limit,
+                       # limit=limit,  # altered uuid_list to reflect limit
                        chunk_len=chunk,
                        format=format,
                        dataset_list=','.join(dataset_list))
@@ -575,7 +575,7 @@ class SparclClient():  # was SparclApi()
             ut.tic()
 
         try:
-            ids = list(uuid_list)
+            ids = list(uuid_list) if limit is None else list(uuid_list)[:limit]
             res = requests.post(url, json=ids, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
@@ -602,6 +602,8 @@ class SparclClient():  # was SparclApi()
             elapsed = ut.toc()
             print(f'Got response to post in {elapsed} seconds')
         if res.status_code != 200:
+            if verbose:
+                print(f'DBG: Server response=\n{res.text}')
             # @@@ FAILS on invalid JSON. Maybe not json at all !!!
             if verbose and ('traceback' in res.json()):
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
