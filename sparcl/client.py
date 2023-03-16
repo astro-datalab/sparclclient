@@ -2,6 +2,14 @@
 This module interfaces to the SPARC-Server to get spectra data.
 """
 # python -m unittest tests.tests_api
+#
+# Doctest example:
+#   cd ~/sandbox/sparclclient
+#   activate
+#   pip install -e .
+#   python sparcl/client.py
+#   ## Returns NOTHING if everything works, else lists errors.
+
 ############################################
 # Python Standard Library
 from urllib.parse import urlencode, urlparse
@@ -114,7 +122,7 @@ class SparclClient():  # was SparclApi()
             wait for first byte. Defaults to 5400.
 
     Example:
-        >>> client = sparcl.client.SparclClient()
+        >>> client = SparclClient()
 
     Raises:
         Exception: Object creation compares the version from the
@@ -210,9 +218,9 @@ class SparclClient():  # was SparclApi()
             List of fields tagged as 'default' from DATASET_LIST.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
+            >>> client = SparclClient()
             >>> client.get_default_fields()
-
+            ['flux', 'id', 'wavelength']
         """
 
         if dataset_list is None:
@@ -240,10 +248,10 @@ class SparclClient():  # was SparclApi()
             List of fields tagged as 'all' from DATASET_LIST.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
+            >>> client = SparclClient()
             >>> client.get_all_fields()
-
-        """
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+    """
 
         common = set(self.fields.common(dataset_list))
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
@@ -295,9 +303,9 @@ class SparclClient():  # was SparclApi()
             Set of fields available from data sets in DATASET_LIST.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
-            >>> client.get_available_fields()
-
+            >>> client = SparclClient()
+            >>> sorted(client.get_available_fields())
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
         """
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
@@ -314,9 +322,9 @@ class SparclClient():  # was SparclApi()
             API version (:obj:`float`).
 
         Example:
-            >>> client = sparcl.client.SparclClient()
-            >>> client.version()
-
+            >>> client = SparclClient()
+            >>> client.version
+            8.0
         """
 
         if self.apiversion is None:
@@ -357,11 +365,12 @@ class SparclClient():  # was SparclApi()
             :class:`~sparcl.Results.Found`: Contains header and records.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
+            >>> client = SparclClient()
             >>> outs = ['id', 'ra', 'dec']
             >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
             >>> found = client.find(outfields=outs, constraints=cons)
-            >>> found.records
+            >>> sorted(list(found.records[0].keys()))
+            ['_dr', 'dec', 'id', 'ra']
         """
         # dataset_list (:obj:`list`, optional): List of data sets from
         #     which to find records. Defaults to None, which
@@ -428,10 +437,10 @@ class SparclClient():  # was SparclApi()
             stored in the SPARC database.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
+            >>> client = SparclClient()
             >>> ids = ['ddbb57ee-8e90-4a0d-823b-0f5d97028076',]
             >>> client.missing(ids)
-
+            ['ddbb57ee-8e90-4a0d-823b-0f5d97028076']
         """
 
         if dataset_list is None:
@@ -521,12 +530,12 @@ class SparclClient():  # was SparclApi()
             :class:`~sparcl.Results.Retrieved`: Contains header and records.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
+            >>> client = SparclClient()
             >>> ids = ['000017b6-56a2-4f87-8828-3a3409ba1083',]
             >>> inc = ['id', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve(uuid_list=ids, include=inc)
-            >>> ret.records
-
+            >>> type(ret.records[0].wavelength)
+            <class 'numpy.ndarray'>
         """
 
         if dataset_list is None:
@@ -667,11 +676,12 @@ class SparclClient():  # was SparclApi()
             :class:`~sparcl.Results.Retrieved`: Contains header and records.
 
         Example:
-            >>> client = sparcl.client.SparclClient()
+            >>> client = SparclClient()
             >>> sids = [5840097619402313728, -8985592895187431424]
             >>> inc = ['specid', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve_by_specid(specid_list=sids, include=inc)
-            >>> ret.records
+            >>> len(ret.records[0].wavelength)
+            4617
 
         """
         #!specid_list = list(specid_list)
