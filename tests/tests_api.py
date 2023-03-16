@@ -13,6 +13,7 @@
 # Python library
 import unittest
 from unittest import skip
+import doctest
 #! from unittest mock, skipIf, skipUnless
 #!import warnings
 from pprint import pformat as pf
@@ -54,6 +55,9 @@ showact = False
 #showact = True
 showact = showact or os.environ.get('showres') == '1'
 
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(sparcl.client))
+    return tests
 
 class SparclClientTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
