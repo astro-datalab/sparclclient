@@ -6,7 +6,6 @@ This module interfaces to the SPARC-Server to get spectra data.
 # Doctest example:
 #   cd ~/sandbox/sparclclient
 #   activate
-#   pip install -e .
 #   python sparcl/client.py
 #   ## Returns NOTHING if everything works, else lists errors.
 
@@ -338,7 +337,8 @@ class SparclClient():  # was SparclApi()
              constraints={},  # dict(fname) = [op, param, ...]
              #dataset_list=None,
              limit=500,
-             sort=None):
+             sort=None,
+             verbose=None):
         """Find records in the SPARC database.
 
         Args:
@@ -361,6 +361,9 @@ class SparclClient():  # was SparclApi()
             sort (:obj:`list`, optional): Comma separated list of fields
                 to sort by. Defaults to None. (no sorting)
 
+            verbose (:obj:`bool`, optional): Set to True for in-depth return
+                statement. Defaults to False.
+
         Returns:
             :class:`~sparcl.Results.Found`: Contains header and records.
 
@@ -377,6 +380,8 @@ class SparclClient():  # was SparclApi()
         #     will find records in all data sets hosted on the SPARC
         #     database.
 
+        verbose = self.verbose if verbose is None else verbose
+
         # Let "outfields" default to ['id']; but fld may have been renamed
         if outfields is None:
             dslist = list(self.fields.all_datasets)
@@ -389,7 +394,7 @@ class SparclClient():  # was SparclApi()
                 raise ex.NoCommonIdField(msg)
             outfields = [idfld]
         dataset_list = self.fields.all_drs
-        self._validate_science_fields(outfields, dataset_list=dataset_list)
+        #! self._validate_science_fields(outfields, dataset_list=dataset_list) # DLS-401
         dr = list(dataset_list)[0]
         if len(constraints) > 0:
             self._validate_science_fields(constraints.keys(),
@@ -401,17 +406,23 @@ class SparclClient():  # was SparclApi()
             uparams['sort'] = sort
         qstr = urlencode(uparams)
         url = f'{self.apiurl}/find/?{qstr}'
+
         outfields = [self.fields._internal_name(s, dr) for s in outfields]
         search = [[k] + v for k, v in constraints.items()]
         sspec = dict(outfields=outfields, search=search)
+        if verbose:
+            print(f'url={url} sspec={sspec}')
         res = requests.post(url, json=sspec, timeout=self.timeout)
 
         if res.status_code != 200:
-            if self.verbose and ('traceback' in res.json()):
+            if verbose and ('traceback' in res.json()):
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(res, verbose=self.verbose)
 
-        return Found(res.json(), client=self)
+        found = Found(res.json(), client=self)
+        if verbose:
+            print(f'Record key counts: {ut.count_values(found.records)}')
+        return found
 
     def missing(self, uuid_list, *, dataset_list=None,
                 countOnly=False, verbose=False):

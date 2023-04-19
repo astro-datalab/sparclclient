@@ -86,7 +86,8 @@ class Fields():  # Derived from a single query
         return self.o2n[dataset].get(internal_name)
 
     def _internal_name(self, science_name, dataset):
-        return self.n2o[dataset][science_name]
+        #!return self.n2o[dataset][science_name]
+        return self.n2o[dataset].get(science_name)
 
     def filter_fields(self, attr, dataset_list):
         fields = set()

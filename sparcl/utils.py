@@ -1,8 +1,8 @@
 # Python library
-#!import os
 import datetime
 import time
 import socket
+import itertools
 # External packages
 #   none
 # LOCAL packages
@@ -142,3 +142,22 @@ def dict2tree(obj, name=None, prefix=''):
 def invLUT(lut):
     """Given dict[k]=v, Return dict[v]=k"""
     return {v: k for k, v in lut.items()}
+
+def count_values(recs):
+    """Count number of non-None values in a list of dictionaries.
+    A key that exists with a value of None is treated the same as a
+    key that does not exist at all. i.e. It does not add to the count.
+
+    Args:
+       recs (:obj:`list`): ('records') List of dictionaries.
+
+    Returns:
+        A dictionary. Keys are the full list of keys available in any
+        of the recs.  Values are the count of occurances of non-None values
+        for that key.
+
+    >>> count_values([dict(a=None, b=3), dict(a=1, b=2), dict(a=None, b=2)])
+    {'a': 1, 'b': 3}
+    """
+    allkeys = set(list(itertools.chain(*recs)))
+    return {k: sum(x.get(k) is not None for x in recs) for k in allkeys}
