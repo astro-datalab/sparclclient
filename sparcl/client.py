@@ -220,7 +220,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_default_fields()
-            ['flux', 'sparcl_id', 'wavelength']
+            ['flux', 'id', 'wavelength']
         """
 
         if dataset_list is None:
@@ -250,7 +250,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_all_fields()
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'sparcl_id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
     """
 
         common = set(self.fields.common(dataset_list))
@@ -305,7 +305,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> sorted(client.get_available_fields())
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'sparcl_id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
         """
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
@@ -366,11 +366,11 @@ class SparclClient():  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> outs = ['sparcl_id', 'ra', 'dec']
+            >>> outs = ['id', 'ra', 'dec']
             >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
             >>> found = client.find(outfields=outs, constraints=cons)
             >>> sorted(list(found.records[0].keys()))
-            ['_dr', 'dec', 'sparcl_id', 'ra']
+            ['_dr', 'dec', 'id', 'ra']
         """
         # dataset_list (:obj:`list`, optional): List of data sets from
         #     which to find records. Defaults to None, which
@@ -533,7 +533,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> ids = ['000017b6-56a2-4f87-8828-3a3409ba1083',]
-            >>> inc = ['sparcl_id', 'flux', 'wavelength', 'model']
+            >>> inc = ['id', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve(uuid_list=ids, include=inc)
             >>> type(ret.records[0].wavelength)
             <class 'numpy.ndarray'>
