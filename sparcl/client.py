@@ -251,7 +251,7 @@ class SparclClient():  # was SparclApi()
             >>> client = SparclClient()
             >>> client.get_all_fields()
             ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
-    """
+    """  # noqa: E501
 
         common = set(self.fields.common(dataset_list))
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
@@ -306,7 +306,7 @@ class SparclClient():  # was SparclApi()
             >>> client = SparclClient()
             >>> sorted(client.get_available_fields())
             ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
-        """
+        """  # noqa: E501
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
         every = [set(self.fields.n2o[dr]) for dr in drs]
