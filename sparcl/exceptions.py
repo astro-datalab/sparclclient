@@ -114,6 +114,7 @@ class NoRecords(BaseSparclException):
     """Results did not contain any records"""
     error_code = 'NORECORD'
 
+
 class TooManyRecords(BaseSparclException):
     """Too many records asked for in RETRIEVE"""
     error_code = 'TOOMANYR'

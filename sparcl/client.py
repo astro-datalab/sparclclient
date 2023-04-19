@@ -220,7 +220,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_default_fields()
-            ['flux', 'id', 'wavelength']
+            ['flux', 'sparcl_id', 'wavelength']
         """
 
         if dataset_list is None:
@@ -250,7 +250,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_all_fields()
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'sparcl_id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
     """
 
         common = set(self.fields.common(dataset_list))
@@ -305,7 +305,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> sorted(client.get_available_fields())
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'sparcl_id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
         """
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
@@ -344,8 +344,8 @@ class SparclClient():  # was SparclApi()
         Args:
             outfields (:obj:`list`, optional): List of fields to return.
                 Only CORE fields may be passed to this parameter.
-                Defaults to None, which will return only the id and _dr
-                fields.
+                Defaults to None, which will return only the sparcl_id
+                and _dr fields.
 
             constraints (:obj:`dict`, optional): Key-Value pairs of
                 constraints to place on the record selection. The Key
@@ -366,11 +366,11 @@ class SparclClient():  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> outs = ['id', 'ra', 'dec']
+            >>> outs = ['sparcl_id', 'ra', 'dec']
             >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
             >>> found = client.find(outfields=outs, constraints=cons)
             >>> sorted(list(found.records[0].keys()))
-            ['_dr', 'dec', 'id', 'ra']
+            ['_dr', 'dec', 'sparcl_id', 'ra']
         """
         # dataset_list (:obj:`list`, optional): List of data sets from
         #     which to find records. Defaults to None, which
@@ -415,26 +415,26 @@ class SparclClient():  # was SparclApi()
 
     def missing(self, uuid_list, *, dataset_list=None,
                 countOnly=False, verbose=False):
-        """Return the subset of ids in the given uuid_list that are NOT stored
-        in the SPARC database.
+        """Return the subset of sparcl_ids in the given uuid_list that are
+        NOT stored in the SPARC database.
 
         Args:
-            uuid_list (:obj:`list`): List of ids.
+            uuid_list (:obj:`list`): List of sparcl_ids.
 
             dataset_list (:obj:`list`, optional): List of data sets from
-                which to find missing ids. Defaults to None, meaning all
-                data sets hosted on the SPARC database.
+                which to find missing sparcl_ids. Defaults to None, meaning
+                all data sets hosted on the SPARC database.
 
             countOnly (:obj:`bool`, optional): Set to True to return only
-                a count of the missing ids from the uuid_list. Defaults to
-                False.
+                a count of the missing sparcl_ids from the uuid_list.
+                Defaults to False.
 
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
 
         Returns:
-            A list of the subset of ids in the given uuid_list that are NOT
-            stored in the SPARC database.
+            A list of the subset of sparcl_ids in the given uuid_list that
+            are NOT stored in the SPARC database.
 
         Example:
             >>> client = SparclClient()
@@ -500,10 +500,11 @@ class SparclClient():  # was SparclApi()
                  limit=500,
                  chunk=500,
                  verbose=None):
-        """Retrieve spectra records from the SPARC database by list of ids.
+        """Retrieve spectra records from the SPARC database by list of
+        sparcl_ids.
 
         Args:
-            uuid_list (:obj:`list`): List of ids.
+            uuid_list (:obj:`list`): List of sparcl_ids.
 
             svc (:obj:`str`, optional): Defaults to 'spectras'.
 
@@ -532,7 +533,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> ids = ['000017b6-56a2-4f87-8828-3a3409ba1083',]
-            >>> inc = ['id', 'flux', 'wavelength', 'model']
+            >>> inc = ['sparcl_id', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve(uuid_list=ids, include=inc)
             >>> type(ret.records[0].wavelength)
             <class 'numpy.ndarray'>
@@ -559,7 +560,7 @@ class SparclClient():  # was SparclApi()
         #!       f'  len(uuid_list)={len(uuid_list):,d}'
         #!       f'  limit={limit}'
         #!       f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED:,d}')
-        if (req_num  >  MAX_NUM_RECORDS_RETRIEVED):
+        if (req_num > MAX_NUM_RECORDS_RETRIEVED):
             msg = (f'Too many records asked for with client.retrieve().'
                    f'  {len(uuid_list):,d} IDs provided,'
                    f'  limit={limit}.'

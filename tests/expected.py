@@ -1,7 +1,7 @@
 # For PAT hosts
 
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
-idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
+idfld = 'sparcl_id'  # Sci Field Name for uuid. Diff val than Internal name.
 
 all_fields = ['data_release',
               'datasetgroup',
@@ -10,7 +10,6 @@ all_fields = ['data_release',
               'dec',
               'exptime',
               'flux',
-              'id',
               'instrument',
               'ivar',
               'mask',
@@ -22,6 +21,7 @@ all_fields = ['data_release',
               'redshift_warning',
               'site',
               'sky',
+              idfld,
               'specid',
               'specprimary',
               'spectype',
@@ -32,12 +32,12 @@ all_fields = ['data_release',
               'wavemax',
               'wavemin']
 
-default_fields = ['dec', 'flux', 'id', 'ra', 'specid', 'wavelength']
+default_fields = ['dec', 'flux', 'ra', idfld, 'specid', 'wavelength']
 
 #retrieve_0 = [1506512395860731904]
 retrieve_0 = [3383388400617889792]  # PAT
 
-retrieve_0b = ['_dr', 'dec', 'flux', idfld, 'ra', 'specid', 'wavelength']
+retrieve_0b = ['_dr', 'dec', 'flux', 'ra', idfld, 'specid', 'wavelength']
 
 retrieve_4 = ['FIBERID',
               'MJD',
@@ -84,12 +84,12 @@ retrieve_4 = ['FIBERID',
 
 find_0 = [{'_dr': 'SDSS-DR16',
            'dec': 63.029566,
-           'id': '2587dc0b-296a-4f77-8197-75431d7e8773',
-           'ra': 137.74507},
+           'ra': 137.74507,
+           'sparcl_id': '2587dc0b-296a-4f77-8197-75431d7e8773'},
           {'_dr': 'SDSS-DR16',
            'dec': 63.286553,
-           'id': '26616ea2-fd26-456d-bb90-d249c597f89a',
-           'ra': 137.48823}]  # PAT
+           'ra': 137.48823,
+           'sparcl_id': '26616ea2-fd26-456d-bb90-d249c597f89a'}]  # PAT
 
 #find_1 = [{'_dr': 'SDSS-DR16',
 #  'dec': 35.039381,
@@ -98,8 +98,8 @@ find_0 = [{'_dr': 'SDSS-DR16',
 
 find_1 = [{'_dr': 'BOSS-DR16',
            'dec': 44.143862,
-           'id': '00000ce3-d15b-4ef5-952b-5790e96af5d7',
-           'ra': 194.55856}]
+           'ra': 194.55856,
+           'sparcl_id': '00000ce3-d15b-4ef5-952b-5790e96af5d7'}]
 
 #find_2 = 640  # DEV
 find_2 = 936894  # PAT
@@ -119,16 +119,16 @@ find_2 = 936894  # PAT
 
 find_3 = [{'_dr': 'BOSS-DR16',
            'dec': 44.143862,
-           'id': '00000ce3-d15b-4ef5-952b-5790e96af5d7',
-           'ra': 194.55856},
+           'ra': 194.55856,
+           'sparcl_id': '00000ce3-d15b-4ef5-952b-5790e96af5d7'},
           {'_dr': 'DESI-EDR',
            'dec': 32.9667091540768,
-           'id': '00001c4b-c0b7-4098-bb85-59f37b81af93',
-           'ra': 141.861318540722},
+           'ra': 141.861318540722,
+           'sparcl_id': '00001c4b-c0b7-4098-bb85-59f37b81af93'},
           {'_dr': 'BOSS-DR16',
            'dec': 21.33438,
-           'id': '00001f94-96b1-4f2d-8d1d-1a47a89fe105',
-           'ra': 0.863617040000008}]
+           'ra': 0.863617040000008,
+           'sparcl_id': '00001f94-96b1-4f2d-8d1d-1a47a89fe105'}]
 
 find_4 = ['00000ce3-d15b-4ef5-952b-5790e96af5d7',
           '00001c4b-c0b7-4098-bb85-59f37b81af93',
