@@ -80,13 +80,34 @@ class Results(UserList):
                 new = self.fields._internal_name(new, dr)
                 rec[new] = rec.pop(new)
 
+    def science_to_internal_fields(self):
+        newrecs = list()
+        for rec in self.recs:
+            newrec = dict()
+            dr = rec['_dr']
+            keep = True
+            for sci_name in rec.keys():
+                if sci_name == '_dr':
+                    # keep DR around unchanged. We need it to rename back
+                    # to Internal Field Names later.
+                    newrec[sci_name] = rec[sci_name]
+                else:
+                    new = self.fields._internal_name(sci_name, dr)
+                    if new is None:
+                        keep = False
+                    newrec[new] = rec[sci_name]
+            if keep:
+                newrecs.append(_AttrDict(newrec))
+        self.recs = newrecs
+        return self.recs
+
     def reorder(self, ids_og):
         """
         Reorder the retrieved records to be in the same
         order as the original IDs passed to client.retrieve().
 
         Args:
-            ids_og (:obj:`list`): List of UUIDs.
+            ids_og (:obj:`list`): List of sparcl_ids or specIDs.
 
         Returns:
             reordered (:class:`~sparcl.Results.Retrieved`): Contains header and
@@ -96,18 +117,20 @@ class Results(UserList):
         """
         if len(ids_og) <= 0:
             msg = (f'The list of IDs passed to the reorder method '
-                   f'does not contain any IDs or specIDs.')
+                   f'does not contain any sparcl_ids or specIDs.')
             raise ex.NoIDs(msg)
         elif len(self.recs) <= 0:
             msg = (f'The retrieved or found results did not '
                    f'contain any records.')
             raise ex.NoRecords(msg)
         else:
+            # Transform science fields to internal fields
+            new_recs = self.science_to_internal_fields()
             # Get the ids or specids from retrieved records
             if type(ids_og[0]) == str:
-                ids_re = [f['id'] for f in self.recs]
+                ids_re = [f['id'] for f in new_recs]
             elif type(ids_og[0]) == int:
-                ids_re = [f['specid'] for f in self.recs]
+                ids_re = [f['specid'] for f in new_recs]
             # Enumerate the original ids
             dict_og = {x: i for i, x in enumerate(ids_og)}
             # Enumerate the retrieved ids
@@ -126,7 +149,8 @@ class Results(UserList):
             reordered.insert(0, self.hdr)
             meta = reordered[0]
             if len(none_idx) > 0:
-                msg = (f'{len(none_idx)} IDs or specIDs were not found in '
+                msg = (f'{len(none_idx)} sparcl_ids or specIDs were '
+                       f'not found in '
                        f'the database. Use "client.missing()" '
                        f'to get a list of the unavailable IDs. '
                        f'To maintain correct reordering, a dummy '
@@ -137,7 +161,6 @@ class Results(UserList):
                        f'{dummy_record}. ')
                 meta['status'].update({'warnings': [msg]})
                 warn(msg, stacklevel=2)
-
         return Results(reordered, client=self.client)
 
 
