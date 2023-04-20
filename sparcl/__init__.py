@@ -1,5 +1,5 @@
 # List of packages to import when "from sparcl import *" is used
-__all__ = ["client"]
+__all__ = ["client", "align_records"]
 
 
 # See semantic versioning
