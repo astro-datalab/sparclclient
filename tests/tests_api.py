@@ -23,6 +23,7 @@ from urllib.parse import urlparse
 import os
 # Local Packages
 import sparcl.client
+import sparcl.gather_2d
 #from sparcl.client import DEFAULT, ALL
 from tests.utils import tic, toc
 import tests.expected as exp_pat
@@ -56,8 +57,15 @@ showact = False
 showact = showact or os.environ.get('showres') == '1'
 
 
+# Arrange to run all doctests.
+# Add package paths to python files.
+# The should contain testable docstrings.
 def load_tests(loader, tests, ignore):
+    print(f'Arranging to run doctests against: sparcl.client')
     tests.addTests(doctest.DocTestSuite(sparcl.client))
+
+    print(f'Arranging to run doctests against: sparcl.gather_2d')
+    tests.addTests(doctest.DocTestSuite(sparcl.gather_2d))
     return tests
 
 

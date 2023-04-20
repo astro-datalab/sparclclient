@@ -197,11 +197,14 @@ def align_records(records, fields=None, precision=7):
         - grid(ndarray): 1D numpy array containing wavelength values.
 
     Example:
-        >>> client = SparclClient()
+        >>> client = sparcl.client.SparclClient()
         >>> specflds = ['wavelength', 'flux', 'ivar', 'mask', 'model']
         >>> cons = {"data_release": ['BOSS-DR16']}
-        >>> found = client.find(constraints=cons, limit=20)
-        >>> got = client.retrieve(found.ids, include=specflds )
+        >>> found = client.find(constraints=cons, limit=21)
+        >>> got = client.retrieve(found.ids, include=specflds)
+        >>> ar_dict, grid = align_records(got.records, fields=specflds)
+        >>> ar_dict['model'].shape
+        (21, 4670)
 
     """
     grid, offsets = _wavelength_grid_offsets(records, precision=precision)
@@ -237,3 +240,7 @@ def _tt(numrecs=9, dr='BOSS-DR16', precision=7):
     ar, grid = flux_records(records, precision=precision)
     return ar, grid  # ar (numRecs,len(grid))
 # with np.printoptions(threshold=np.inf, linewidth=210, formatter=dict(float=lambda v: f'{v: > 7.3f}')): print(ar.T)  # noqa: E501
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
