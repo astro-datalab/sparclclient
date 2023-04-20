@@ -49,15 +49,17 @@ else:
 
 
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
-idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
+idfld = 'sparcl_id'  # Sci Field Name for uuid. Diff val than Internal name.
 
 showact = False
 #showact = True
 showact = showact or os.environ.get('showres') == '1'
 
+
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(sparcl.client))
     return tests
+
 
 class SparclClientTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
@@ -307,7 +309,7 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
     def test_reorder_1a(self):
-        """Reorder retrieved records by ID."""
+        """Reorder retrieved records by sparcl_id."""
         name = 'reorder_1a'
         ids = self.uuids2
 
@@ -315,7 +317,7 @@ class SparclClientTest(unittest.TestCase):
         res = self.client.retrieve(ids)
         self.timing[name] = toc()
         res_reorder = res.reorder(ids)
-        actual = [f['id'] for f in res_reorder.records]
+        actual = [f['sparcl_id'] for f in res_reorder.records]
         if showact:
             print(f'reorder_1a: actual={pf(actual)}')
         self.assertEqual(actual,
@@ -339,7 +341,7 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
     def test_reorder_2a(self):
-        """Reorder records when ID is missing from database, after using
+        """Reorder records when sparcl_id is missing from database, after using
            retrieve()."""
         name = 'reorder_2a'
         ids = self.uuids3
@@ -350,7 +352,7 @@ class SparclClientTest(unittest.TestCase):
         self.timing[name] = toc()
         with self.assertWarns(Warning):
             res_reorder = res.reorder(ids)
-        actual = [f['id'] for f in res_reorder.records]
+        actual = [f['sparcl_id'] for f in res_reorder.records]
         if showact:
             print(f'reorder_2a: actual={pf(actual)}')
         self.assertEqual(actual,
@@ -376,8 +378,8 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
     def test_reorder_3a(self):
-        """Test for expected Exception when a list of IDs with length 0 is
-           passed to reorder method after using retrieve()."""
+        """Test for expected Exception when a list of sparcl_ids with
+           length 0 is passed to reorder method after using retrieve()."""
         name = 'reorder_3a'
         ids = self.uuids2
         og_ids = []
@@ -402,8 +404,8 @@ class SparclClientTest(unittest.TestCase):
             res.reorder(og_specids)
 
     def test_reorder_4a(self):
-        """Test for expected Exception when there are no records, using IDs
-           and retrieve()."""
+        """Test for expected Exception when there are no records, using
+           sparcl_ids and retrieve()."""
         name = 'reorder_4a'
         ids = self.uuids4
 
