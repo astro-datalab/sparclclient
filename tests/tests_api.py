@@ -13,6 +13,7 @@
 # Python library
 import unittest
 from unittest import skip
+import doctest
 #! from unittest mock, skipIf, skipUnless
 #!import warnings
 from pprint import pformat as pf
@@ -22,6 +23,7 @@ from urllib.parse import urlparse
 import os
 # Local Packages
 import sparcl.client
+import sparcl.gather_2d
 #from sparcl.client import DEFAULT, ALL
 from tests.utils import tic, toc
 import tests.expected as exp_pat
@@ -48,11 +50,23 @@ else:
 
 
 #!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
-idfld = 'id'      # Science Field Name for uuid. Diff val than Internal name.
+idfld = 'sparcl_id'  # Sci Field Name for uuid. Diff val than Internal name.
 
 showact = False
 #showact = True
 showact = showact or os.environ.get('showres') == '1'
+
+
+# Arrange to run all doctests.
+# Add package paths to python files.
+# The should contain testable docstrings.
+def load_tests(loader, tests, ignore):
+    print(f'Arranging to run doctests against: sparcl.client')
+    tests.addTests(doctest.DocTestSuite(sparcl.client))
+
+    print(f'Arranging to run doctests against: sparcl.gather_2d')
+    tests.addTests(doctest.DocTestSuite(sparcl.gather_2d))
+    return tests
 
 
 class SparclClientTest(unittest.TestCase):
@@ -78,10 +92,25 @@ class SparclClientTest(unittest.TestCase):
         cls.doc = dict()
         cls.count = dict()
         cls.specids = [1506512395860731904, 3383388400617889792]
+        cls.specids2 = [-5970393627659841536, 8712441763707768832,
+                        3497074051921321984]
+        # two real specids, one fake
+        cls.specids3 = cls.specids2[0:2]
+        cls.specids3.insert(2, 300000000000000001)
+        # two fake specids
+        cls.specids4 = [300000000000000001, 111111111111111111]
         #!found = cls.client.find([idfld, 'data_release'], limit=None)
         #!cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
         cls.uuids = cls.client.find([idfld, 'data_release'],
                                     sort='id', limit=3).ids
+        cls.uuids2 = cls.client.find([idfld, 'data_release'],
+                                     sort='data_release', limit=3).ids
+        # two real UUIDs, one fake
+        cls.uuids3 = cls.uuids2[1:3]
+        cls.uuids3.insert(1, '00001ebf-d030-4d59-97e5-060c47202897')
+        # two fake UUIDs
+        cls.uuids4 = ['00001ebf-d030-4d59-97e5-060c47202897',
+                      'ff1e9a12-f21a-4050-bada-a1e67a265885']
 
     @classmethod
     def tearDownClass(cls):
@@ -286,3 +315,123 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(actual,
                          sorted(exp.find_4),
                          msg='Actual to Expected')
+
+    def test_reorder_1a(self):
+        """Reorder retrieved records by sparcl_id."""
+        name = 'reorder_1a'
+        ids = self.uuids2
+
+        tic()
+        res = self.client.retrieve(ids)
+        self.timing[name] = toc()
+        res_reorder = res.reorder(ids)
+        actual = [f['sparcl_id'] for f in res_reorder.records]
+        if showact:
+            print(f'reorder_1a: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.reorder_1a,
+                         msg='Actual to Expected')
+
+    def test_reorder_1b(self):
+        """Reorder retrieved records by specid."""
+        name = 'reorder_1b'
+        specids = self.specids2
+
+        tic()
+        res = self.client.retrieve_by_specid(specids)
+        self.timing[name] = toc()
+        res_reorder = res.reorder(specids)
+        actual = [f['specid'] for f in res_reorder.records]
+        if showact:
+            print(f'reorder_1b: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.reorder_1b,
+                         msg='Actual to Expected')
+
+    def test_reorder_2a(self):
+        """Reorder records when sparcl_id is missing from database, after using
+           retrieve()."""
+        name = 'reorder_2a'
+        ids = self.uuids3
+
+        tic()
+        with self.assertWarns(Warning):
+            res = self.client.retrieve(ids)
+        self.timing[name] = toc()
+        with self.assertWarns(Warning):
+            res_reorder = res.reorder(ids)
+        actual = [f['sparcl_id'] for f in res_reorder.records]
+        if showact:
+            print(f'reorder_2a: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.reorder_2a,
+                         msg='Actual to Expected')
+
+    def test_reorder_2b(self):
+        """Reorder records when specid is missing from database, after
+           using retrieve_by_specid()."""
+        name = 'reorder_2b'
+        specids = self.specids3
+
+        tic()
+        res = self.client.retrieve_by_specid(specids)
+        self.timing[name] = toc()
+        with self.assertWarns(Warning):
+            res_reorder = res.reorder(specids)
+        actual = [f['specid'] for f in res_reorder.records]
+        if showact:
+            print(f'reorder_2b: actual={pf(actual)}')
+        self.assertEqual(actual,
+                         exp.reorder_2b,
+                         msg='Actual to Expected')
+
+    def test_reorder_3a(self):
+        """Test for expected Exception when a list of sparcl_ids with
+           length 0 is passed to reorder method after using retrieve()."""
+        name = 'reorder_3a'
+        ids = self.uuids2
+        og_ids = []
+
+        tic()
+        res = self.client.retrieve(ids)
+        self.timing[name] = toc()
+        with self.assertRaises(ex.NoIDs):
+            res.reorder(og_ids)
+
+    def test_reorder_3b(self):
+        """Test for expected Exception when a list of specids with length 0
+           is passed to reorder method after using retrieve_by_specid()."""
+        name = 'reorder_3b'
+        specids = self.specids2
+        og_specids = []
+
+        tic()
+        res = self.client.retrieve_by_specid(specids)
+        self.timing[name] = toc()
+        with self.assertRaises(ex.NoIDs):
+            res.reorder(og_specids)
+
+    def test_reorder_4a(self):
+        """Test for expected Exception when there are no records, using
+           sparcl_ids and retrieve()."""
+        name = 'reorder_4a'
+        ids = self.uuids4
+
+        tic()
+        with self.assertWarns(Warning):
+            res = self.client.retrieve(ids)
+        self.timing[name] = toc()
+        with self.assertRaises(ex.NoRecords):
+            res.reorder(ids)
+
+    def test_reorder_4b(self):
+        """Test for expected Exception when there are no records, using specids
+           and retrieve_by_specid()."""
+        name = 'reorder_4b'
+        specids = self.specids4
+
+        tic()
+        res = self.client.retrieve_by_specid(specids)
+        self.timing[name] = toc()
+        with self.assertRaises(ex.NoRecords):
+            res.reorder(specids)

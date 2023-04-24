@@ -1,5 +1,5 @@
 # List of packages to import when "from sparcl import *" is used
-__all__ = ["client"]
+__all__ = ["client", "align_records"]
 
 
 # See semantic versioning
@@ -23,4 +23,12 @@ __all__ = ["client"]
 # Example of a correct version string: '0.4.0a3.dev35'
 #__version__ = '0.4.0b1.dev8'
 #__version__ = '0.4.0b1.dev10'
-__version__ = '1.0.0'
+#__version__ = '1.0.0'
+#__version__ = '1.0.0b1.dev7'
+#__version__ = '1.0.0b1.dev8'
+#__version__ = '1.0.0b1.dev9'
+#__version__ = '1.0.1b2.dev1'
+#__version__ = '1.1rc1'
+#__version__ = '1.1rc2'
+#__version__ = '1.1'
+__version__ = '1.2.0b3.dev9'
