@@ -2,15 +2,18 @@
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
 #
-#  ### Run against DEV server.
+#  ### Run Against Dev Server.
 #  serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #  showres=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #
 # python -m unittest  -v tests.tests_api    # VERBOSE
 # python -m unittest tests.tests_api.SparclClientTest
 # python -m unittest tests.tests_api.SparclClientTest.test_find_3
+#
+# showact=1 python -m unittest -k test_find_5 tests.tests_api
 
 # Python library
+from contextlib import contextmanager
 import unittest
 from unittest import skip
 import doctest
@@ -55,6 +58,23 @@ idfld = 'sparcl_id'  # Sci Field Name for uuid. Diff val than Internal name.
 showact = False
 #showact = True
 showact = showact or os.environ.get('showres') == '1'
+
+@contextmanager
+def streamhandler_to_console(lggr):
+    # Use 'up to date' value of sys.stdout for StreamHandler,
+    # as set by test runner.
+    stream_handler = logging.StreamHandler(sys.stdout)
+    lggr.addHandler(stream_handler)
+    yield
+    lggr.removeHandler(stream_handler)
+
+def testcase_log_console(lggr):
+    def testcase_decorator(func):
+        def testcase_log_console(*args, **kwargs):
+            with streamhandler_to_console(lggr):
+                return func(*args, **kwargs)
+        return testcase_log_console
+    return testcase_decorator
 
 
 # Arrange to run all doctests.
@@ -305,6 +325,7 @@ class SparclClientTest(unittest.TestCase):
                          sorted(exp.find_3, key=lambda rec: rec[idfld]),
                          msg='Actual to Expected')
 
+
     def test_find_4(self):
         """Check found.ids"""
         outfields = [idfld, 'ra', 'dec']
@@ -315,6 +336,24 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(actual,
                          sorted(exp.find_4),
                          msg='Actual to Expected')
+
+    def test_find_5a(self):
+        """Aux field values when they exists in all found records"""
+        found = self.client.find(['data_release', 'mjd'], limit=5, sort='id')
+        actual = found.records
+        if showact:
+            print(f'find_5a: actual={pf(actual)}')
+        self.assertEqual(actual,exp.find_5a,
+                         msg='Actual to Expected')
+
+
+    def test_find_5b(self):
+        """Aux field values when they exists in the proper subset of found records"""
+        self.assertTrue(False)
+
+    def test_find_5c(self):
+        """Aux field values when they do not exist in any found records"""
+        self.assertTrue(False)
 
     def test_reorder_1a(self):
         """Reorder retrieved records by sparcl_id."""
