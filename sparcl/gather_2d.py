@@ -95,6 +95,7 @@ def _tt1(numrecs=20, dr='BOSS-DR16'):
 
 
 # precision:: number of decimal places
+# "records" must contain "wavelength" field.
 def _wavelength_grid_offsets(records, precision=11):
     PLACES = Decimal(10) ** -precision
 
@@ -150,7 +151,7 @@ def _validate_spectra_fields(records, fields):
 
 # TOP level: Intended for access from Jupyter NOTEBOOK.
 # Align spectra related field from records into one array using quantization.
-def align_records(records, fields=None, precision=7):
+def align_records(records, fields=['flux','wavelength'], precision=7):
     """Align given spectra-type fields to a common wavelength grid.
 
     Args:
@@ -159,9 +160,11 @@ def align_records(records, fields=None, precision=7):
 
         fields (:obj:`list`, optional): List of Science Field Names of
             spectra related fields to align and include in the results.
+            DEFAULT=['flux', 'wavelength']
 
         precision (:obj:`int`, optional): Number of decimal points to use for
-            quantizing wavelengths into a grid. Default=7
+            quantizing wavelengths into a grid.
+            DEFAULT=7
 
     Returns:
         tuple containing:
@@ -180,18 +183,13 @@ def align_records(records, fields=None, precision=7):
         (21, 4670)
 
     """
-    grid, offsets = _wavelength_grid_offsets(records, precision=precision)
-    _validate_wavelength_alignment(records, grid, offsets, precision=precision)
-    #! _validate_spectra_fields(records, fields)
+    # Report Garbage In
     if 'wavelength' not in fields:
         msg = 'You must provide "wavelength" spectra field'
         raise Exception(msg)
-
-    # One slice for each record; each slice a 2darray(wavelength, fieldName)=fldVal
-    #! slices = list()
-    #! for rec in records:
-    #!     ar = rec_grid(rec, fields, grid, offsets, precision=None):
-    #!     slices.append(ar)
+    #! _validate_spectra_fields(records, fields)
+    grid, offsets = _wavelength_grid_offsets(records, precision=precision)
+    _validate_wavelength_alignment(records, grid, offsets, precision=precision)
 
     # One slice for each field; each slice a 2darray(wavelength, record)=fldVal
     adict = dict()
