@@ -9,6 +9,7 @@
 # python -m unittest  -v tests.tests_api    # VERBOSE
 # python -m unittest tests.tests_api.SparclClientTest
 # python -m unittest tests.tests_api.SparclClientTest.test_find_3
+# python3 -m unittest tests.tests_api.AlignRecordsTest
 #
 # showact=1 python -m unittest -k test_find_5 tests.tests_api
 
@@ -32,8 +33,9 @@ from tests.utils import tic, toc
 import tests.expected as exp_pat
 import tests.expected_dev1 as exp_dev
 import sparcl.exceptions as ex
+import sparcl.gather_2d as sg
 # External Packages
-# <none>
+import numpy
 
 DEFAULT = 'DEFAULT'
 ALL = 'ALL'
@@ -347,10 +349,13 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
 
+    @skip('Not implemented')
     def test_find_5b(self):
-        """Aux field values when they exists in the proper subset of found records"""
+        """Aux field values when they exists in the
+        proper subset of found records"""
         self.assertTrue(False)
 
+    @skip('Not implemented')
     def test_find_5c(self):
         """Aux field values when they do not exist in any found records"""
         self.assertTrue(False)
@@ -474,3 +479,66 @@ class SparclClientTest(unittest.TestCase):
         self.timing[name] = toc()
         with self.assertRaises(ex.NoRecords):
             res.reorder(specids)
+
+
+# See DLS-280
+class AlignRecordsTest(unittest.TestCase):
+    """Test ability to align spectra and all records by wavelength grid"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.client = sparcl.client.SparclClient(url=serverurl)
+        found = cls.client.find(constraints={"data_release": ['BOSS-DR16']},
+                                limit=20)
+        cls.specflds = ['wavelength', 'flux', 'ivar', 'mask', 'model']
+        cls.got = cls.client.retrieve(found.ids, include=cls.specflds)
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def test_align_1(self):
+        """The grid value return by align_records is a numpy array of Floats."""
+        ar_dict, grid = sg.align_records(self.got.records,
+                                         fields=['wavelength', 'flux', 'model'])
+        self.assertTrue(isinstance(grid, numpy.ndarray))
+        self.assertTrue(isinstance(grid[0], numpy.float64))
+
+    def test_align_2(self):
+        """Allow conversion of all SPECTRA-type fields (except for wavelength)
+        to be returned as same type of structure and registered to the same
+        wavelength grid."""
+
+        #! print(f'Fields={list(self.got.records[0].keys())}')
+        ar_dict, grid = sg.align_records(self.got.records, fields=self.specflds)
+        self.assertEqual(sorted(ar_dict.keys()), sorted(self.specflds))
+
+    def test_align_3(self):
+        """Verify shapes of arrays"""
+
+        ar_dict, grid = sg.align_records(self.got.records, fields=self.specflds)
+        shape = list(ar_dict.values())[0].shape
+        self.assertEqual(shape, (20, 4662))
+
+    # Difficult to implement
+    @skip('Not implemented')
+    def test_align_4(self):
+        """All align fields are valid spectra fields"""
+        self.assertTrue(False)
+
+    def test_align_5(self):
+        """Verify wavelength given."""
+        msg = 'You must provide "wavelength" spectra field'
+        with self.assertRaises(Exception, msg=msg) as err:
+            ar_dict, grid = sg.align_records(self.got.records,
+                                             fields=['flux', 'model'])
+
+    @skip('Not implemented')
+    def test_align_6(self):
+        """align_6."""
+        self.assertTrue(False)
+
+    @skip('Not implemented')
+    def test_align_7(self):
+        """align_5."""
+        self.assertTrue(False)

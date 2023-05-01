@@ -62,7 +62,7 @@ class Results(UserList):
                 else:
                     new = self.fields._science_name(orig, dr)
                     if new is None:
-                        keep = False
+                        keep = False # We don't have name mapping, toss rec
                     newrec[new] = rec[orig]
             if keep:
                 newrecs.append(_AttrDict(newrec))

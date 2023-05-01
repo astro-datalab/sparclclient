@@ -1,8 +1,6 @@
 """Align or resample spectra related fields across multiple records."""
 # See client.py for Doctest example
 #
-# See:
-#   https://spectres.readthedocs.io/en/latest/
 # For info about problems with floating point,
 #   See:  https://docs.python.org/3/tutorial/floatingpoint.html
 #   Also: https://docs.python.org/3/library/decimal.html#floating-point-notes
@@ -10,41 +8,11 @@
 import math
 from decimal import Decimal
 #
-import spectres
 import numpy as np
 #
 import sparcl.client
 
 
-# Per paper, should be able to pass all flux in one call to spectres
-# https://arxiv.org/pdf/1705.05165.pdf
-# Perhaps users would rather the bins uniform (1,5,20 Angstroms?)
-def _resample_flux(records, wavstep=1):
-    smallest = math.floor(min([min(r.wavelength) for r in records]))
-    largest = math.ceil(max([max(r.wavelength) for r in records]))
-
-    #!wrange = largest - smallest
-    #new_wavs = np.fromfunction(lambda i: i + smallest, (wrange,), dtype=int)
-    #flux_2d = np.ones([len(records), wrange])
-
-    new_wavs = np.array(range(smallest, largest + 1, wavstep))
-    flux_2d = np.full([len(records), len(new_wavs)], None, dtype=float)
-
-    for idx, rec in enumerate(records):
-        flux_2d[idx] = spectres.spectres(new_wavs,
-                                         rec.wavelength,
-                                         rec.flux,
-                                         verbose=False)
-    return flux_2d, new_wavs
-
-
-def _tt0(numrecs=20):
-    client = sparcl.client.SparclClient()
-    found = client.find(constraints=dict(data_release=['BOSS-DR16']),
-                        limit=numrecs)
-    got = client.retrieve(found.ids)
-    flux_2d, new_wavs = _resample_flux(got.records)
-    return flux_2d, new_wavs
 
 
 # Map every wavelength of every record to index (ri,wi)
@@ -175,6 +143,11 @@ def _field_grid(records, fieldName, grid, offsets, precision=None):
 #!     ar = _flux_grid(records, grid, offsets, precision=precision)
 #!     return ar, np.array([float(x) for x in grid])
 
+def _validate_spectra_fields(records, fields):
+    spectra_fields = [client.fields.n2o['BOSS-DR16'][k] for k,v in client.fields.attrs['BOSS-DR16'].items() if v['storage']=='S']
+    [k for k in records[0].keys() if not k.startswith('_')]
+
+
 # TOP level: Intended for access from Jupyter NOTEBOOK.
 # Align spectra related field from records into one array using quantization.
 def align_records(records, fields=None, precision=7):
@@ -198,7 +171,7 @@ def align_records(records, fields=None, precision=7):
 
     Example:
         >>> client = sparcl.client.SparclClient()
-        >>> specflds = ['wavelength', 'flux', 'ivar', 'mask', 'model']
+        >>> specflds = ['wavelength', 'model']
         >>> cons = {"data_release": ['BOSS-DR16']}
         >>> found = client.find(constraints=cons, limit=21)
         >>> got = client.retrieve(found.ids, include=specflds)
@@ -209,6 +182,10 @@ def align_records(records, fields=None, precision=7):
     """
     grid, offsets = _wavelength_grid_offsets(records, precision=precision)
     _validate_wavelength_alignment(records, grid, offsets, precision=precision)
+    #! _validate_spectra_fields(records, fields)
+    if 'wavelength' not in fields:
+        msg = 'You must provide "wavelength" spectra field'
+        raise Exception(msg)
 
     # One slice for each record; each slice a 2darray(wavelength, fieldName)=fldVal
     #! slices = list()
