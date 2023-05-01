@@ -348,17 +348,29 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(actual,exp.find_5a,
                          msg='Actual to Expected')
 
-
-    @skip('Not implemented')
+    # DLS-365
     def test_find_5b(self):
-        """Aux field values when they exists in the
-        proper subset of found records"""
-        self.assertTrue(False)
+        """Aux field in one Data Set but not another. (proper subset)"""
+        cons={'data_release':['SDSS-DR16','DESI-EDR']}
+        f0 = self.client.find(['data_release'],
+                              constraints=cons,
+                              limit=5, sort='id')
+        f1 = self.client.find(['data_release', 'plate'],
+                              constraints=cons,
+                              limit=5, sort='id')
+        self.assertEqual(f0.count, f1.count)
 
-    @skip('Not implemented')
+    # DLS-365
     def test_find_5c(self):
         """Aux field values when they do not exist in any found records"""
-        self.assertTrue(False)
+        cons={'data_release':['SDSS-DR16','DESI-EDR']}
+        nsf = 'NO_SUCH_FIELD'
+        f1 = self.client.find(['data_release', nsf],  constraints=cons,
+                              limit=5, sort='id')
+        msg = f'Expected field "{nsf}" with value None in all records'
+        self.assertTrue(nsf in f1.records[0].keys(), msg)
+
+
 
     def test_reorder_1a(self):
         """Reorder retrieved records by sparcl_id."""

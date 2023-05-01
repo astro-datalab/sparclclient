@@ -140,6 +140,8 @@ find_5a = [{'_dr': 'BOSS-DR16', 'data_release': 'BOSS-DR16', 'mjd': 56371},
            {'_dr': 'SDSS-DR16', 'data_release': 'SDSS-DR16', 'mjd': 54918},
            {'_dr': 'SDSS-DR16', 'data_release': 'SDSS-DR16', 'mjd': 54485}]
 
+find_5d = []
+
 reorder_1a = ['f77143fd-89d8-4c92-ad61-8826cfa1bfe2',
               '54715e2a-427d-4090-981d-5137e4f5ff21',
               '690e9fae-35f1-436f-90f6-258499fc74d7']
