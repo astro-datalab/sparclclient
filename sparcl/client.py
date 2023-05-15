@@ -667,6 +667,7 @@ class SparclClient():  # was SparclApi()
                            format='pkl',    # 'json',
                            include='DEFAULT',
                            dataset_list=None,
+                           limit=500,
                            verbose=False):
         """Retrieve spectra records from the SPARC database by list of specids.
 
@@ -716,7 +717,7 @@ class SparclClient():  # was SparclApi()
         dr = list(self.fields.all_drs)[0]
         idfld = self.fields._science_name('id', dr)
 
-        found = self.find([idfld], constraints=constraints)
+        found = self.find([idfld], constraints=constraints, limit=limit)
         if verbose:
             print(f'Found {found.count} matches.')
         res = self.retrieve(found.ids,
@@ -724,6 +725,7 @@ class SparclClient():  # was SparclApi()
                             format=format,
                             include=include,
                             dataset_list=dataset_list,
+                            limit=limit,
                             verbose=verbose)
         if verbose:
             print(f'Got {res.count} records.')

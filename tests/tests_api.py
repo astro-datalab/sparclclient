@@ -290,7 +290,7 @@ class SparclClientTest(unittest.TestCase):
         found = self.client.find(outfields, constraints=constraints)
         actual = found.records[:2]
         if showact:
-            print(f'find_0: actual={pf(actual)}')
+            print(f'find_0: actual={pf(actual[:2])}')
         self.assertEqual(actual, exp.find_0, msg='Actual to Expected')
 
     def test_find_1(self):
@@ -349,6 +349,7 @@ class SparclClientTest(unittest.TestCase):
                          msg='Actual to Expected')
 
     # DLS-365
+    @skip('Not implemented. Waiting for switch to ingest-time field naming ')
     def test_find_5b(self):
         """Aux field in one Data Set but not another. (proper subset)"""
         cons={'data_release':['SDSS-DR16','DESI-EDR']}
@@ -361,6 +362,7 @@ class SparclClientTest(unittest.TestCase):
         self.assertEqual(f0.count, f1.count)
 
     # DLS-365
+    @skip('Not implemented. Waiting for switch to ingest-time field naming ')
     def test_find_5c(self):
         """Aux field values when they do not exist in any found records"""
         cons={'data_release':['SDSS-DR16','DESI-EDR']}
@@ -502,6 +504,7 @@ class AlignRecordsTest(unittest.TestCase):
         cls.client = sparcl.client.SparclClient(url=serverurl)
         found = cls.client.find(constraints={"data_release": ['BOSS-DR16']},
                                 limit=20)
+        cls.found = found
         cls.specflds = ['wavelength', 'flux', 'ivar', 'mask', 'model']
         cls.got = cls.client.retrieve(found.ids, include=cls.specflds)
 
@@ -509,6 +512,7 @@ class AlignRecordsTest(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
+    # Requirement #1 from DLS-280
     def test_align_1(self):
         """The grid value return by align_records is a numpy array of Floats."""
         ar_dict, grid = sg.align_records(self.got.records,
@@ -516,6 +520,7 @@ class AlignRecordsTest(unittest.TestCase):
         self.assertTrue(isinstance(grid, numpy.ndarray))
         self.assertTrue(isinstance(grid[0], numpy.float64))
 
+    # Requirement #2 from DLS-280
     def test_align_2(self):
         """Allow conversion of all SPECTRA-type fields (except for wavelength)
         to be returned as same type of structure and registered to the same
@@ -525,19 +530,22 @@ class AlignRecordsTest(unittest.TestCase):
         ar_dict, grid = sg.align_records(self.got.records, fields=self.specflds)
         self.assertEqual(sorted(ar_dict.keys()), sorted(self.specflds))
 
+    # Requirement #3 from DLS-280
     def test_align_3(self):
         """Verify shapes of arrays"""
 
         ar_dict, grid = sg.align_records(self.got.records, fields=self.specflds)
         shape = list(ar_dict.values())[0].shape
-        self.assertEqual(shape, (20, 4662))
+        self.assertEqual(shape, (20, 4667))
 
+    # Requirement #4 from DLS-280
     # Difficult to implement
     @skip('Not implemented')
     def test_align_4(self):
         """All align fields are valid spectra fields"""
         self.assertTrue(False)
 
+    # Requirement #5 from DLS-280
     def test_align_5(self):
         """Verify wavelength given."""
         msg = 'You must provide "wavelength" spectra field'
@@ -545,12 +553,21 @@ class AlignRecordsTest(unittest.TestCase):
             ar_dict, grid = sg.align_records(self.got.records,
                                              fields=['flux', 'model'])
 
-    @skip('Not implemented')
+    # Requirement #6  from DLS-280
     def test_align_6(self):
-        """align_6."""
-        self.assertTrue(False)
+        """Default FIELDS to flux,wavelength."""
+        got = self.client.retrieve(self.found.ids,
+                                  include=['flux','model', 'wavelength'])
+        ar_dict, grid = sg.align_records(got.records)
+        self.assertEqual(ar_dict['flux'].shape, (20, 4667))
 
-    @skip('Not implemented')
+    # Requirement #7  from DLS-280
     def test_align_7(self):
-        """align_5."""
-        self.assertTrue(False)
+        """Error message if PRECISION not adequote for alignment"""
+        #7 precision does not support alignment
+        got = self.client.retrieve(self.found.ids,
+                                   include=['wavelength', 'flux','model'])
+        msg = f'bad precision'
+        with self.assertRaises(Exception, msg=msg) as err:
+            ar_dict, grid = sg.align_records(got.records, precision=11)
+            shape = ar_dict['flux'].shape

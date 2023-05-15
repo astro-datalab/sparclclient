@@ -56,14 +56,17 @@ def _validate_wavelength_alignment(records, window, offsets, precision=None):
             else:
                 recwl = Decimal(rwl).quantize(PLACES)
             wwl = window[offsets[ri] + wi]
-            msg = (f'Wavelength in '
-                   f'Record[{ri}][{wi}] ({recwl}) does not match '
-                   f'Window[{offsets[ri]+wi} = offset[{ri}]={offsets[ri]} '
-                   f'+ {wi}]  ({wwl})'
-                   )
-            assert recwl == wwl, msg
-            # f'RecWL[{wi}] {rwl} != WindowWL[{offsets[ri+wi]}] {wwl} '
-            # f'offset={offsets[ri]}')
+            #! msg = (f'Wavelength in '
+            #!        f'Record[{ri}][{wi}] ({recwl}) does not match '
+            #!        f'Window[{offsets[ri]+wi} = offset[{ri}]={offsets[ri]} '
+            #!        f'+ {wi}]  ({wwl})'
+            #!        )
+            #! assert recwl == wwl, msg
+            if recwl != wwl:
+                msg = (f'The spectra cannot be aligned with the given'
+                       f' "precision" parameter ({precision}).'
+                       f' Try lowering the precision value.')
+                raise Exception(msg)
 
 
 # We want to align a bunch of records by wavelength into a single
@@ -185,8 +188,14 @@ def align_records(records, fields=['flux','wavelength'], precision=7):
     """
     # Report Garbage In
     if 'wavelength' not in fields:
-        msg = 'You must provide "wavelength" spectra field'
+        msg = (f'You must provide "wavelength" in the list provided'
+               f' in the "fields" paramter.  Got: {fields}')
         raise Exception(msg)
+    if 'wavelength' not in records[0]:
+        msg = (f'Records must contain the "wavelength" field.'
+               f' The first record contains fields: {sorted(records[0].keys())}')
+        raise Exception(msg)
+
     #! _validate_spectra_fields(records, fields)
     grid, offsets = _wavelength_grid_offsets(records, precision=precision)
     _validate_wavelength_alignment(records, grid, offsets, precision=precision)
