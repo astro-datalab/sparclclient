@@ -59,7 +59,7 @@ idfld = 'sparcl_id'  # Sci Field Name for uuid. Diff val than Internal name.
 
 showact = False
 #showact = True
-showact = showact or os.environ.get('showres') == '1'
+showact = showact or os.environ.get('showact') == '1'
 
 @contextmanager
 def streamhandler_to_console(lggr):
@@ -103,12 +103,12 @@ class SparclClientTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
-        print(f'Running Client tests\n\t against Server: '
-              f'"{urlparse(serverurl).netloc}"\n\t comparing to {exp}\n'
+        print(f'Running Client tests\n'
+              f'  against Server: "{urlparse(serverurl).netloc}"\n'
+              f'  comparing to: {exp.__name__}\n'
+              f'  showact={showact}\n'
               )
 
-        #! cls.clienti # Internal field names
-        #! cls.client2 # Renamed, Science field names
         cls.client = sparcl.client.SparclClient(url=serverurl)
         cls.timing = dict()
         cls.doc = dict()
@@ -116,6 +116,12 @@ class SparclClientTest(unittest.TestCase):
         cls.specids = [1506512395860731904, 3383388400617889792]
         cls.specids2 = [-5970393627659841536, 8712441763707768832,
                         3497074051921321984]
+        # [r.specid for r in
+        #   client.find(['specid', 'data_release'], sort='specid', limit=4).records]
+        cls.specids5 = [-9199727726476111872, -9199727451598204928,
+                        -9199727176720297984, -9199726901842391040,
+                        -9199726626964484096]
+
         # two real specids, one fake
         cls.specids3 = cls.specids2[0:2]
         cls.specids3.insert(2, 300000000000000001)
@@ -272,6 +278,16 @@ class SparclClientTest(unittest.TestCase):
         with self.assertWarns(Warning):
             self.client.retrieve(uuids + [999])
 
+    def test_retrieve_5(self):
+        """Limit number of records returned by retrieve_by_specid."""
+        res = self.client.retrieve_by_specid(self.specids5, include=['specid'],
+                                             limit=2)
+        actual = sorted([r['specid'] for r in res.records])
+        if showact:
+            print(f'retrieve_5: actual={actual}')
+
+        self.assertEqual(actual, exp.retrieve_5, msg='Actual to Expected')
+
     def test_find_0(self):
         """Get metadata using search spec."""
         #! name = 'find_0'
@@ -339,6 +355,8 @@ class SparclClientTest(unittest.TestCase):
                          sorted(exp.find_4),
                          msg='Actual to Expected')
 
+    # DLS-365
+    @skip('Not implemented. Waiting for switch to ingest-time field naming ')
     def test_find_5a(self):
         """Aux field values when they exists in all found records"""
         found = self.client.find(['data_release', 'mjd'], limit=5, sort='id')

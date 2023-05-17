@@ -38,40 +38,7 @@ retrieve_0 = [3383388400617889792]  # PAT
 
 retrieve_0b = ['_dr', 'dec', 'flux', 'ra', idfld, 'specid', 'wavelength']
 
-retrieve_4 = ['FIBERID',
-              'MJD',
-              'PLATEID',
-              'RUN1D',
-              'RUN2D',
-              'SPECOBJID',
-              'data_release_id',
-              'datasetgroup_id',
-              'dateobs',
-              'dateobs_center',
-              'dec',
-              'exptime',
-              'flux',
-              'instrument_id',
-              'ivar',
-              'mask',
-              'model',
-              'ra',
-              'redshift_err',
-              'redshift_warning',
-              'site',
-              'sky',
-              'specid',
-              'specprimary',
-              'spectype_id',
-              'targetid',
-              'telescope_id',
-              idfld,
-              'wave_sigma',
-              'wavelength',
-              'wavemax',
-              'wavemin',
-              'z']
-
+retrieve_5 = [-9199727451598204928, -9199726901842391040]
 
 find_0 = [{'_dr': 'SDSS-DR16',
   'dec': 63.370185,
