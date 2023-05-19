@@ -220,7 +220,8 @@ class SparclClientTest(unittest.TestCase):
 
     def test_missing_specids_1(self):
         """Specids (not UUID) missing"""
-        specids = ['1506454396622366720', '1506454671500273664']
+        # DEV-sp specids = ['1506454396622366720', '1506454671500273664']
+        specids = ['435780743478667264']
         badid = 'NOT_SPEC_ID'
         specids += [badid]
         missing = self.client.missing_specids(specids)
