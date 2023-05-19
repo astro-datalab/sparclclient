@@ -31,4 +31,4 @@ __all__ = ["client", "align_records"]
 #__version__ = '1.1rc1'
 #__version__ = '1.1rc2'
 #__version__ = '1.1'
-__version__ = '1.2.0b4.dev0'
+__version__ = '1.2.0b4.dev1'

@@ -130,7 +130,7 @@ class SparclClient():  # was SparclApi()
 
     """
 
-    KNOWN_GOOD_API_VERSION = 8.0  # @@@ Change this on Server version increment
+    KNOWN_GOOD_API_VERSION = 9.0  # @@@ Change this on Server version increment
 
     def __init__(self, *,
                  url=_PROD,
@@ -474,6 +474,57 @@ class SparclClient():  # was SparclApi()
         ret = res.json()
         return ret
         # END missing()
+
+    def missing_specids(self, specid_list, *, dataset_list=None,
+                        countOnly=False, verbose=False):
+        """Return the subset of specids in the given specid_list that are
+        NOT stored in the SPARC database.
+
+        Args:
+            specid_list (:obj:`list`): List of specids.
+
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to find missing specids. Defaults to None, meaning
+                all data sets hosted on the SPARC database.
+
+            countOnly (:obj:`bool`, optional): Set to True to return only
+                a count of the missing specids from the specid_list.
+                Defaults to False.
+
+            verbose (:obj:`bool`, optional): Set to True for in-depth return
+                statement. Defaults to False.
+
+        Returns:
+            A list of the subset of specids in the given specid_list that
+            are NOT stored in the SPARC database.
+
+        Example:
+            >>> client = SparclClient(url=_DEV)
+            >>> specids = ['1506454396622366720', '1506454671500273664']
+            >>> client.missing_specids(specids + ['bad_id'])
+            ['bad_id']
+        """
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
+        assert isinstance(dataset_list, (list, set)), (
+            f'DATASET_LIST must be a list. Found {dataset_list}')
+
+        verbose = verbose or self.verbose
+        uparams = dict(dataset_list=','.join(dataset_list))
+        qstr = urlencode(uparams)
+        url = f'{self.apiurl}/missing_specids/?{qstr}'
+        specids = list(specid_list)
+        if verbose:
+            print(f'Using url="{url}"')
+        res = requests.post(url, json=specids, timeout=self.timeout)
+
+        res.raise_for_status()
+        if res.status_code != 200:
+            raise Exception(res)
+        ret = res.json()
+        return ret
+        # END missing_specids()
+
 
     # Include fields are Science (not internal) names. But the mapping
     # of Internal to Science name depends on DataSet.  Its possible

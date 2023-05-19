@@ -218,6 +218,16 @@ class SparclClientTest(unittest.TestCase):
             print(f'missing_1: missing={missing}')
         assert missing == []
 
+    def test_missing_specids_1(self):
+        """Specids (not UUID) missing"""
+        specids = ['1506454396622366720', '1506454671500273664']
+        badid = 'NOT_SPEC_ID'
+        specids += [badid]
+        missing = self.client.missing_specids(specids)
+        if showact:
+            print(f'missing_specids_1: missing={missing}')
+        assert missing == [badid]
+
     def test_retrieve_0(self):
         """Get spectra using small list of specids."""
         #!name = 'retrieve_0'
