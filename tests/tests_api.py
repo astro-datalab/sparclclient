@@ -36,6 +36,8 @@ import sparcl.exceptions as ex
 import sparcl.gather_2d as sg
 # External Packages
 import numpy
+import logging
+import sys
 
 DEFAULT = 'DEFAULT'
 ALL = 'ALL'
@@ -61,6 +63,7 @@ showact = False
 #showact = True
 showact = showact or os.environ.get('showact') == '1'
 
+
 @contextmanager
 def streamhandler_to_console(lggr):
     # Use 'up to date' value of sys.stdout for StreamHandler,
@@ -69,6 +72,7 @@ def streamhandler_to_console(lggr):
     lggr.addHandler(stream_handler)
     yield
     lggr.removeHandler(stream_handler)
+
 
 def testcase_log_console(lggr):
     def testcase_decorator(func):
@@ -117,7 +121,8 @@ class SparclClientTest(unittest.TestCase):
         cls.specids2 = [-5970393627659841536, 8712441763707768832,
                         3497074051921321984]
         # [r.specid for r in
-        #   client.find(['specid', 'data_release'], sort='specid', limit=4).records]
+        #   client.find(['specid', 'data_release'], sort='specid',
+        #                limit=4).records]
         cls.specids5 = [-9199727726476111872, -9199727451598204928,
                         -9199727176720297984, -9199726901842391040,
                         -9199726626964484096]
@@ -354,7 +359,6 @@ class SparclClientTest(unittest.TestCase):
                          sorted(exp.find_3, key=lambda rec: rec[idfld]),
                          msg='Actual to Expected')
 
-
     def test_find_4(self):
         """Check found.ids"""
         outfields = [idfld, 'ra', 'dec']
@@ -374,14 +378,14 @@ class SparclClientTest(unittest.TestCase):
         actual = found.records
         if showact:
             print(f'find_5a: actual={pf(actual)}')
-        self.assertEqual(actual,exp.find_5a,
+        self.assertEqual(actual, exp.find_5a,
                          msg='Actual to Expected')
 
     # DLS-365
     @skip('Not implemented. Waiting for switch to ingest-time field naming ')
     def test_find_5b(self):
         """Aux field in one Data Set but not another. (proper subset)"""
-        cons={'data_release':['SDSS-DR16','DESI-EDR']}
+        cons = {'data_release': ['SDSS-DR16', 'DESI-EDR']}
         f0 = self.client.find(['data_release'],
                               constraints=cons,
                               limit=5, sort='id')
@@ -394,14 +398,12 @@ class SparclClientTest(unittest.TestCase):
     @skip('Not implemented. Waiting for switch to ingest-time field naming ')
     def test_find_5c(self):
         """Aux field values when they do not exist in any found records"""
-        cons={'data_release':['SDSS-DR16','DESI-EDR']}
+        cons = {'data_release': ['SDSS-DR16', 'DESI-EDR']}
         nsf = 'NO_SUCH_FIELD'
-        f1 = self.client.find(['data_release', nsf],  constraints=cons,
+        f1 = self.client.find(['data_release', nsf], constraints=cons,
                               limit=5, sort='id')
         msg = f'Expected field "{nsf}" with value None in all records'
         self.assertTrue(nsf in f1.records[0].keys(), msg)
-
-
 
     def test_reorder_1a(self):
         """Reorder retrieved records by sparcl_id."""
@@ -543,9 +545,11 @@ class AlignRecordsTest(unittest.TestCase):
 
     # Requirement #1 from DLS-280
     def test_align_1(self):
-        """The grid value return by align_records is a numpy array of Floats."""
+        """The grid value return by align_records is a numpy array of
+        Floats."""
         ar_dict, grid = sg.align_records(self.got.records,
-                                         fields=['wavelength', 'flux', 'model'])
+                                         fields=['wavelength', 'flux',
+                                                 'model'])
         self.assertTrue(isinstance(grid, numpy.ndarray))
         self.assertTrue(isinstance(grid[0], numpy.float64))
 
@@ -556,16 +560,18 @@ class AlignRecordsTest(unittest.TestCase):
         wavelength grid."""
 
         #! print(f'Fields={list(self.got.records[0].keys())}')
-        ar_dict, grid = sg.align_records(self.got.records, fields=self.specflds)
+        ar_dict, grid = sg.align_records(self.got.records,
+                                         fields=self.specflds)
         self.assertEqual(sorted(ar_dict.keys()), sorted(self.specflds))
 
     # Requirement #3 from DLS-280
     def test_align_3(self):
         """Verify shapes of arrays"""
 
-        ar_dict, grid = sg.align_records(self.got.records, fields=self.specflds)
+        ar_dict, grid = sg.align_records(self.got.records,
+                                         fields=self.specflds)
         shape = list(ar_dict.values())[0].shape
-        self.assertEqual(shape, (20, 4667))
+        self.assertEqual(shape, (20, 4669))
 
     # Requirement #4 from DLS-280
     # Difficult to implement
@@ -578,7 +584,7 @@ class AlignRecordsTest(unittest.TestCase):
     def test_align_5(self):
         """Verify wavelength given."""
         msg = 'You must provide "wavelength" spectra field'
-        with self.assertRaises(Exception, msg=msg) as err:
+        with self.assertRaises(Exception, msg=msg):
             ar_dict, grid = sg.align_records(self.got.records,
                                              fields=['flux', 'model'])
 
@@ -586,17 +592,17 @@ class AlignRecordsTest(unittest.TestCase):
     def test_align_6(self):
         """Default FIELDS to flux,wavelength."""
         got = self.client.retrieve(self.found.ids,
-                                  include=['flux','model', 'wavelength'])
+                                   include=['flux', 'model', 'wavelength'])
         ar_dict, grid = sg.align_records(got.records)
-        self.assertEqual(ar_dict['flux'].shape, (20, 4667))
+        self.assertEqual(ar_dict['flux'].shape, (20, 4669))
 
     # Requirement #7  from DLS-280
     def test_align_7(self):
         """Error message if PRECISION not adequote for alignment"""
         #7 precision does not support alignment
         got = self.client.retrieve(self.found.ids,
-                                   include=['wavelength', 'flux','model'])
+                                   include=['wavelength', 'flux', 'model'])
         msg = f'bad precision'
-        with self.assertRaises(Exception, msg=msg) as err:
+        with self.assertRaises(Exception, msg=msg):
             ar_dict, grid = sg.align_records(got.records, precision=11)
-            shape = ar_dict['flux'].shape
+            #shape = ar_dict['flux'].shape

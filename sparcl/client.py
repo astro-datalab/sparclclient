@@ -394,7 +394,8 @@ class SparclClient():  # was SparclApi()
                 raise ex.NoCommonIdField(msg)
             outfields = [idfld]
         dataset_list = self.fields.all_drs
-        #! self._validate_science_fields(outfields, dataset_list=dataset_list) # DLS-401
+        #! self._validate_science_fields(outfields,
+        #!                               dataset_list=dataset_list) # DLS-401
         dr = list(dataset_list)[0]
         if len(constraints) > 0:
             self._validate_science_fields(constraints.keys(),
@@ -499,8 +500,8 @@ class SparclClient():  # was SparclApi()
             are NOT stored in the SPARC database.
 
         Example:
-            >>> client = SparclClient(url=_DEV)
-            >>> specids = ['1506454396622366720', '1506454671500273664']
+            >>> client = SparclClient(url=_PAT)
+            >>> specids = ['7972592460248666112', '3663710814482833408']
             >>> client.missing_specids(specids + ['bad_id'])
             ['bad_id']
         """
@@ -524,7 +525,6 @@ class SparclClient():  # was SparclApi()
         ret = res.json()
         return ret
         # END missing_specids()
-
 
     # Include fields are Science (not internal) names. But the mapping
     # of Internal to Science name depends on DataSet.  Its possible
