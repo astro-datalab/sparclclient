@@ -782,6 +782,7 @@ class SparclClient():  # was SparclApi()
             print(f'Got {res.count} records.')
         return res
 
+# this is a really long comment line to verify that flake8 is catching such things and requiring no longer than 80 characters.
 
 if __name__ == "__main__":
     import doctest
