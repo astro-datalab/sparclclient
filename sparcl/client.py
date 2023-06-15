@@ -232,7 +232,7 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_default_fields()
-            ['flux', 'id', 'wavelength']
+            ['dec', 'flux', 'ra', 'sparcl_id', 'specid', 'wavelength']
         """
 
         if dataset_list is None:
@@ -263,7 +263,7 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_all_fields()
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'flux', 'instrument', 'ivar', 'mask', 'model', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'site', 'sparcl_id', 'specid', 'specprimary', 'spectype', 'survey', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
         """  # noqa: E501
 
         common = set(self.fields.common(dataset_list))
@@ -321,7 +321,7 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> sorted(client.get_available_fields())
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'filename', 'filesize', 'flux', 'instrument', 'ivar', 'mask', 'model', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'site', 'sparcl_id', 'specid', 'specprimary', 'spectype', 'survey', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
         """  # noqa: E501
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
@@ -340,7 +340,7 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.version
-            8.0
+            9.0
         """
 
         if self.apiversion is None:
@@ -390,11 +390,11 @@ class SparclClient:  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> outs = ['id', 'ra', 'dec']
+            >>> outs = ['sparcl_id', 'ra', 'dec']
             >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
             >>> found = client.find(outfields=outs, constraints=cons)
             >>> sorted(list(found.records[0].keys()))
-            ['_dr', 'dec', 'id', 'ra']
+            ['_dr', 'dec', 'ra', 'sparcl_id']
         """
         # dataset_list (:obj:`list`, optional): List of data sets from
         #     which to find records. Defaults to None, which
@@ -615,7 +615,7 @@ class SparclClient:  # was SparclApi()
                 data sets hosted on the SPARC database.
 
             limit (:obj:`int`, optional): Maximum number of records to
-                return. Defaults to 500.
+                return. Defaults to 500. Maximum allowed is 24,000.
 
             chunk (:obj:`int`, optional): Size of chunks to break list into.
                 Defaults to 500.
@@ -628,8 +628,8 @@ class SparclClient:  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> ids = ['000017b6-56a2-4f87-8828-3a3409ba1083',]
-            >>> inc = ['id', 'flux', 'wavelength', 'model']
+            >>> ids = ['00000f0b-07db-4234-892a-6e347db79c89',]
+            >>> inc = ['sparcl_id', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve(uuid_list=ids, include=inc)
             >>> type(ret.records[0].wavelength)
             <class 'numpy.ndarray'>
@@ -776,6 +776,9 @@ class SparclClient:  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
                 data sets hosted on the SPARC database.
+
+            limit (:obj:`int`, optional): Maximum number of records to
+                return. Defaults to 500. Maximum allowed is 24,000.
 
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
