@@ -670,13 +670,14 @@ class SparclClient:  # was SparclApi()
         com_include = self._common_internal(
             science_fields=include_list, dataset_list=dataset_list
         )
-        uparams = dict(
-            include=",".join(com_include),
+        uparams = {
+            "include": ",".join(com_include),
             # limit=limit,  # altered uuid_list to reflect limit
-            chunk_len=chunk,
-            format=format,
-            dataset_list=",".join(dataset_list),
-        )
+            "chunk_len": chunk,
+            "format": format,
+            "1thread": "yes",  # @@@ 7.3.2023
+            "dataset_list": ",".join(dataset_list),
+        }
         qstr = urlencode(uparams)
 
         #!url = f'{self.apiurl}/retrieve/?{qstr}'
