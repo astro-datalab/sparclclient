@@ -405,16 +405,7 @@ class SparclClient:  # was SparclApi()
 
         # Let "outfields" default to ['id']; but fld may have been renamed
         if outfields is None:
-            dslist = list(self.fields.all_datasets)
-            idfld = self.fields._science_name("id", dslist[0])
-            if idfld not in self.fields.common():
-                msg = (
-                    f'The "id" field ("{idfld}" is not common to all '
-                    f'current Data Sets ({(", ").join(dslist)}) '
-                    f'so we cannot use the default outfields="{idfld}".'
-                )
-                raise ex.NoCommonIdField(msg)
-            outfields = [idfld]
+            outfields = ["sparcl_id"]
         dataset_list = self.fields.all_drs
         #! self._validate_science_fields(outfields,
         #!                               dataset_list=dataset_list) # DLS-401
@@ -816,7 +807,7 @@ class SparclClient:  # was SparclApi()
 
         # Science Field Name for uuid.
         dr = list(self.fields.all_drs)[0]
-        idfld = self.fields._science_name("id", dr)
+        idfld = self.fields._science_name("sparcl_id", dr)
 
         found = self.find([idfld], constraints=constraints, limit=limit)
         if verbose:

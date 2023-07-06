@@ -133,7 +133,7 @@ class Results(UserList):
             new_recs = self.science_to_internal_fields()
             # Get the ids or specids from retrieved records
             if type(ids_og[0]) == str:
-                ids_re = [f["id"] for f in new_recs]
+                ids_re = [f["sparcl_id"] for f in new_recs]
             elif type(ids_og[0]) == int:
                 ids_re = [f["specid"] for f in new_recs]
             # Enumerate the original ids
@@ -150,7 +150,7 @@ class Results(UserList):
             dummy_record = "{'id': None, 'specid': None, '_dr': 'SDSS-DR16'}"
             for i in none_idx:
                 reordered.insert(
-                    i, {"id": None, "specid": None, "_dr": "SDSS-DR16"}
+                    i, {"sparcl_id": None, "specid": None, "_dr": "SDSS-DR16"}
                 )
             reordered.insert(0, self.hdr)
             meta = reordered[0]
@@ -220,7 +220,6 @@ class Found(Results):
     @property
     def ids(self):
         """List of unique identifiers of matched records."""
-        dr = list(self.fields.all_drs)[0]
-        idfld = self.fields._science_name("id", dr)
+        #! dr = list(self.fields.all_drs)[0]
 
-        return [d.get(idfld) for d in self.recs]
+        return [d.get("sparcl_id") for d in self.recs]

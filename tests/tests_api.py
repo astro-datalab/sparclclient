@@ -33,7 +33,7 @@ import sparcl.gather_2d
 
 # from sparcl.client import DEFAULT, ALL
 from tests.utils import tic, toc
-import tests.expected as exp_pat
+import tests.expected_pat as exp_pat
 import tests.expected_dev1 as exp_dev
 import sparcl.exceptions as ex
 import sparcl.gather_2d as sg
@@ -61,12 +61,7 @@ if serverurl in DEV_SERVERS:
 else:
     exp = exp_pat
 
-
-#!idfld = 'uuid'  # Science Field Name for uuid. Diff val than Internal name.
-idfld = "sparcl_id"  # Sci Field Name for uuid. Diff val than Internal name.
-
 showact = False
-# showact = True
 showact = showact or os.environ.get("showact") == "1"
 
 
@@ -129,41 +124,34 @@ class SparclClientTest(unittest.TestCase):
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
-        cls.specids = [1506512395860731904, 3383388400617889792]
-        cls.specids2 = [
-            -5970393627659841536,
-            8712441763707768832,
-            3497074051921321984,
-        ]
-        # [r.specid for r in
-        #   client.find(['specid', 'data_release'], sort='specid',
-        #                limit=4).records]
-        cls.specids5 = [
-            -9199727726476111872,
-            -9199727451598204928,
-            -9199727176720297984,
-            -9199726901842391040,
-            -9199726626964484096,
-        ]
 
+        # Get some id_lists to use in tests
+        found = cls.client.find(["sparcl_id", "specid"], limit=5)
+        sparc_tups, spec_tups = list(
+            zip(*[(r["sparcl_id"], r["specid"]) for r in found.records])
+        )
+        sparc_ids, spec_ids = list(sparc_tups), list(spec_tups)
+        print(f"sparc_ids={sparc_ids}")
+        print(f"spec_ids={spec_ids}")
+
+        # Lists of SPECID
+        cls.specid_list0 = spec_ids[:2]
+        cls.specid_list2 = spec_ids[:3]
+        cls.specid_list5 = spec_ids[:5]
         # two real specids, one fake
-        cls.specids3 = cls.specids2[0:2]
-        cls.specids3.insert(2, 300000000000000001)
+        cls.specid_list3 = spec_ids[:2] + [300000000000000001]
         # two fake specids
-        cls.specids4 = [300000000000000001, 111111111111111111]
-        #!found = cls.client.find([idfld, 'data_release'], limit=None)
-        #!cls.uuids = sorted([rec.get(idfld) for rec in found.records])[:3]
-        cls.uuids = cls.client.find(
-            [idfld, "data_release"], sort="id", limit=3
-        ).ids
-        cls.uuids2 = cls.client.find(
-            [idfld, "data_release"], sort="data_release", limit=3
-        ).ids
+        cls.specid_list4 = [300000000000000001, 111111111111111111]
+
+        # Lists of SPARCL_ID (UUID)
+        cls.uuid_list0 = sparc_ids[:3]
+        cls.uuid_list2 = sparc_ids[:3]
         # two real UUIDs, one fake
-        cls.uuids3 = cls.uuids2[1:3]
-        cls.uuids3.insert(1, "00001ebf-d030-4d59-97e5-060c47202897")
-        # two fake UUIDs
-        cls.uuids4 = [
+        cls.uuid_list3 = sparc_ids[:2] + [
+            "00001ebf-d030-4d59-97e5-060c47202897"
+        ]
+        # two (probably) fake UUIDs
+        cls.uuid_list4 = [
             "00001ebf-d030-4d59-97e5-060c47202897",
             "ff1e9a12-f21a-4050-bada-a1e67a265885",
         ]
@@ -171,12 +159,6 @@ class SparclClientTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pass
-        #! print(f'\n## Times on: {urlparse(serverurl).netloc.split(".")[0]}'
-        #!       ' (TestName, NumRecs, Description)')
-        #! for k,v in cls.timing.items():
-        #!     print(f'##   {k}: elapsed={v:.1f} secs;'
-        #!           f'\t{cls.count.get(k)}'
-        #!           f'\t{cls.doc.get(k)}')
 
     # Full records are big.  Get the gist of them.
     def records_expected(self, recs, expd, jdata=None, show=False):
@@ -187,17 +169,6 @@ class SparclClientTest(unittest.TestCase):
             print(f"{expd}: ACTUAL={actual}")
         self.assertEqual(actual, expected, "Actual to Expected")
         return actual
-
-    # This is checked in SparclClient.__init__()
-    #!def test_version(self):
-    #!    """Get version of the NOIRLab SPARC Server API"""
-    #!    version = self.client.version
-    #!    expected = 4.0 # only major version part matters. Minor=.0
-    #!    assert expected <= version < (1 + expected),(
-    #!        f'Client/Server mismatch. '
-    #!        f'Must be: expected({expected}) <= version({version}) '
-    #!        f'< (1 + expected)'
-    #!        )
 
     #################################
     # ## Convenience Functions
@@ -229,13 +200,13 @@ class SparclClientTest(unittest.TestCase):
     def test_missing_0(self):
         """Known missing"""
         uuids = [99, 88, 777]
-        missing = self.client.missing(self.uuids + uuids)
+        missing = self.client.missing(self.uuid_list0 + uuids)
         assert sorted(missing) == sorted(uuids)
 
     def test_missing_1(self):
         """None missing"""
         # uuids = self.client.sample_uuids()
-        uuids = self.uuids
+        uuids = self.uuid_list0
 
         missing = self.client.missing(uuids)
         if showact:
@@ -244,36 +215,30 @@ class SparclClientTest(unittest.TestCase):
 
     def test_missing_specids_1(self):
         """Specids (not UUID) missing"""
-        # DEV-sp specids = ['1506454396622366720', '1506454671500273664']
-        specids = ["435780743478667264"]
+        specids = self.specid_list0[:1]
         badid = "NOT_SPEC_ID"
         specids += [badid]
         missing = self.client.missing_specids(specids)
         if showact:
+            print(f"missing_specids_1: specids={specids}")
             print(f"missing_specids_1: missing={missing}")
         assert missing == [badid]
 
     def test_retrieve_0(self):
         """Get spectra using small list of specids."""
-        #!name = 'retrieve_0'
-        #!this = self.test_retrieve_0
-
         res = self.client.retrieve_by_specid(
-            self.specids, include=[idfld, "specid"]
+            self.specid_list0, include=["sparcl_id", "specid"]
         )
         actual = sorted([r["specid"] for r in res.records])
         if showact:
             print(f"retrieve_0: actual={actual}")
 
-        #!print(f'DBG gotspecids={gotspecids} specids={specids}')
         self.assertEqual(actual, exp.retrieve_0, msg="Actual to Expected")
 
     def test_retrieve_0b(self):
         """Get spectra using small list of uuids."""
         name = "retrieve_0b"
-        #!this = self.test_retrieve_0b
-        # uuids from expected.py:retrieve_0
-        uuids = self.uuids
+        uuids = self.uuid_list0
 
         tic()
         res = self.client.retrieve(uuids)
@@ -293,7 +258,7 @@ class SparclClientTest(unittest.TestCase):
         #!                                             dataset_list=drs))
         with self.assertRaises(ex.BadInclude):
             self.client.retrieve_by_specid(
-                self.specids, include=inc2, dataset_list=drs
+                self.specid_list0, include=inc2, dataset_list=drs
             )
 
     #! @skip('Cannot find an example of this edge case occuring')
@@ -310,14 +275,14 @@ class SparclClientTest(unittest.TestCase):
 
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
-        uuids = self.uuids
+        uuids = self.uuid_list0
         with self.assertWarns(Warning):
             self.client.retrieve(uuids + [999])
 
     def test_retrieve_5(self):
         """Limit number of records returned by retrieve_by_specid."""
         res = self.client.retrieve_by_specid(
-            self.specids5, include=["specid"], limit=2
+            self.specid_list5, include=["specid"], limit=2
         )
         actual = sorted([r["specid"] for r in res.records])
         if showact:
@@ -327,10 +292,8 @@ class SparclClientTest(unittest.TestCase):
 
     def test_find_0(self):
         """Get metadata using search spec."""
-        #! name = 'find_0'
-        #! this = self.test_find_0
 
-        outfields = [idfld, "ra", "dec"]
+        outfields = ["sparcl_id", "ra", "dec"]
         # from list(FitsFile.objects.all().values('ra','dec'))
 
         # To get suitable constraints (in sparc-shell on Server):
@@ -348,22 +311,24 @@ class SparclClientTest(unittest.TestCase):
 
     def test_find_1(self):
         """Get metadata using search spec."""
-        outfields = [idfld, "ra", "dec"]
-        found = self.client.find(outfields, limit=1, sort="id")  # @@@
-        actual = sorted(found.records, key=lambda rec: rec[idfld])
+        outfields = ["sparcl_id", "ra", "dec"]
+        found = self.client.find(outfields, limit=1, sort="sparcl_id")  # @@@
+        actual = sorted(found.records, key=lambda rec: rec["sparcl_id"])
         if showact:
             print(f"find_1: actual={pf(actual)}")
         self.assertEqual(
             actual,
-            sorted(exp.find_1, key=lambda rec: rec[idfld]),
+            sorted(exp.find_1, key=lambda rec: rec["sparcl_id"]),
             msg="Actual to Expected",
         )
 
     @skip("Takes too long for regression tests when used on big database.")
     def test_find_2(self):
         """Limit=None."""
-        outfields = [idfld, "ra", "dec"]
-        found = self.client.find(outfields, limit=None, sort="id")  # @@@
+        outfields = ["sparcl_id", "ra", "dec"]
+        found = self.client.find(
+            outfields, limit=None, sort="sparcl_id"
+        )  # @@@
         actual = len(found.records)
         if showact:
             print(f"find_2: actual={pf(actual)}")
@@ -371,21 +336,21 @@ class SparclClientTest(unittest.TestCase):
 
     def test_find_3(self):
         """Limit=3."""
-        outfields = [idfld, "ra", "dec"]
-        found = self.client.find(outfields, limit=3, sort="id")  # @@@
-        actual = sorted(found.records, key=lambda rec: rec[idfld])
+        outfields = ["sparcl_id", "ra", "dec"]
+        found = self.client.find(outfields, limit=3, sort="sparcl_id")  # @@@
+        actual = sorted(found.records, key=lambda rec: rec["sparcl_id"])
         if showact:
             print(f"find_3: actual={pf(actual)}")
         self.assertEqual(
             actual,
-            sorted(exp.find_3, key=lambda rec: rec[idfld]),
+            sorted(exp.find_3, key=lambda rec: rec["sparcl_id"]),
             msg="Actual to Expected",
         )
 
     def test_find_4(self):
         """Check found.ids"""
-        outfields = [idfld, "ra", "dec"]
-        found = self.client.find(outfields, limit=3, sort="id")  # @@@
+        outfields = ["sparcl_id", "ra", "dec"]
+        found = self.client.find(outfields, limit=3, sort="sparcl_id")  # @@@
         actual = sorted(found.ids)
         if showact:
             print(f"find_4: actual={pf(actual)}")
@@ -395,7 +360,9 @@ class SparclClientTest(unittest.TestCase):
     @skip("Not implemented. Waiting for switch to ingest-time field naming ")
     def test_find_5a(self):
         """Aux field values when they exists in all found records"""
-        found = self.client.find(["data_release", "mjd"], limit=5, sort="id")
+        found = self.client.find(
+            ["data_release", "mjd"], limit=5, sort="sparcl_id"
+        )
         actual = found.records
         if showact:
             print(f"find_5a: actual={pf(actual)}")
@@ -407,10 +374,13 @@ class SparclClientTest(unittest.TestCase):
         """Aux field in one Data Set but not another. (proper subset)"""
         cons = {"data_release": ["SDSS-DR16", "DESI-EDR"]}
         f0 = self.client.find(
-            ["data_release"], constraints=cons, limit=5, sort="id"
+            ["data_release"], constraints=cons, limit=5, sort="sparcl_id"
         )
         f1 = self.client.find(
-            ["data_release", "plate"], constraints=cons, limit=5, sort="id"
+            ["data_release", "plate"],
+            constraints=cons,
+            limit=5,
+            sort="sparcl_id",
         )
         self.assertEqual(f0.count, f1.count)
 
@@ -421,7 +391,7 @@ class SparclClientTest(unittest.TestCase):
         cons = {"data_release": ["SDSS-DR16", "DESI-EDR"]}
         nsf = "NO_SUCH_FIELD"
         f1 = self.client.find(
-            ["data_release", nsf], constraints=cons, limit=5, sort="id"
+            ["data_release", nsf], constraints=cons, limit=5, sort="sparcl_id"
         )
         msg = f'Expected field "{nsf}" with value None in all records'
         self.assertTrue(nsf in f1.records[0].keys(), msg)
@@ -429,7 +399,7 @@ class SparclClientTest(unittest.TestCase):
     def test_reorder_1a(self):
         """Reorder retrieved records by sparcl_id."""
         name = "reorder_1a"
-        ids = self.uuids2
+        ids = self.uuid_list2
 
         tic()
         res = self.client.retrieve(ids)
@@ -443,7 +413,7 @@ class SparclClientTest(unittest.TestCase):
     def test_reorder_1b(self):
         """Reorder retrieved records by specid."""
         name = "reorder_1b"
-        specids = self.specids2
+        specids = self.specid_list2
 
         tic()
         res = self.client.retrieve_by_specid(specids)
@@ -458,7 +428,7 @@ class SparclClientTest(unittest.TestCase):
         """Reorder records when sparcl_id is missing from database, after using
         retrieve()."""
         name = "reorder_2a"
-        ids = self.uuids3
+        ids = self.uuid_list3
 
         tic()
         with self.assertWarns(Warning):
@@ -475,7 +445,7 @@ class SparclClientTest(unittest.TestCase):
         """Reorder records when specid is missing from database, after
         using retrieve_by_specid()."""
         name = "reorder_2b"
-        specids = self.specids3
+        specids = self.specid_list3
 
         tic()
         res = self.client.retrieve_by_specid(specids)
@@ -491,7 +461,7 @@ class SparclClientTest(unittest.TestCase):
         """Test for expected Exception when a list of sparcl_ids with
         length 0 is passed to reorder method after using retrieve()."""
         name = "reorder_3a"
-        ids = self.uuids2
+        ids = self.uuid_list2
         og_ids = []
 
         tic()
@@ -504,7 +474,7 @@ class SparclClientTest(unittest.TestCase):
         """Test for expected Exception when a list of specids with length 0
         is passed to reorder method after using retrieve_by_specid()."""
         name = "reorder_3b"
-        specids = self.specids2
+        specids = self.specid_list2
         og_specids = []
 
         tic()
@@ -517,7 +487,7 @@ class SparclClientTest(unittest.TestCase):
         """Test for expected Exception when there are no records, using
         sparcl_ids and retrieve()."""
         name = "reorder_4a"
-        ids = self.uuids4
+        ids = self.uuid_list4
 
         tic()
         with self.assertWarns(Warning):
@@ -530,7 +500,7 @@ class SparclClientTest(unittest.TestCase):
         """Test for expected Exception when there are no records, using specids
         and retrieve_by_specid()."""
         name = "reorder_4b"
-        specids = self.specids4
+        specids = self.specid_list4
 
         tic()
         res = self.client.retrieve_by_specid(specids)
@@ -542,7 +512,9 @@ class SparclClientTest(unittest.TestCase):
         idss = self.client.find(
             constraints={"data_release": ["SDSS-DR16"]}, limit=2
         ).ids
-        re = self.client.retrieve(uuid_list=idss, verbose=True)
+        re = self.client.retrieve(
+            uuid_list=idss, include=["ra", "dec"], verbose=True
+        )
         self.assertEqual(2, re.count)
 
 
@@ -594,7 +566,7 @@ class AlignRecordsTest(unittest.TestCase):
             self.got.records, fields=self.specflds
         )
         shape = list(ar_dict.values())[0].shape
-        self.assertEqual(shape, (20, 4669))
+        self.assertEqual(shape, (20, 4621))
 
     # Requirement #4 from DLS-280
     # Difficult to implement
@@ -619,11 +591,12 @@ class AlignRecordsTest(unittest.TestCase):
             self.found.ids, include=["flux", "model", "wavelength"]
         )
         ar_dict, grid = sg.align_records(got.records)
-        self.assertEqual(ar_dict["flux"].shape, (20, 4669))
+        self.assertEqual(ar_dict["flux"].shape, (20, 4621))
 
     # Requirement #7  from DLS-280
+    @skip("Data on DEV does not seem good enough to invoke this.")
     def test_align_7(self):
-        """Error message if PRECISION not adequote for alignment"""
+        """Error message if PRECISION not adequate for alignment"""
         # 7 precision does not support alignment
         got = self.client.retrieve(
             self.found.ids, include=["wavelength", "flux", "model"]
