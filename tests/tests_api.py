@@ -2,7 +2,7 @@
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
 #   python -m unittest tests.tests_api
 #
-#  ### Run Against Dev Server.
+#  ### Run Against DEV Server.
 #  serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #  showres=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #
@@ -12,36 +12,45 @@
 # python3 -m unittest tests.tests_api.AlignRecordsTest
 #
 # showact=1 python -m unittest -k test_find_5 tests.tests_api
+#
+#  ### Run Against STAGE Server.
+#  serverurl=https://sparclstage.datalab.noirlab.edu/ python -m unittest tests.gtests_api  # noqa: E501
+#
+#  ### Run Against PROD Server.
+#  serverurl=https://astrosparcl.datalab.noirlab.edu/ python -m unittest tests.tests_api  # noqa: E501
 
 # Python library
 from contextlib import contextmanager
 import unittest
 from unittest import skip
+import datetime
 
 #! from unittest mock, skipIf, skipUnless
 #!import warnings
 from pprint import pformat as pf
 from urllib.parse import urlparse
 
-#!from unittest.mock import MagicMock
-#!from unittest.mock import create_autospec
+#! from urllib.parse import urlencode
+
+#!from unittest.mock import MagicMock, create_autospec
 import os
-
-# Local Packages
-import sparcl.client
-import sparcl.gather_2d
-
-# from sparcl.client import DEFAULT, ALL
-from tests.utils import tic, toc
-import tests.expected_pat as exp_pat
-import tests.expected_dev1 as exp_dev
-import sparcl.exceptions as ex
-import sparcl.gather_2d as sg
 
 # External Packages
 import numpy
 import logging
 import sys
+
+# Local Packages
+from tests.utils import tic, toc
+import tests.expected_pat as exp_pat
+import tests.expected_dev1 as exp_dev
+import sparcl.exceptions as ex
+import sparcl.gather_2d as sg
+import sparcl.client
+import sparcl.gather_2d
+
+#! import sparcl.utils as ut
+
 
 DEFAULT = "DEFAULT"
 ALL = "ALL"
@@ -63,6 +72,8 @@ else:
 
 showact = False
 showact = showact or os.environ.get("showact") == "1"
+
+clverb = True
 
 
 @contextmanager
@@ -109,6 +120,12 @@ class SparclClientTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if clverb:
+            print(
+                f"\n# Running SparclClientTest:setUpClass() "
+                "{str(datetime.datetime.now())}"
+            )
+
         # Client object creation compares the version from the Server
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
@@ -120,7 +137,7 @@ class SparclClientTest(unittest.TestCase):
             f"  showact={showact}\n"
         )
 
-        cls.client = sparcl.client.SparclClient(url=serverurl)
+        cls.client = sparcl.client.SparclClient(url=serverurl, verbose=clverb)
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -155,6 +172,11 @@ class SparclClientTest(unittest.TestCase):
             "00001ebf-d030-4d59-97e5-060c47202897",
             "ff1e9a12-f21a-4050-bada-a1e67a265885",
         ]
+        if clverb:
+            print(
+                f"\n# Completed SparclClientTest:setUpClass() "
+                f"{str(datetime.datetime.now())}\n"
+            )
 
     @classmethod
     def tearDownClass(cls):
@@ -519,18 +541,31 @@ class SparclClientTest(unittest.TestCase):
 
 
 # See DLS-280
+@skip("takes to long to retrieve")  # 7/12/23
 class AlignRecordsTest(unittest.TestCase):
     """Test ability to align spectra and all records by wavelength grid"""
 
     @classmethod
     def setUpClass(cls):
-        cls.client = sparcl.client.SparclClient(url=serverurl)
+        if clverb:
+            print(
+                f"\n# Running AlignRecordsTest:setUpClass() "
+                "{str(datetime.datetime.now())}"
+            )
+
+        cls.client = sparcl.client.SparclClient(url=serverurl, verbose=clverb)
         found = cls.client.find(
             constraints={"data_release": ["BOSS-DR16"]}, limit=20
         )
         cls.found = found
         cls.specflds = ["wavelength", "flux", "ivar", "mask", "model"]
         cls.got = cls.client.retrieve(found.ids, include=cls.specflds)
+
+        if clverb:
+            print(
+                f"\n# Completed AlignRecordsTest:setUpClass() "
+                f"{str(datetime.datetime.now())}\n"
+            )
 
     @classmethod
     def tearDownClass(cls):

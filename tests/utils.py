@@ -43,3 +43,15 @@ def objform(obj):
         return dict((k, objform(v)) for (k, v) in obj.items())
     else:
         return str(type(obj))
+
+
+# In case I want to give CURL equivalents for client methods
+def curl_retrieve_str(msg, svc="spectras", qstr="", **uparams):
+    ids = "00000dd7-b1ff-48ed-b162-46d9d65f829c,BADID"
+    #!svc = 'spectras' if use_async else 'retrieve'
+    #! qstr = urlencode(uparams)
+    url = f"https://astrosparcl.datalab.noirlab.edu/sparc/{svc}/?{qstr}"
+    curlpost1 = "curl -X 'POST' -H 'Content-Type: application/json' "
+    curlpost2 = f"-d '[{ids.split(',')}]' '{url}'"
+    #! curlpost3 = " | python3 -m json.tool"
+    return curlpost1 + curlpost2

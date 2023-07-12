@@ -137,13 +137,14 @@ class SparclClient:  # was SparclApi()
 
     """
 
-    KNOWN_GOOD_API_VERSION = 9.0  # @@@ Change this on Server version increment
+    KNOWN_GOOD_API_VERSION = 10.0  # @@@ Change when Server version incremented
 
     def __init__(
         self,
         *,
         url=_PROD,
         verbose=False,
+        show_curl=False,
         connect_timeout=1.1,  # seconds
         read_timeout=90 * 60,
     ):  # seconds
@@ -152,6 +153,7 @@ class SparclClient:  # was SparclApi()
         self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
         self.verbose = verbose
+        self.show_curl = show_curl  # Show CURL equivalent of client method
         #!self.internal_names = internal_names
         self.c_timeout = min(
             MAX_CONNECT_TIMEOUT, float(connect_timeout)
@@ -579,7 +581,8 @@ class SparclClient:  # was SparclApi()
         self,
         uuid_list,
         *,
-        svc="spectras",  # 'retrieve',
+        svc="spectras",  # retrieve, spectras
+        # svc="retrieve",
         format="pkl",  # 'json',
         include="DEFAULT",
         dataset_list=None,
