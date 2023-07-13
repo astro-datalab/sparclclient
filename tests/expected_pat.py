@@ -33,7 +33,7 @@ all_fields = [
 
 default_fields = ["dec", "flux", "ra", "sparcl_id", "specid", "wavelength"]
 
-retrieve_0 = [3383388400617889792]  # PAT
+retrieve_0 = [-6444474727991586816, -6444474453113679872]
 
 retrieve_0b = ["_dr", "dec", "flux", "ra", "sparcl_id", "specid", "wavelength"]
 

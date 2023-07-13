@@ -3,6 +3,7 @@ import datetime
 import time
 import socket
 import itertools
+import json
 
 # External packages
 #   none
@@ -165,3 +166,22 @@ def count_values(recs):
     """
     allkeys = set(list(itertools.chain(*recs)))
     return {k: sum(x.get(k) is not None for x in recs) for k in allkeys}
+
+
+# In case I want to give CURL equivalents for client methods.
+#
+# Retrieve may return results as a pickle file since it usually contains
+# spectra vectors.  To handle pickle results, write curl output to out.pkl
+# and do something like:
+#   with open('out.pkl', 'rb') as f: res = pickle.load(f)
+def curl_retrieve_str(ids, server, svc="spectras", qstr=None):
+    #! ids = ['00000dd7-b1ff-48ed-b162-46d9d65f829c', 'BADID']
+    #!svc = 'spectras' if use_async else 'retrieve'
+    #! qstr = urlencode(uparams)
+    # server = "https://sparc1.datalab.noirlab.edu"
+    qqstr = "" if qstr is None else f"?{qstr}"
+    url = f"{server}/sparc/{svc}/{qqstr}"
+    curlpost1 = "curl -X 'POST' -H 'Content-Type: application/json' "
+    curlpost2 = f"-d '{json.dumps(ids)}' '{url}'"
+    curlpost3 = " | python3 -m json.tool"
+    return curlpost1 + curlpost2 + curlpost3

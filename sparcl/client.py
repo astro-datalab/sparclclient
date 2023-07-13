@@ -149,7 +149,7 @@ class SparclClient:  # was SparclApi()
         read_timeout=90 * 60,
     ):  # seconds
         """Create client instance."""
-        self.rooturl = url.rstrip("/")
+        self.rooturl = url.rstrip("/")  # eg. "http://localhost:8050"
         self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
         self.verbose = verbose
@@ -581,13 +581,9 @@ class SparclClient:  # was SparclApi()
         self,
         uuid_list,
         *,
-        svc="spectras",  # retrieve, spectras
-        # svc="retrieve",
-        format="pkl",  # 'json',
         include="DEFAULT",
         dataset_list=None,
         limit=500,
-        chunk=500,
         verbose=None,
     ):
         """Retrieve spectra records from the SPARC database by list of
@@ -595,10 +591,6 @@ class SparclClient:  # was SparclApi()
 
         Args:
             uuid_list (:obj:`list`): List of sparcl_ids.
-
-            svc (:obj:`str`, optional): Defaults to 'spectras'.
-
-            format (:obj:`str`, optional): Defaults to 'pkl'.
 
             include (:obj:`list`, optional): List of field names to include
                 in each record. Defaults to 'DEFAULT', which will return
@@ -610,9 +602,6 @@ class SparclClient:  # was SparclApi()
 
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500. Maximum allowed is 24,000.
-
-            chunk (:obj:`int`, optional): Size of chunks to break list into.
-                Defaults to 500.
 
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
@@ -628,6 +617,22 @@ class SparclClient:  # was SparclApi()
             >>> type(ret.records[0].wavelength)
             <class 'numpy.ndarray'>
         """
+
+        # Variants for async, etc.
+        #
+        # From "performance testing" docstring
+        #    svc (:obj:`str`, optional): Defaults to 'spectras'.
+        #
+        #    format (:obj:`str`, optional): Defaults to 'pkl'.
+        #
+        #
+        #    chunk (:obj:`int`, optional): Size of chunks to break list into.
+        #        Defaults to 500.
+        #
+        # These were keyword params:
+        svc = "spectras"  # retrieve, spectras
+        format = "pkl"  # 'json',
+        chunk = 500
 
         if dataset_list is None:
             dataset_list = self.fields.all_drs
@@ -667,9 +672,9 @@ class SparclClient:  # was SparclApi()
         uparams = {
             "include": ",".join(com_include),
             # limit=limit,  # altered uuid_list to reflect limit
-            "chunk_len": chunk,
+            #! "chunk_len": chunk,
             "format": format,
-            "1thread": "yes",  # @@@ 7.3.2023
+            #! "1thread": "yes",  # @@@ 7.3.2023
             "dataset_list": ",".join(dataset_list),
         }
         qstr = urlencode(uparams)
@@ -680,8 +685,12 @@ class SparclClient:  # was SparclApi()
             print(f'Using url="{url}"')
             ut.tic()
 
+        ids = list(uuid_list) if limit is None else list(uuid_list)[:limit]
+        if self.show_curl:
+            cmd = ut.curl_retrieve_str(ids, self.rooturl, svc=svc, qstr=qstr)
+            print(cmd)
+
         try:
-            ids = list(uuid_list) if limit is None else list(uuid_list)[:limit]
             res = requests.post(url, json=ids, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f"ConnectTimeout: {reCT}")
@@ -817,8 +826,8 @@ class SparclClient:  # was SparclApi()
             print(f"Found {found.count} matches.")
         res = self.retrieve(
             found.ids,
-            svc=svc,
-            format=format,
+            #! svc=svc,
+            #! format=format,
             include=include,
             dataset_list=dataset_list,
             limit=limit,

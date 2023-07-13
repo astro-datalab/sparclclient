@@ -137,7 +137,9 @@ class SparclClientTest(unittest.TestCase):
             f"  showact={showact}\n"
         )
 
-        cls.client = sparcl.client.SparclClient(url=serverurl, verbose=clverb)
+        cls.client = sparcl.client.SparclClient(
+            url=serverurl, verbose=clverb, show_curl=False
+        )
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
@@ -247,7 +249,7 @@ class SparclClientTest(unittest.TestCase):
         assert missing == [badid]
 
     def test_retrieve_0(self):
-        """Get spectra using small list of specids."""
+        """Get spectra using small list of SPECIDS."""
         res = self.client.retrieve_by_specid(
             self.specid_list0, include=["sparcl_id", "specid"]
         )
