@@ -431,8 +431,13 @@ class SparclClient:  # was SparclApi()
         outfields = [self.fields._internal_name(s, dr) for s in outfields]
         search = [[k] + v for k, v in constraints.items()]
         sspec = dict(outfields=outfields, search=search)
+
         if verbose:
             print(f"url={url} sspec={sspec}")
+        if self.show_curl:
+            cmd = ut.curl_find_str(sspec, self.rooturl, qstr=qstr)
+            print(cmd)
+
         res = requests.post(url, json=sspec, timeout=self.timeout)
 
         if res.status_code != 200:

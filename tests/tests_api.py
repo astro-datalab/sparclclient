@@ -4,7 +4,7 @@
 #
 #  ### Run Against DEV Server.
 #  serverurl=http://localhost:8050 python -m unittest tests.tests_api
-#  showres=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  showact=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #
 # python -m unittest  -v tests.tests_api    # VERBOSE
 # python -m unittest tests.tests_api.SparclClientTest
@@ -73,6 +73,9 @@ else:
 showact = False
 showact = showact or os.environ.get("showact") == "1"
 
+showcurl = False
+showcurl = showcurl or os.environ.get("showcurl") == "1"
+
 clverb = True
 
 
@@ -135,10 +138,13 @@ class SparclClientTest(unittest.TestCase):
             f'  against Server: "{urlparse(serverurl).netloc}"\n'
             f"  comparing to: {exp.__name__}\n"
             f"  showact={showact}\n"
+            f"  showcurl={showcurl}\n"
         )
 
         cls.client = sparcl.client.SparclClient(
-            url=serverurl, verbose=clverb, show_curl=False
+            url=serverurl,
+            verbose=clverb,
+            show_curl=showcurl,
         )
         cls.timing = dict()
         cls.doc = dict()
@@ -326,8 +332,8 @@ class SparclClientTest(unittest.TestCase):
         if serverurl in DEV_SERVERS:
             constraints = {"ra": [246.0, 247.0], "dec": [+34.7, +34.8]}
         else:
-            constraints = {"ra": [137.0, 138.0], "dec": [+63.0, +64.0]}
-        found = self.client.find(outfields, constraints=constraints)
+            constraints = {"ra": [132.0, 133.0], "dec": [+28.0, +29.0]}
+        found = self.client.find(outfields, constraints=constraints, limit=3)
         actual = found.records[:2]
         if showact:
             print(f"find_0: actual={pf(actual[:2])}")
@@ -555,7 +561,9 @@ class AlignRecordsTest(unittest.TestCase):
                 "{str(datetime.datetime.now())}"
             )
 
-        cls.client = sparcl.client.SparclClient(url=serverurl, verbose=clverb)
+        cls.client = sparcl.client.SparclClient(
+            url=serverurl, verbose=clverb, show_curl=showcurl
+        )
         found = cls.client.find(
             constraints={"data_release": ["BOSS-DR16"]}, limit=20
         )

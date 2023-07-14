@@ -185,3 +185,13 @@ def curl_retrieve_str(ids, server, svc="spectras", qstr=None):
     curlpost2 = f"-d '{json.dumps(ids)}' '{url}'"
     curlpost3 = " | python3 -m json.tool"
     return curlpost1 + curlpost2 + curlpost3
+
+
+# see: curl_retrieve_str
+def curl_find_str(sspec, server, qstr=None):
+    qqstr = "" if qstr is None else f"?{qstr}"
+    url = f"{server}/sparc/find/{qqstr}"
+    curlpost1 = "curl -X 'POST' -H 'Content-Type: application/json' "
+    curlpost2 = f"-d '{json.dumps(sspec)}' '{url}'"
+    curlpost3 = " | python3 -m json.tool"
+    return curlpost1 + curlpost2 + curlpost3
