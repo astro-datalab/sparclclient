@@ -142,13 +142,19 @@ class SparclClient:  # was SparclApi()
     def __init__(
         self,
         *,
+        email=None,
+        password=None,
         url=_PROD,
         verbose=False,
         show_curl=False,
         connect_timeout=1.1,  # seconds
-        read_timeout=90 * 60,
-    ):  # seconds
+        read_timeout=90 * 60,  # seconds
+    ):
         """Create client instance."""
+        session = requests.Session()
+        self.session = session
+
+        session.auth = (email, password) if email and password else None
         self.rooturl = url.rstrip("/")  # eg. "http://localhost:8050"
         self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
@@ -696,7 +702,9 @@ class SparclClient:  # was SparclApi()
             print(cmd)
 
         try:
-            res = requests.post(url, json=ids, timeout=self.timeout)
+            res = requests.post(
+                url, json=ids, auth=self.auth, timeout=self.timeout
+            )
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f"ConnectTimeout: {reCT}")
         except requests.exceptions.ReadTimeout as reRT:
