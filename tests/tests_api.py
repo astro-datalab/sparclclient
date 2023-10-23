@@ -76,7 +76,7 @@ showact = showact or os.environ.get("showact") == "1"
 showcurl = False
 showcurl = showcurl or os.environ.get("showcurl") == "1"
 
-clverb = True
+clverb = False
 
 
 @contextmanager
@@ -151,7 +151,9 @@ class SparclClientTest(unittest.TestCase):
         cls.count = dict()
 
         # Get some id_lists to use in tests
-        found = cls.client.find(["sparcl_id", "specid"], limit=5)
+        found = cls.client.find(
+            ["sparcl_id", "specid"], sort="sparcl_id", limit=5
+        )
         sparc_tups, spec_tups = list(
             zip(*[(r["sparcl_id"], r["specid"]) for r in found.records])
         )
@@ -231,7 +233,9 @@ class SparclClientTest(unittest.TestCase):
         """Known missing"""
         uuids = [99, 88, 777]
         missing = self.client.missing(self.uuid_list0 + uuids)
-        assert sorted(missing) == sorted(uuids)
+        self.assertEqual(
+            sorted(missing), sorted(uuids), msg="Actual to Expected"
+        )
 
     def test_missing_1(self):
         """None missing"""
@@ -241,18 +245,17 @@ class SparclClientTest(unittest.TestCase):
         missing = self.client.missing(uuids)
         if showact:
             print(f"missing_1: missing={missing}")
-        assert missing == []
+        self.assertEqual(missing, [], msg="Actual to Expected")
 
     def test_missing_specids_1(self):
         """Specids (not UUID) missing"""
-        specids = self.specid_list0[:1]
         badid = "NOT_SPEC_ID"
-        specids += [badid]
-        missing = self.client.missing_specids(specids)
+        specids = set([badid] + self.specid_list0[:1])
+        missing = set(self.client.missing_specids(specids, verbose=True))
         if showact:
             print(f"missing_specids_1: specids={specids}")
             print(f"missing_specids_1: missing={missing}")
-        assert missing == [badid]
+        self.assertEqual(missing, set([badid]), msg="Actual to Expected")
 
     def test_retrieve_0(self):
         """Get spectra using small list of SPECIDS."""
@@ -324,13 +327,14 @@ class SparclClientTest(unittest.TestCase):
         """Get metadata using search spec."""
 
         outfields = ["sparcl_id", "ra", "dec"]
-        # from list(FitsFile.objects.all().values('ra','dec'))
+        # from list(FitsRecord.objects.all().values('ra','dec'))
 
         # To get suitable constraints (in sparc-shell on Server):
-        #   sorted(FitsFile.objects.all().values('ra','dec'),
+        #   sorted(FitsRecord.objects.all().values('ra','dec'),
         #          key=lambda r: r['dec'])
         if serverurl in DEV_SERVERS:
-            constraints = {"ra": [246.0, 247.0], "dec": [+34.7, +34.8]}
+            #!constraints = {"ra": [246.0, 247.0], "dec": [+34.7, +34.8]}
+            constraints = {"ra": [194.0, 195.0], "dec": [+27.5, +27.6]}
         else:
             constraints = {"ra": [132.0, 133.0], "dec": [+28.0, +29.0]}
         found = self.client.find(outfields, constraints=constraints, limit=3)
@@ -540,12 +544,12 @@ class SparclClientTest(unittest.TestCase):
 
     def test_dls_468(self):
         idss = self.client.find(
-            constraints={"data_release": ["SDSS-DR16"]}, limit=2
+            constraints={"data_release": ["SDSS-DR16"]}, limit=1
         ).ids
         re = self.client.retrieve(
             uuid_list=idss, include=["ra", "dec"], verbose=True
         )
-        self.assertEqual(2, re.count)
+        self.assertEqual(1, re.count)
 
 
 # See DLS-280

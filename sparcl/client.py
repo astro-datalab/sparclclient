@@ -154,7 +154,7 @@ class SparclClient:  # was SparclApi()
         session = requests.Session()
         self.session = session
 
-        session.auth = (email, password) if email and password else None
+        self.session.auth = (email, password) if email and password else None
         self.rooturl = url.rstrip("/")  # eg. "http://localhost:8050"
         self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
@@ -703,7 +703,7 @@ class SparclClient:  # was SparclApi()
 
         try:
             res = requests.post(
-                url, json=ids, auth=self.auth, timeout=self.timeout
+                url, json=ids, auth=self.session.auth, timeout=self.timeout
             )
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f"ConnectTimeout: {reCT}")
