@@ -137,7 +137,7 @@ class SparclClient:  # was SparclApi()
 
     """
 
-    KNOWN_GOOD_API_VERSION = 10.0  # @@@ Change when Server version incremented
+    KNOWN_GOOD_API_VERSION = 11.0  # @@@ Change when Server version incremented
 
     def __init__(
         self,

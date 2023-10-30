@@ -13,8 +13,16 @@
 #
 # showact=1 python -m unittest -k test_find_5 tests.tests_api
 #
+#  ### Run Against DEV Server.
+#  serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#
+#  ### Run Against PAT Server.
+#  serverurl=https://sparc1.datalab.noirlab.edu/
+#  python -m unittest tests.tests_api
+#
 #  ### Run Against STAGE Server.
-#  serverurl=https://sparclstage.datalab.noirlab.edu/ python -m unittest tests.gtests_api  # noqa: E501
+#  serverurl=https://sparclstage.datalab.noirlab.edu/
+#  python -m unittest tests.tests_api
 #
 #  ### Run Against PROD Server.
 #  serverurl=https://astrosparcl.datalab.noirlab.edu/ python -m unittest tests.tests_api  # noqa: E501
