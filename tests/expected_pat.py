@@ -8,8 +8,6 @@ all_fields = [
     "dateobs_center",
     "dec",
     "exptime",
-    "extra_files",
-    "file",
     "flux",
     "instrument",
     "ivar",
@@ -27,42 +25,42 @@ all_fields = [
     "survey",
     "targetid",
     "telescope",
-    "updated",
     "wave_sigma",
     "wavelength",
     "wavemax",
     "wavemin",
 ]
 
+
 default_fields = ["dec", "flux", "ra", "sparcl_id", "specid", "wavelength"]
 
-retrieve_0 = [-6444474727991586816, -6444474453113679872]
+retrieve_0 = [1254334738051655680, 1254335012929562624]
 
 retrieve_0b = ["_dr", "dec", "flux", "ra", "sparcl_id", "specid", "wavelength"]
 
-retrieve_5 = [-6444474727991586816, -6444474453113679872]
+retrieve_5 = [1254334738051655680, 1254335012929562624]
 
 find_0 = [
     {
         "_dr": "BOSS-DR16",
-        "dec": 28.992644,
-        "ra": 132.33645,
-        "sparcl_id": "00031d79-1f6d-11ee-9788-525400aad0aa",
+        "dec": 28.038113,
+        "ra": 132.95902999999998,
+        "sparcl_id": "611a5a1c-75d8-11ee-8b9f-525400aad0aa",
     },
     {
         "_dr": "BOSS-DR16",
-        "dec": 28.951661,
-        "ra": 132.40982,
-        "sparcl_id": "002f2f2a-1f6d-11ee-bd1f-525400aad0aa",
+        "dec": 28.019856,
+        "ra": 132.93685,
+        "sparcl_id": "61357ba4-75d8-11ee-a1b5-525400aad0aa",
     },
 ]
 
 find_1 = [
     {
-        "_dr": "BOSS-DR16",
-        "dec": 28.992644,
-        "ra": 132.33645,
-        "sparcl_id": "00031d79-1f6d-11ee-9788-525400aad0aa",
+        "_dr": "SDSS-DR17",
+        "dec": -0.98681,
+        "ra": 313.90848,
+        "sparcl_id": "0002f55c-75d7-11ee-822f-525400aad0aa",
     }
 ]
 
@@ -70,29 +68,30 @@ find_2 = 936894  # PAT
 
 find_3 = [
     {
-        "_dr": "BOSS-DR16",
-        "dec": 28.992644,
-        "ra": 132.33645,
-        "sparcl_id": "00031d79-1f6d-11ee-9788-525400aad0aa",
+        "_dr": "SDSS-DR17",
+        "dec": -0.98681,
+        "ra": 313.90848,
+        "sparcl_id": "0002f55c-75d7-11ee-822f-525400aad0aa",
     },
     {
-        "_dr": "BOSS-DR16",
-        "dec": 29.033685,
-        "ra": 132.33797,
-        "sparcl_id": "0018bce9-1f6d-11ee-8cd9-525400aad0aa",
+        "_dr": "SDSS-DR17",
+        "dec": -0.945676,
+        "ra": 313.91043,
+        "sparcl_id": "000df610-75d7-11ee-9957-525400aad0aa",
     },
     {
-        "_dr": "BOSS-DR16",
-        "dec": 28.951661,
-        "ra": 132.40982,
-        "sparcl_id": "002f2f2a-1f6d-11ee-bd1f-525400aad0aa",
+        "_dr": "SDSS-DR17",
+        "dec": -0.486388,
+        "ra": 313.70407,
+        "sparcl_id": "0018f253-75d7-11ee-8253-525400aad0aa",
     },
 ]
 
+
 find_4 = [
-    "00031d79-1f6d-11ee-9788-525400aad0aa",
-    "0018bce9-1f6d-11ee-8cd9-525400aad0aa",
-    "002f2f2a-1f6d-11ee-bd1f-525400aad0aa",
+    "0002f55c-75d7-11ee-822f-525400aad0aa",
+    "000df610-75d7-11ee-9957-525400aad0aa",
+    "0018f253-75d7-11ee-8253-525400aad0aa",
 ]
 
 find_5a = [
@@ -108,12 +107,8 @@ reorder_1a = [
     "fbb22144-25c5-4330-9b0b-8b2eac83079c",
 ]
 
-reorder_1b = [-6444474727991586816, -6444474453113679872, -6444474178235772928]
+reorder_1b = [1254334738051655680, 1254335012929562624, 1254335287807469568]
 
-reorder_2a = [
-    "529936c6-14ef-4119-a80d-b184dcb6308e",
-    None,
-    "fbb22144-25c5-4330-9b0b-8b2eac83079c",
-]
+reorder_2a = [1254334738051655680, 1254335012929562624, None]
 
-reorder_2b = [-6444474727991586816, -6444474453113679872, None]
+reorder_2b = [1254334738051655680, 1254335012929562624, None]
