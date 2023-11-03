@@ -1,12 +1,50 @@
+# See:
+#   https://flit.pypa.io/en/latest/pyproject_toml.html  # FLIT
+#   https://packaging.python.org/en/latest/tutorials/packaging-projects/
+#   https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
+#   https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+#
+# Updating PyPi:
+#   source venv/bin/activate
+#   python3 -m pip install --upgrade build
+#
+#   python -m build; twine upload --repository sparclclient dist/*
+#
 # For how to use pyproject.toml, see:
-# https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
-# TOML format: https://toml.io/en/
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
+#   https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
+#   TOML format: https://toml.io/en/
+
+
+[project]
+name = "sparclclient"
+authors = [
+  { name="S. Pothier", email="datalab-spectro@noirlab.edu" },
 ]
-build-backend = "setuptools.build_meta"
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+]
+requires-python = ">=3.7"
+dynamic = ["version", "description"]
+
+#! [build-system]
+#! requires = [
+#!     "setuptools>=42",
+#!     "wheel"
+#! ]
+#! build-backend = "setuptools.build_meta"
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+# requires = ["hatchling"]
+# build-backend = "hatchling.build"
+# https://hatch.pypa.io/latest/config/build/
+
+[project.urls]
+"Homepage" = "https://github.com/pypa/sparclclient"
+"Bug Tracker" = "https://github.com/pypa/sparclclient/issues"
+"Documentation" = "https://sparclclient.readthedocs.io/en/latest/"
+
 
 [tool.black]
 # https://black.readthedocs.io/en/stable/usage_and_configuration/index.html
