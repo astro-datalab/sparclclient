@@ -221,6 +221,7 @@ class SparclClient:  # was SparclApi()
 
     @property
     def all_datasets(self):
+        """Set of all DataSets available from Server"""
         return self.fields.all_drs
 
     def get_default_fields(self, *, dataset_list=None):
