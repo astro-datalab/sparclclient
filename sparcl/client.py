@@ -113,7 +113,7 @@ class SparclClient:  # was SparclApi()
     about the Client and Server that is usefule to Developers.
 
     Args:
-        url (:obj:`str`, optional): Base URL of SPARC Server. Defaults
+        url (:obj:`str`, optional): Base URL of SPARCL Server. Defaults
             to 'https://astrosparcl.datalab.noirlab.edu'.
 
         verbose (:obj:`bool`, optional): Default verbosity is set to
@@ -233,7 +233,7 @@ class SparclClient:  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to get the default fields. Defaults to None, which
                 will return the intersection of default fields in all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
         Returns:
             List of fields tagged as 'default' from DATASET_LIST.
@@ -264,7 +264,7 @@ class SparclClient:  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to get all fields. Defaults to None, which
                 will return the intersection of all fields in all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
         Returns:
             List of fields tagged as 'all' from DATASET_LIST.
@@ -322,7 +322,7 @@ class SparclClient:  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to get available fields. Defaults to None, which
                 will return the intersection of all available fields in
-                all data sets hosted on the SPARC database.
+                all data sets hosted on the SPARCL database.
 
         Returns:
             Set of fields available from data sets in DATASET_LIST.
@@ -369,7 +369,7 @@ class SparclClient:  # was SparclApi()
         sort=None,
         verbose=None,
     ):
-        """Find records in the SPARC database.
+        """Find records in the SPARCL database.
 
         Args:
             outfields (:obj:`list`, optional): List of fields to return.
@@ -461,14 +461,14 @@ class SparclClient:  # was SparclApi()
         self, uuid_list, *, dataset_list=None, countOnly=False, verbose=False
     ):
         """Return the subset of sparcl_ids in the given uuid_list that are
-        NOT stored in the SPARC database.
+        NOT stored in the SPARCL database.
 
         Args:
             uuid_list (:obj:`list`): List of sparcl_ids.
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to find missing sparcl_ids. Defaults to None, meaning
-                all data sets hosted on the SPARC database.
+                all data sets hosted on the SPARCL database.
 
             countOnly (:obj:`bool`, optional): Set to True to return only
                 a count of the missing sparcl_ids from the uuid_list.
@@ -479,7 +479,7 @@ class SparclClient:  # was SparclApi()
 
         Returns:
             A list of the subset of sparcl_ids in the given uuid_list that
-            are NOT stored in the SPARC database.
+            are NOT stored in the SPARCL database.
 
         Example:
             >>> client = SparclClient()
@@ -514,14 +514,14 @@ class SparclClient:  # was SparclApi()
         self, specid_list, *, dataset_list=None, countOnly=False, verbose=False
     ):
         """Return the subset of specids in the given specid_list that are
-        NOT stored in the SPARC database.
+        NOT stored in the SPARCL database.
 
         Args:
             specid_list (:obj:`list`): List of specids.
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to find missing specids. Defaults to None, meaning
-                all data sets hosted on the SPARC database.
+                all data sets hosted on the SPARCL database.
 
             countOnly (:obj:`bool`, optional): Set to True to return only
                 a count of the missing specids from the specid_list.
@@ -532,7 +532,7 @@ class SparclClient:  # was SparclApi()
 
         Returns:
             A list of the subset of specids in the given specid_list that
-            are NOT stored in the SPARC database.
+            are NOT stored in the SPARCL database.
 
         Example:
             >>> client = SparclClient(url=_PAT)
@@ -598,7 +598,7 @@ class SparclClient:  # was SparclApi()
         limit=500,
         verbose=None,
     ):
-        """Retrieve spectra records from the SPARC database by list of
+        """Retrieve spectra records from the SPARCL database by list of
         sparcl_ids.
 
         Args:
@@ -610,7 +610,7 @@ class SparclClient:  # was SparclApi()
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500. Maximum allowed is 24,000.
@@ -782,7 +782,7 @@ class SparclClient:  # was SparclApi()
         limit=500,
         verbose=False,
     ):
-        """Retrieve spectra records from the SPARC database by list of specids.
+        """Retrieve spectra records from the SPARCL database by list of specids.
 
         Args:
             specid_list (:obj:`list`): List of specids.
@@ -793,7 +793,7 @@ class SparclClient:  # was SparclApi()
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500. Maximum allowed is 24,000.
