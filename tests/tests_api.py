@@ -344,7 +344,7 @@ class SparclClientTest(unittest.TestCase):
             #!constraints = {"ra": [246.0, 247.0], "dec": [+34.7, +34.8]}
             constraints = {"ra": [194.0, 195.0], "dec": [+27.5, +27.6]}
         else:
-            constraints = {"ra": [132.0, 133.0], "dec": [+28.0, +29.0]}
+            constraints = {"ra": [340.0, 341.0], "dec": [+3.0, +4.0]}
         found = self.client.find(outfields, constraints=constraints, limit=3)
         actual = found.records[:2]
         if showact:
@@ -442,9 +442,12 @@ class SparclClientTest(unittest.TestCase):
         """Reorder retrieved records by sparcl_id."""
         name = "reorder_1a"
         ids = self.uuid_list2
+        print(f"ids: {ids}")
 
         tic()
         res = self.client.retrieve(ids)
+        res_ids = [r["sparcl_id"] for r in res.records]
+        print(f"retrieved: {res_ids}")
         self.timing[name] = toc()
         res_reorder = res.reorder(ids)
         actual = [f["sparcl_id"] for f in res_reorder.records]
