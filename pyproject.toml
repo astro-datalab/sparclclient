@@ -1,9 +1,7 @@
 # See:
-#   https://flit.pypa.io/en/latest/pyproject_toml.html  # FLIT
-#   https://packaging.python.org/en/latest/tutorials/packaging-projects/
-#   https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
+#   FLIT: https://flit.pypa.io/en/latest/pyproject_toml.html
 #   TOML format: https://toml.io/en/
-#   https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+
 #
 # Updating PyPi:
 #   source venv/bin/activate
