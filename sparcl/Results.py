@@ -141,9 +141,9 @@ class Results(UserList):
             # Transform science fields to internal fields
             new_recs = self.science_to_internal_fields()
             # Get the ids or specids from retrieved records
-            if type(ids_og[0]) == str:
+            if type(ids_og[0]) is str:
                 ids_re = [f["sparcl_id"] for f in new_recs]
-            elif type(ids_og[0]) == int:
+            elif type(ids_og[0]) is int:
                 ids_re = [f["specid"] for f in new_recs]
             # Enumerate the original ids
             dict_og = {x: i for i, x in enumerate(ids_og)}
