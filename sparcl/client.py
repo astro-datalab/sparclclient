@@ -782,7 +782,8 @@ class SparclClient:  # was SparclApi()
         limit=500,
         verbose=False,
     ):
-        """Retrieve spectra records from the SPARCL database by list of specids.
+        """Retrieve spectra records from the SPARCL database by list of
+        specids.
 
         Args:
             specid_list (:obj:`list`): List of specids.
