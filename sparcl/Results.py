@@ -21,6 +21,15 @@ class Results(UserList):
         self.fields = client.fields
         self.to_science_fields()
 
+        # HACK 12/14/2023 -sp- to fix UUID problem presumably
+        # produced on stack version upgrade (to Django 4.2, postgres 13+)
+        # Done per AB for expediency since real solution will be easier
+        # after field-renaming is removed.
+        for rec in self.recs:
+            if "sparcl_id" in rec:
+                rec["sparcl_id"] = str(rec["sparcl_id"])
+        # END __init__()
+
     # https://docs.python.org/3/library/collections.html#collections.deque.clear
     def clear(self):
         """Delete the contents of this collection."""
