@@ -1,2 +1,2 @@
 # sparclclient
-Python Client for SPARC (SPectra Analysis and Retrievable Catalog Lab)
+Python Client for SPARCL (SPectra Analysis and Retrievable Catalog Lab)
