@@ -14,12 +14,9 @@
 import os
 import re
 import sys
-
-sys.path.insert(0, os.path.abspath(".."))
-
-
 from sparcl import __version__
 
+sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
