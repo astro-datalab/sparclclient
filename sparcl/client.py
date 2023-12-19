@@ -14,6 +14,7 @@ This module interfaces to the SPARC-Server to get spectra data.
 from urllib.parse import urlencode, urlparse
 from warnings import warn
 import pickle
+import subprocess
 
 #!from pathlib import Path
 import tempfile
@@ -100,6 +101,18 @@ RESERVED = set([DEFAULT, ALL])
 #!def intersection(*lists):
 #!    """Return intersection of all LISTS."""
 #!    return set(lists[0]).intersection(*lists[1:])
+
+
+def githash():
+    try:
+        r2 = subprocess.run(
+            ["/usr/bin/git", "rev-parse", "HEAD"], stdout=subprocess.PIPE
+        )
+        commit_hash = r2.stdout.decode().strip()
+    except Exception:
+        commit_hash = "UNKNOWN"
+
+    return commit_hash
 
 
 ###########################
@@ -214,6 +227,7 @@ class SparclClient:  # was SparclApi()
             f"(sparclclient:{self.clientversion},"
             f" api:{self.apiversion},"
             f" {self.apiurl},"
+            f" client_hash={githash()},"
             f" verbose={self.verbose},"
             f" connect_timeout={self.c_timeout},"
             f" read_timeout={self.r_timeout})"

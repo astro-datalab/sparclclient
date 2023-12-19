@@ -141,14 +141,6 @@ class SparclClientTest(unittest.TestCase):
         # against the one expected by the Client. Raise error if
         # the Client is at least one major version behind.
 
-        print(
-            f"Running Client tests\n"
-            f'  against Server: "{urlparse(serverurl).netloc}"\n'
-            f"  comparing to: {exp.__name__}\n"
-            f"  showact={showact}\n"
-            f"  showcurl={showcurl}\n"
-        )
-
         cls.client = sparcl.client.SparclClient(
             url=serverurl,
             verbose=clverb,
@@ -157,6 +149,15 @@ class SparclClientTest(unittest.TestCase):
         cls.timing = dict()
         cls.doc = dict()
         cls.count = dict()
+
+        print(
+            f"Running Client tests\n"
+            f'  against Server: "{urlparse(serverurl).netloc}"\n'
+            f"  comparing to: {exp.__name__}\n"
+            f"  showact={showact}\n"
+            f"  showcurl={showcurl}\n"
+            f"  client={cls.client}\n"
+        )
 
         # Get some id_lists to use in tests
         found = cls.client.find(
