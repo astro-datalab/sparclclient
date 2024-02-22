@@ -16,8 +16,8 @@
 #  ### Run Against DEV Server.
 #  serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #
-#  ### Run Against PAT Server.
-#  serverurl=https://sparc1.datalab.noirlab.edu/
+#  ### Run tests Against PAT Server.
+#  export serverurl=https://sparc1.datalab.noirlab.edu/
 #  python -m unittest tests.tests_api
 #
 #  ### Run Against STAGE Server.

@@ -26,16 +26,8 @@ __all__ = ["client", "align_records"]
 
 # must mach: [N!]N(.N)*[{a|b|rc}N][.postN][.devN]
 # Example of a correct version string: '0.4.0a3.dev35'
-# __version__ = '0.4.0b1.dev8'
-# __version__ = '0.4.0b1.dev10'
-# __version__ = '1.0.0'
-# __version__ = '1.0.0b1.dev7'
-# __version__ = '1.0.0b1.dev8'
-# __version__ = '1.0.0b1.dev9'
-# __version__ = '1.0.1b2.dev1'
-# __version__ = '1.1rc1'
-# __version__ = '1.1rc2'
 # __version__ = '1.1'
 # __version__ = '1.2.0b4'
 # __version__ = '1.2.0'  # Release
-__version__ = "1.2.1b2"
+# __version__ = "1.2.1b3"
+__version__ = "1.2.1"

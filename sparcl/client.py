@@ -2,6 +2,14 @@
 This module interfaces to the SPARC-Server to get spectra data.
 """
 # python -m unittest tests.tests_api
+
+# ### Run tests against DEV
+# serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#
+#  ### Run tests Against PAT Server.
+#  export serverurl=https://sparc1.datalab.noirlab.edu/
+#  python -m unittest tests.tests_api
+
 #
 # Doctest example:
 #   cd ~/sandbox/sparclclient
@@ -14,7 +22,7 @@ This module interfaces to the SPARC-Server to get spectra data.
 from urllib.parse import urlencode, urlparse
 from warnings import warn
 import pickle
-import subprocess
+import getpass
 
 #!from pathlib import Path
 import tempfile
@@ -22,6 +30,9 @@ import tempfile
 ############################################
 # External Packages
 import requests
+
+#!from requests.auth import HTTPBasicAuth
+from requests.auth import AuthBase
 
 ############################################
 # Local Packages
@@ -103,16 +114,17 @@ RESERVED = set([DEFAULT, ALL])
 #!    return set(lists[0]).intersection(*lists[1:])
 
 
-def githash():
-    try:
-        r2 = subprocess.run(
-            ["/usr/bin/git", "rev-parse", "HEAD"], stdout=subprocess.PIPE
-        )
-        commit_hash = r2.stdout.decode().strip()
-    except Exception:
-        commit_hash = "UNKNOWN"
+class TokenAuth(AuthBase):
+    """Attaches HTTP Token Authentication to the given Request object."""
 
-    return commit_hash
+    def __init__(self, token):
+        # setup any auth-related data here
+        self.token = token
+
+    def __call__(self, request):
+        # modify and return the request
+        request.headers["Authorization"] = self.token
+        return request
 
 
 ###########################
@@ -155,8 +167,6 @@ class SparclClient:  # was SparclApi()
     def __init__(
         self,
         *,
-        email=None,
-        password=None,
         url=_PROD,
         verbose=False,
         show_curl=False,
@@ -166,11 +176,11 @@ class SparclClient:  # was SparclApi()
         """Create client instance."""
         session = requests.Session()
         self.session = session
-
-        self.session.auth = (email, password) if email and password else None
+        self.session.auth = None
         self.rooturl = url.rstrip("/")  # eg. "http://localhost:8050"
         self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
+        self.token = None
         self.verbose = verbose
         self.show_curl = show_curl  # Show CURL equivalent of client method
         #!self.internal_names = internal_names
@@ -227,11 +237,33 @@ class SparclClient:  # was SparclApi()
             f"(sparclclient:{self.clientversion},"
             f" api:{self.apiversion},"
             f" {self.apiurl},"
-            f" client_hash={githash()},"
+            f" client_hash={ut.githash()},"
             f" verbose={self.verbose},"
             f" connect_timeout={self.c_timeout},"
             f" read_timeout={self.r_timeout})"
         )
+
+    def login(self, email):
+        password = getpass.getpass()
+        # url = f"{self.apiurl}/get_token/"
+        url = "http://localhost:8060/api/get_token/"
+        res = requests.post(
+            url,
+            json=dict(email=email, password=password),
+            timeout=self.timeout,
+        )
+        self.session.auth = None
+        self.token = None
+        try:
+            res.raise_for_status()
+            print(f"DBG: {res.content=}")
+            self.token = res.json()
+            self.session.auth = (email, password)
+        except Exception as err:
+            msg = f"Could not login with given credentials. {err=}"
+            return msg
+
+        return f"Logged in successfully with {email=}"
 
     @property
     def all_datasets(self):
@@ -459,7 +491,17 @@ class SparclClient:  # was SparclApi()
             cmd = ut.curl_find_str(sspec, self.rooturl, qstr=qstr)
             print(cmd)
 
-        res = requests.post(url, json=sspec, timeout=self.timeout)
+        #! if self.token:
+        #!     res = requests.post(
+        #!         url,
+        #!         json=sspec,
+        #!         auth=TokenAuth(self.token),
+        #!         timeout=self.timeout,
+        #!     )
+        #! else:
+        #!     res = requests.post(url, json=sspec, timeout=self.timeout)
+        auth = TokenAuth(self.token) if self.token else None
+        res = requests.post(url, json=sspec, auth=auth, timeout=self.timeout)
 
         if res.status_code != 200:
             if verbose and ("traceback" in res.json()):

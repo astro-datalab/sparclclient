@@ -4,6 +4,7 @@ import time
 import socket
 import itertools
 import json
+import subprocess
 
 # External packages
 #   none
@@ -195,3 +196,15 @@ def curl_find_str(sspec, server, qstr=None):
     curlpost2 = f"-d '{json.dumps(sspec)}' '{url}'"
     curlpost3 = " | python3 -m json.tool"
     return curlpost1 + curlpost2 + curlpost3
+
+
+def githash(verbose=False):
+    try:
+        #  "/usr/bin/git"
+        ret = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
+        commit_hash = ret.stdout.decode().strip()
+    except Exception as err:
+        if verbose:
+            print(err)
+        commit_hash = "<NA>"
+    return commit_hash
