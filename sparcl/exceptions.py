@@ -23,7 +23,9 @@ def genSparclException(response, verbose=False):
         return BadSearchConstraint(status.get("errorMessage"))
     else:
         return UnknownServerError(
-            f"{status.get('errorMessage')} " f"[{status.get('errorCode')}]"
+            f"{status.get('errorMessage')} "
+            f"[{status.get('errorCode')}] "
+            f"{status.get('traceback')}"
         )
 
 

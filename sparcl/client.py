@@ -244,6 +244,16 @@ class SparclClient:  # was SparclApi()
         )
 
     def login(self, email):
+        if email is None:  # "logout"
+            old_email = self.session.auth[0] if self.session.auth else None
+            self.session.auth = None
+            self.token = None
+            print(
+                f"Logged-out successfully. "
+                f" Previously logged-in with email {old_email}."
+            )
+            return None
+
         password = getpass.getpass()
         # url = f"{self.apiurl}/get_token/"
         url = "http://localhost:8060/api/get_token/"
@@ -256,14 +266,39 @@ class SparclClient:  # was SparclApi()
         self.token = None
         try:
             res.raise_for_status()
-            print(f"DBG: {res.content=}")
+            #!print(f"DBG: {res.content=}")
             self.token = res.json()
             self.session.auth = (email, password)
         except Exception as err:
             msg = f"Could not login with given credentials. {err=}"
             return msg
 
-        return f"Logged in successfully with {email=}"
+        print(f"Logged in successfully with {email=}")
+        return None
+
+    def logout(self):
+        return self.login(None)
+
+    @property
+    def authorized(self):
+        auth = TokenAuth(self.token) if self.token else None
+        username = self.session.auth[0] if self.session.auth else "Anonymous"
+        response = requests.get(
+            f"{self.apiurl}/auth_status/", auth=auth, timeout=self.timeout
+        )
+        auth_status = response.json()
+
+        all_private_drs = set(auth_status.get("All_Private_DataReleases"))
+        all_drs = self.fields.all_drs
+        auth_drs = set(auth_status.get("Authorized_DataReleases"))
+        res = dict(
+            Loggedin_As=username,  # email
+            Authorized_Datasets=auth_drs,
+            Unauthorized_Datasets=all_private_drs - auth_drs,
+            All_Private_Datasets=all_private_drs,
+            All_Datasets=all_drs,
+        )
+        return res
 
     @property
     def all_datasets(self):
@@ -410,9 +445,11 @@ class SparclClient:  # was SparclApi()
         outfields=None,
         *,
         constraints={},  # dict(fname) = [op, param, ...]
-        # dataset_list=None,
+        #! exclude_unauth = True,  # Not implemented yet
         limit=500,
         sort=None,
+        # count=False,
+        # dataset_list=None,
         verbose=None,
     ):
         """Find records in the SPARCL database.
@@ -475,6 +512,7 @@ class SparclClient:  # was SparclApi()
             }
         uparams = dict(
             limit=limit,
+            #! count='Y' if count else 'N'
         )
         if sort is not None:
             uparams["sort"] = sort
@@ -491,15 +529,6 @@ class SparclClient:  # was SparclApi()
             cmd = ut.curl_find_str(sspec, self.rooturl, qstr=qstr)
             print(cmd)
 
-        #! if self.token:
-        #!     res = requests.post(
-        #!         url,
-        #!         json=sspec,
-        #!         auth=TokenAuth(self.token),
-        #!         timeout=self.timeout,
-        #!     )
-        #! else:
-        #!     res = requests.post(url, json=sspec, timeout=self.timeout)
         auth = TokenAuth(self.token) if self.token else None
         res = requests.post(url, json=sspec, auth=auth, timeout=self.timeout)
 
@@ -759,9 +788,8 @@ class SparclClient:  # was SparclApi()
             print(cmd)
 
         try:
-            res = requests.post(
-                url, json=ids, auth=self.session.auth, timeout=self.timeout
-            )
+            auth = TokenAuth(self.token) if self.token else None
+            res = requests.post(url, json=ids, auth=auth, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f"ConnectTimeout: {reCT}")
         except requests.exceptions.ReadTimeout as reRT:
