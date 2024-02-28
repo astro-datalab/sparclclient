@@ -254,7 +254,7 @@ class SparclClient:  # was SparclApi()
             )
             return None
         if password is None:
-            password = getpass.getpass()
+            password = getpass.getpass(prompt="SSO Password: ")
         # url = f"{self.apiurl}/get_token/"
         url = "http://localhost:8060/api/get_token/"
         res = requests.post(

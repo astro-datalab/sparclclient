@@ -6,7 +6,7 @@
 # Updating PyPi:
 #   source venv/bin/activate
 #   flit build
-#   flit publish
+#   flit publish --repository sparclclient
 
 
 [build-system]
@@ -22,6 +22,7 @@ authors = [
 readme = "README.md"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
+# version is found in: ~/sandbox/sparclclient/sparcl/__init__.py
 dynamic = ["version", "description"]
 
 [project.urls]
