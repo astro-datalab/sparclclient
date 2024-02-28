@@ -243,7 +243,7 @@ class SparclClient:  # was SparclApi()
             f" read_timeout={self.r_timeout})"
         )
 
-    def login(self, email):
+    def login(self, email, password=None):
         if email is None:  # "logout"
             old_email = self.session.auth[0] if self.session.auth else None
             self.session.auth = None
@@ -253,8 +253,8 @@ class SparclClient:  # was SparclApi()
                 f" Previously logged-in with email {old_email}."
             )
             return None
-
-        password = getpass.getpass()
+        if password is None:
+            password = getpass.getpass()
         # url = f"{self.apiurl}/get_token/"
         url = "http://localhost:8060/api/get_token/"
         res = requests.post(
@@ -287,6 +287,7 @@ class SparclClient:  # was SparclApi()
             f"{self.apiurl}/auth_status/", auth=auth, timeout=self.timeout
         )
         auth_status = response.json()
+        print(f"{auth_status=}")
 
         all_private_drs = set(auth_status.get("All_Private_DataReleases"))
         all_drs = self.fields.all_drs
