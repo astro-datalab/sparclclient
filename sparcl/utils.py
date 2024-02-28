@@ -3,6 +3,9 @@ import datetime
 import time
 import socket
 import itertools
+import json
+import subprocess
+
 # External packages
 #   none
 # LOCAL packages
@@ -25,17 +28,19 @@ import itertools
 # data1 = AttrDict(data)
 # print(data1.b.b1.b2a.b3b)  # -> b3bval
 class _AttrDict(dict):
-    """ Dictionary subclass whose entries can be accessed by attributes
+    """Dictionary subclass whose entries can be accessed by attributes
     (as well as normally).
     """
+
     def __init__(self, *args, **kwargs):
         def from_nested_dict(data):
-            """ Construct nested AttrDicts from nested dictionaries. """
+            """Construct nested AttrDicts from nested dictionaries."""
             if not isinstance(data, dict):
                 return data
             else:
-                return _AttrDict({key: from_nested_dict(data[key])
-                                 for key in data})
+                return _AttrDict(
+                    {key: from_nested_dict(data[key]) for key in data}
+                )
 
         super(_AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
@@ -77,7 +82,7 @@ def here_now():
     """
     hostname = socket.gethostname()
     now = str(datetime.datetime.now())
-    return(hostname, now)
+    return (hostname, now)
 
 
 def objform(obj):
@@ -99,18 +104,18 @@ def objform(obj):
         return None
     elif type(obj) is list:
         if len(obj) > 999:
-            return f'CNT={len(obj)}'
+            return f"CNT={len(obj)}"
         elif len(obj) < 9:
             return [objform(x) for x in obj]
         else:
-            return [objform(x) for x in obj[:10]] + ['...']
+            return [objform(x) for x in obj[:10]] + ["..."]
     elif type(obj) is dict:
         return dict((k, objform(v)) for (k, v) in obj.items())
     else:
         return str(type(obj))
 
 
-def dict2tree(obj, name=None, prefix=''):
+def dict2tree(obj, name=None, prefix=""):
     """Return abstracted nested tree. Terminals contain TYPE.
     As a special case, a list is given as a dict that represents a
     compound type.  E.G. {'<list(3835)[0]>': float} means a list of
@@ -119,11 +124,11 @@ def dict2tree(obj, name=None, prefix=''):
     list has hetergeneous types, that fact is invisible in the
     structure!!
     """
-    nextpfx = '' if name is None else (prefix + name + '.')
+    nextpfx = "" if name is None else (prefix + name + ".")
     showname = prefix if name is None else (prefix + name)
     if isinstance(obj, dict):
         children = dict()
-        for (k, v) in obj.items():
+        for k, v in obj.items():
             if isinstance(v, dict) or isinstance(v, list):
                 val = dict2tree(v, name=k, prefix=nextpfx)
             else:
@@ -132,16 +137,17 @@ def dict2tree(obj, name=None, prefix=''):
             children.update(val)
         tree = children if name is None else {showname: children}
     elif isinstance(obj, list):
-        children = f'<list({len(obj)})[0]>:{type(obj[0]).__name__}'
+        children = f"<list({len(obj)})[0]>:{type(obj[0]).__name__}"
         tree = {showname: children}
     else:
         tree = {showname: type(obj).__name__}
-    return(tree)
+    return tree
 
 
 def invLUT(lut):
     """Given dict[k]=v, Return dict[v]=k"""
     return {v: k for k, v in lut.items()}
+
 
 def count_values(recs):
     """Count number of non-None values in a list of dictionaries.
@@ -161,3 +167,44 @@ def count_values(recs):
     """
     allkeys = set(list(itertools.chain(*recs)))
     return {k: sum(x.get(k) is not None for x in recs) for k in allkeys}
+
+
+# In case I want to give CURL equivalents for client methods.
+#
+# Retrieve may return results as a pickle file since it usually contains
+# spectra vectors.  To handle pickle results, write curl output to out.pkl
+# and do something like:
+#   with open('out.pkl', 'rb') as f: res = pickle.load(f)
+def curl_retrieve_str(ids, server, svc="spectras", qstr=None):
+    #! ids = ['00000dd7-b1ff-48ed-b162-46d9d65f829c', 'BADID']
+    #!svc = 'spectras' if use_async else 'retrieve'
+    #! qstr = urlencode(uparams)
+    # server = "https://sparc1.datalab.noirlab.edu"
+    qqstr = "" if qstr is None else f"?{qstr}"
+    url = f"{server}/sparc/{svc}/{qqstr}"
+    curlpost1 = "curl -X 'POST' -H 'Content-Type: application/json' "
+    curlpost2 = f"-d '{json.dumps(ids)}' '{url}'"
+    curlpost3 = " | python3 -m json.tool"
+    return curlpost1 + curlpost2 + curlpost3
+
+
+# see: curl_retrieve_str
+def curl_find_str(sspec, server, qstr=None):
+    qqstr = "" if qstr is None else f"?{qstr}"
+    url = f"{server}/sparc/find/{qqstr}"
+    curlpost1 = "curl -X 'POST' -H 'Content-Type: application/json' "
+    curlpost2 = f"-d '{json.dumps(sspec)}' '{url}'"
+    curlpost3 = " | python3 -m json.tool"
+    return curlpost1 + curlpost2 + curlpost3
+
+
+def githash(verbose=False):
+    try:
+        #  "/usr/bin/git"
+        ret = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
+        commit_hash = ret.stdout.decode().strip()
+    except Exception as err:
+        if verbose:
+            print(err)
+        commit_hash = "<NA>"
+    return commit_hash

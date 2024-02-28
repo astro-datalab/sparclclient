@@ -1,3 +1,8 @@
+"""
+A client for getting spectra and meta-data from NOIRLab.
+"""
+
+
 # List of packages to import when "from sparcl import *" is used
 __all__ = ["client", "align_records"]
 
@@ -14,21 +19,15 @@ __all__ = ["client", "align_records"]
 #
 # https://semver.org/ yields possible versions that violate PEP-0440
 
-#__version__ = '0.3.21'
-#__version__ = '0.1a3.dev22'
-#__version__ = '0.3.0-alpha3.23'
-#__version__ = '0.3.22'
+# __version__ = '0.3.21'
+# __version__ = '0.1a3.dev22'
+# __version__ = '0.3.0-alpha3.23'
+# __version__ = '0.3.22'
 
 # must mach: [N!]N(.N)*[{a|b|rc}N][.postN][.devN]
 # Example of a correct version string: '0.4.0a3.dev35'
-#__version__ = '0.4.0b1.dev8'
-#__version__ = '0.4.0b1.dev10'
-#__version__ = '1.0.0'
-#__version__ = '1.0.0b1.dev7'
-#__version__ = '1.0.0b1.dev8'
-#__version__ = '1.0.0b1.dev9'
-#__version__ = '1.0.1b2.dev1'
-#__version__ = '1.1rc1'
-#__version__ = '1.1rc2'
-#__version__ = '1.1'
-__version__ = '1.2.0b3.dev9'
+# __version__ = '1.1'
+# __version__ = '1.2.0b4'
+# __version__ = '1.2.0'  # Release
+# __version__ = "1.2.1b3"
+__version__ = "1.2.1"

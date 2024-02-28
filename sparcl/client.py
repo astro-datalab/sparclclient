@@ -2,6 +2,14 @@
 This module interfaces to the SPARC-Server to get spectra data.
 """
 # python -m unittest tests.tests_api
+
+# ### Run tests against DEV
+# serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#
+#  ### Run tests Against PAT Server.
+#  export serverurl=https://sparc1.datalab.noirlab.edu/
+#  python -m unittest tests.tests_api
+
 #
 # Doctest example:
 #   cd ~/sandbox/sparclclient
@@ -14,30 +22,40 @@ This module interfaces to the SPARC-Server to get spectra data.
 from urllib.parse import urlencode, urlparse
 from warnings import warn
 import pickle
+import getpass
+
 #!from pathlib import Path
 import tempfile
+
 ############################################
 # External Packages
 import requests
+
+#!from requests.auth import HTTPBasicAuth
+from requests.auth import AuthBase
+
 ############################################
 # Local Packages
 from sparcl.fields import Fields
 import sparcl.utils as ut
 import sparcl.exceptions as ex
+
 #!import sparcl.type_conversion as tc
 from sparcl import __version__
 from sparcl.Results import Found, Retrieved
 
 
-MAX_CONNECT_TIMEOUT = 3.1    # seconds
-MAX_READ_TIMEOUT = 150 * 60   # seconds
+MAX_CONNECT_TIMEOUT = 3.1  # seconds
+MAX_READ_TIMEOUT = 150 * 60  # seconds
 MAX_NUM_RECORDS_RETRIEVED = int(24e3)  # Minimum Hard Limit = 25,000
 #!MAX_NUM_RECORDS_RETRIEVED = int(5e4) #@@@ Reduce !!!
 
 
-_pat_hosts = ['sparc1.datalab.noirlab.edu',
-              'sparc2.datalab.noirlab.edu',
-              'astrosparcl.datalab.noirlab.edu']
+_pat_hosts = [
+    "sparc1.datalab.noirlab.edu",
+    "sparc2.datalab.noirlab.edu",
+    "astrosparcl.datalab.noirlab.edu",
+]
 
 # Upload to PyPi:
 #   python3 -m build --wheel
@@ -71,17 +89,17 @@ _pat_hosts = ['sparc1.datalab.noirlab.edu',
 # dataall = client.retrieve(specids,columns=allc)
 # f'{len(str(dataall)):,}' # -> '27,470,052'
 
-_PROD  = 'https://astrosparcl.datalab.noirlab.edu'  # noqa: E221
-_STAGE = 'https://sparclstage.datalab.noirlab.edu'  # noqa: E221
-_PAT   = 'https://sparc1.datalab.noirlab.edu'       # noqa: E221
-_DEV   = 'http://localhost:8050'                    # noqa: E221
+_PROD = "https://astrosparcl.datalab.noirlab.edu"  # noqa: E221
+_STAGE = "https://sparclstage.datalab.noirlab.edu"  # noqa: E221
+_PAT = "https://sparc1.datalab.noirlab.edu"  # noqa: E221
+_DEV = "http://localhost:8050"  # noqa: E221
 
 
-#client_version = pkg_resources.require("sparclclient")[0].version
+# client_version = pkg_resources.require("sparclclient")[0].version
 client_version = __version__
 
-DEFAULT = 'DEFAULT'
-ALL = 'ALL'
+DEFAULT = "DEFAULT"
+ALL = "ALL"
 RESERVED = set([DEFAULT, ALL])
 
 
@@ -96,17 +114,31 @@ RESERVED = set([DEFAULT, ALL])
 #!    return set(lists[0]).intersection(*lists[1:])
 
 
+class TokenAuth(AuthBase):
+    """Attaches HTTP Token Authentication to the given Request object."""
+
+    def __init__(self, token):
+        # setup any auth-related data here
+        self.token = token
+
+    def __call__(self, request):
+        # modify and return the request
+        request.headers["Authorization"] = self.token
+        return request
+
+
 ###########################
 # ## The Client class
 
-class SparclClient():  # was SparclApi()
+
+class SparclClient:  # was SparclApi()
     """Provides interface to SPARCL Server.
     When using this to report a bug, set verbose to True. Also print
     your instance of this.  The results will include important info
     about the Client and Server that is usefule to Developers.
 
     Args:
-        url (:obj:`str`, optional): Base URL of SPARC Server. Defaults
+        url (:obj:`str`, optional): Base URL of SPARCL Server. Defaults
             to 'https://astrosparcl.datalab.noirlab.edu'.
 
         verbose (:obj:`bool`, optional): Default verbosity is set to
@@ -130,57 +162,67 @@ class SparclClient():  # was SparclApi()
 
     """
 
-    KNOWN_GOOD_API_VERSION = 8.0  # @@@ Change this on Server version increment
+    KNOWN_GOOD_API_VERSION = 11.0  # @@@ Change when Server version incremented
 
-    def __init__(self, *,
-                 url=_PROD,
-                 verbose=False,
-                 connect_timeout=1.1,    # seconds
-                 read_timeout=90 * 60):  # seconds
-        """Create client instance.
-        """
-        self.rooturl = url.rstrip("/")
-        self.apiurl = f'{self.rooturl}/sparc'
+    def __init__(
+        self,
+        *,
+        url=_PROD,
+        verbose=False,
+        show_curl=False,
+        connect_timeout=1.1,  # seconds
+        read_timeout=90 * 60,  # seconds
+    ):
+        """Create client instance."""
+        session = requests.Session()
+        self.session = session
+        self.session.auth = None
+        self.rooturl = url.rstrip("/")  # eg. "http://localhost:8050"
+        self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
+        self.token = None
         self.verbose = verbose
+        self.show_curl = show_curl  # Show CURL equivalent of client method
         #!self.internal_names = internal_names
-        self.c_timeout = min(MAX_CONNECT_TIMEOUT,
-                             float(connect_timeout))  # seconds
-        self.r_timeout = min(MAX_READ_TIMEOUT,  # seconds
-                             float(read_timeout))
+        self.c_timeout = min(
+            MAX_CONNECT_TIMEOUT, float(connect_timeout)
+        )  # seconds
+        self.r_timeout = min(MAX_READ_TIMEOUT, float(read_timeout))  # seconds
 
         # require response within this num seconds
         # https://2.python-requests.org/en/master/user/advanced/#timeouts
         # (connect timeout, read timeout) in seconds
         self.timeout = (self.c_timeout, self.r_timeout)
-        #@@@ read timeout should be a function of the POST payload size
+        # @@@ read timeout should be a function of the POST payload size
 
         if verbose:
-            print(f'apiurl={self.apiurl}')
+            print(f"apiurl={self.apiurl}")
 
         # Get API Version
         try:
-            endpoint = f'{self.apiurl}/version/'
+            endpoint = f"{self.apiurl}/version/"
             verstr = requests.get(endpoint, timeout=self.timeout).content
         except requests.ConnectionError as err:
-            msg = f'Could not connect to {endpoint}. {str(err)}'
+            msg = f"Could not connect to {endpoint}. {str(err)}"
             if urlparse(url).hostname in _pat_hosts:
-                msg += 'Did you enable VPN?'
+                msg += "Did you enable VPN?"
             raise ex.ServerConnectionError(msg) from None  # disable chaining
 
         self.apiversion = float(verstr)
 
         expected_api = SparclClient.KNOWN_GOOD_API_VERSION
         if (int(self.apiversion) - int(expected_api)) >= 1:
-            msg = (f'The SPARCL Client you are running expects an older '
-                   f'version of the API services. '
-                   f'Please upgrade to the latest "sparclclient".  '
-                   f'The Client you are using expected version '
-                   f'{SparclClient.KNOWN_GOOD_API_VERSION} but got '
-                   f'{self.apiversion} from the SPARCL Server '
-                   f'at {self.apiurl}.')
+            msg = (
+                f"The SPARCL Client you are running expects an older "
+                f"version of the API services. "
+                f'Please upgrade to the latest "sparclclient".  '
+                f"The Client you are using expected version "
+                f"{SparclClient.KNOWN_GOOD_API_VERSION} but got "
+                f"{self.apiversion} from the SPARCL Server "
+                f"at {self.apiurl}."
+            )
             raise Exception(msg)
-        #self.session = requests.Session() #@@@
+        # self.session = requests.Session() #@@@
 
         self.clientversion = client_version
         self.fields = Fields(self.apiurl)
@@ -191,15 +233,77 @@ class SparclClient():  # was SparclApi()
 
     def __repr__(self):
         #!f' internal_names={self.internal_names},'
-        return(f'(sparclclient:{self.clientversion},'
-               f' api:{self.apiversion},'
-               f' {self.apiurl},'
-               f' verbose={self.verbose},'
-               f' connect_timeout={self.c_timeout},'
-               f' read_timeout={self.r_timeout})')
+        return (
+            f"(sparclclient:{self.clientversion},"
+            f" api:{self.apiversion},"
+            f" {self.apiurl},"
+            f" client_hash={ut.githash()},"
+            f" verbose={self.verbose},"
+            f" connect_timeout={self.c_timeout},"
+            f" read_timeout={self.r_timeout})"
+        )
+
+    def login(self, email, password=None):
+        if email is None:  # "logout"
+            old_email = self.session.auth[0] if self.session.auth else None
+            self.session.auth = None
+            self.token = None
+            print(
+                f"Logged-out successfully. "
+                f" Previously logged-in with email {old_email}."
+            )
+            return None
+        if password is None:
+            password = getpass.getpass()
+        # url = f"{self.apiurl}/get_token/"
+        url = "http://localhost:8060/api/get_token/"
+        res = requests.post(
+            url,
+            json=dict(email=email, password=password),
+            timeout=self.timeout,
+        )
+        self.session.auth = None
+        self.token = None
+        try:
+            res.raise_for_status()
+            #!print(f"DBG: {res.content=}")
+            self.token = res.json()
+            self.session.auth = (email, password)
+        except Exception as err:
+            msg = f"Could not login with given credentials. {err=}"
+            return msg
+
+        print(f"Logged in successfully with {email=}")
+        return None
+
+    def logout(self):
+        return self.login(None)
+
+    @property
+    def authorized(self):
+        auth = TokenAuth(self.token) if self.token else None
+        username = self.session.auth[0] if self.session.auth else "Anonymous"
+        response = requests.get(
+            f"{self.apiurl}/auth_status/", auth=auth, timeout=self.timeout
+        )
+        auth_status = response.json()
+        print(f"{auth_status=}")
+
+        all_private_drs = set(auth_status.get("All_Private_DataReleases"))
+        all_drs = self.fields.all_drs
+        auth_drs = set(auth_status.get("Authorized_DataReleases"))
+        res = dict(
+            Loggedin_As=username,  # email
+            Authorized_Datasets=auth_drs,
+            Unauthorized_Datasets=all_private_drs - auth_drs,
+            All_Private_Datasets=all_private_drs,
+            All_Datasets=all_drs,
+        )
+        return res
 
     @property
     def all_datasets(self):
+        """Set of all DataSets available from Server"""
         return self.fields.all_drs
 
     def get_default_fields(self, *, dataset_list=None):
@@ -211,7 +315,7 @@ class SparclClient():  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to get the default fields. Defaults to None, which
                 will return the intersection of default fields in all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
         Returns:
             List of fields tagged as 'default' from DATASET_LIST.
@@ -219,14 +323,15 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_default_fields()
-            ['flux', 'id', 'wavelength']
+            ['dec', 'flux', 'ra', 'sparcl_id', 'specid', 'wavelength']
         """
 
         if dataset_list is None:
             dataset_list = self.fields.all_drs
 
-        assert isinstance(dataset_list, (list, set)), (
-            f'DATASET_LIST must be a list. Found {dataset_list}')
+        assert isinstance(
+            dataset_list, (list, set)
+        ), f"DATASET_LIST must be a list. Found {dataset_list}"
 
         common = set(self.fields.common(dataset_list))
         union = self.fields.default_retrieve_fields(dataset_list=dataset_list)
@@ -241,7 +346,7 @@ class SparclClient():  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to get all fields. Defaults to None, which
                 will return the intersection of all fields in all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
         Returns:
             List of fields tagged as 'all' from DATASET_LIST.
@@ -249,8 +354,8 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.get_all_fields()
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'fiberid', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
-    """  # noqa: E501
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'flux', 'instrument', 'ivar', 'mask', 'model', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'site', 'sparcl_id', 'specid', 'specprimary', 'spectype', 'survey', 'targetid', 'telescope', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+        """  # noqa: E501
 
         common = set(self.fields.common(dataset_list))
         union = self.fields.all_retrieve_fields(dataset_list=dataset_list)
@@ -265,15 +370,18 @@ class SparclClient():  # was SparclApi()
         unk = set(science_fields) - all
         if len(unk) > 0:
             drs = self.fields.all_drs if dataset_list is None else dataset_list
-            msg = (f'Unknown fields \"{",".join(unk)}\" given '
-                   f'for DataSets {",".join(drs)}. '
-                   f'Allowed fields are: {",".join(all)}. ')
+            msg = (
+                f'Unknown fields "{",".join(unk)}" given '
+                f'for DataSets {",".join(drs)}. '
+                f'Allowed fields are: {",".join(all)}. '
+            )
             raise ex.UnknownField(msg)
         return True
 
     def _common_internal(self, *, science_fields=None, dataset_list=None):
-        self._validate_science_fields(science_fields,
-                                      dataset_list=dataset_list)
+        self._validate_science_fields(
+            science_fields, dataset_list=dataset_list
+        )
 
         if dataset_list is None:
             dataset_list = self.fields.all_drs
@@ -296,7 +404,7 @@ class SparclClient():  # was SparclApi()
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to get available fields. Defaults to None, which
                 will return the intersection of all available fields in
-                all data sets hosted on the SPARC database.
+                all data sets hosted on the SPARCL database.
 
         Returns:
             Set of fields available from data sets in DATASET_LIST.
@@ -304,7 +412,7 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> sorted(client.get_available_fields())
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'fiberid', 'filename', 'filesize', 'flux', 'id', 'instrument', 'ivar', 'mask', 'mjd', 'model', 'plate', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'run1d', 'run2d', 'site', 'sky', 'specid', 'specobjid', 'specprimary', 'spectype', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'filename', 'filesize', 'flux', 'instrument', 'ivar', 'mask', 'model', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'site', 'sparcl_id', 'specid', 'specprimary', 'spectype', 'survey', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
         """  # noqa: E501
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
@@ -323,23 +431,29 @@ class SparclClient():  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.version
-            8.0
+            9.0
         """
 
         if self.apiversion is None:
-            response = requests.get(f'{self.apiurl}/version',
-                                    timeout=self.timeout,
-                                    cache=True)
+            response = requests.get(
+                f"{self.apiurl}/version", timeout=self.timeout, cache=True
+            )
             self.apiversion = float(response.content)
         return self.apiversion
 
-    def find(self, outfields=None, *,
-             constraints={},  # dict(fname) = [op, param, ...]
-             #dataset_list=None,
-             limit=500,
-             sort=None,
-             verbose=None):
-        """Find records in the SPARC database.
+    def find(
+        self,
+        outfields=None,
+        *,
+        constraints={},  # dict(fname) = [op, param, ...]
+        #! exclude_unauth = True,  # Not implemented yet
+        limit=500,
+        sort=None,
+        # count=False,
+        # dataset_list=None,
+        verbose=None,
+    ):
+        """Find records in the SPARCL database.
 
         Args:
             outfields (:obj:`list`, optional): List of fields to return.
@@ -369,11 +483,11 @@ class SparclClient():  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> outs = ['id', 'ra', 'dec']
+            >>> outs = ['sparcl_id', 'ra', 'dec']
             >>> cons = {'spectype': ['GALAXY'], 'redshift': [0.5, 0.9]}
             >>> found = client.find(outfields=outs, constraints=cons)
             >>> sorted(list(found.records[0].keys()))
-            ['_dr', 'dec', 'id', 'ra']
+            ['_dr', 'dec', 'ra', 'sparcl_id']
         """
         # dataset_list (:obj:`list`, optional): List of data sets from
         #     which to find records. Defaults to None, which
@@ -384,57 +498,63 @@ class SparclClient():  # was SparclApi()
 
         # Let "outfields" default to ['id']; but fld may have been renamed
         if outfields is None:
-            dslist = list(self.fields.all_datasets)
-            idfld = self.fields._science_name('id', dslist[0])
-            if idfld not in self.fields.common():
-                msg = (f'The "id" field ("{idfld}" is not common to all '
-                       f'current Data Sets ({(", ").join(dslist)}) '
-                       f'so we cannot use the default outfields="{idfld}".'
-                       )
-                raise ex.NoCommonIdField(msg)
-            outfields = [idfld]
+            outfields = ["sparcl_id"]
         dataset_list = self.fields.all_drs
-        #! self._validate_science_fields(outfields, dataset_list=dataset_list) # DLS-401
+        #! self._validate_science_fields(outfields,
+        #!                               dataset_list=dataset_list) # DLS-401
         dr = list(dataset_list)[0]
         if len(constraints) > 0:
-            self._validate_science_fields(constraints.keys(),
-                                          dataset_list=dataset_list)
-            constraints = {self.fields._internal_name(k, dr): v
-                           for k, v in constraints.items()}
-        uparams = dict(limit=limit,)
+            self._validate_science_fields(
+                constraints.keys(), dataset_list=dataset_list
+            )
+            constraints = {
+                self.fields._internal_name(k, dr): v
+                for k, v in constraints.items()
+            }
+        uparams = dict(
+            limit=limit,
+            #! count='Y' if count else 'N'
+        )
         if sort is not None:
-            uparams['sort'] = sort
+            uparams["sort"] = sort
         qstr = urlencode(uparams)
-        url = f'{self.apiurl}/find/?{qstr}'
+        url = f"{self.apiurl}/find/?{qstr}"
 
         outfields = [self.fields._internal_name(s, dr) for s in outfields]
         search = [[k] + v for k, v in constraints.items()]
         sspec = dict(outfields=outfields, search=search)
+
         if verbose:
-            print(f'url={url} sspec={sspec}')
-        res = requests.post(url, json=sspec, timeout=self.timeout)
+            print(f"url={url} sspec={sspec}")
+        if self.show_curl:
+            cmd = ut.curl_find_str(sspec, self.rooturl, qstr=qstr)
+            print(cmd)
+
+        auth = TokenAuth(self.token) if self.token else None
+        res = requests.post(url, json=sspec, auth=auth, timeout=self.timeout)
 
         if res.status_code != 200:
-            if verbose and ('traceback' in res.json()):
+            if verbose and ("traceback" in res.json()):
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(res, verbose=self.verbose)
 
         found = Found(res.json(), client=self)
         if verbose:
-            print(f'Record key counts: {ut.count_values(found.records)}')
+            print(f"Record key counts: {ut.count_values(found.records)}")
         return found
 
-    def missing(self, uuid_list, *, dataset_list=None,
-                countOnly=False, verbose=False):
+    def missing(
+        self, uuid_list, *, dataset_list=None, countOnly=False, verbose=False
+    ):
         """Return the subset of sparcl_ids in the given uuid_list that are
-        NOT stored in the SPARC database.
+        NOT stored in the SPARCL database.
 
         Args:
             uuid_list (:obj:`list`): List of sparcl_ids.
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to find missing sparcl_ids. Defaults to None, meaning
-                all data sets hosted on the SPARC database.
+                all data sets hosted on the SPARCL database.
 
             countOnly (:obj:`bool`, optional): Set to True to return only
                 a count of the missing sparcl_ids from the uuid_list.
@@ -445,7 +565,7 @@ class SparclClient():  # was SparclApi()
 
         Returns:
             A list of the subset of sparcl_ids in the given uuid_list that
-            are NOT stored in the SPARC database.
+            are NOT stored in the SPARCL database.
 
         Example:
             >>> client = SparclClient()
@@ -456,13 +576,14 @@ class SparclClient():  # was SparclApi()
 
         if dataset_list is None:
             dataset_list = self.fields.all_drs
-        assert isinstance(dataset_list, (list, set)), (
-            f'DATASET_LIST must be a list. Found {dataset_list}')
+        assert isinstance(
+            dataset_list, (list, set)
+        ), f"DATASET_LIST must be a list. Found {dataset_list}"
 
         verbose = verbose or self.verbose
-        uparams = dict(dataset_list=','.join(dataset_list))
+        uparams = dict(dataset_list=",".join(dataset_list))
         qstr = urlencode(uparams)
-        url = f'{self.apiurl}/missing/?{qstr}'
+        url = f"{self.apiurl}/missing/?{qstr}"
         uuids = list(uuid_list)
         if verbose:
             print(f'Using url="{url}"')
@@ -475,6 +596,58 @@ class SparclClient():  # was SparclApi()
         return ret
         # END missing()
 
+    def missing_specids(
+        self, specid_list, *, dataset_list=None, countOnly=False, verbose=False
+    ):
+        """Return the subset of specids in the given specid_list that are
+        NOT stored in the SPARCL database.
+
+        Args:
+            specid_list (:obj:`list`): List of specids.
+
+            dataset_list (:obj:`list`, optional): List of data sets from
+                which to find missing specids. Defaults to None, meaning
+                all data sets hosted on the SPARCL database.
+
+            countOnly (:obj:`bool`, optional): Set to True to return only
+                a count of the missing specids from the specid_list.
+                Defaults to False.
+
+            verbose (:obj:`bool`, optional): Set to True for in-depth return
+                statement. Defaults to False.
+
+        Returns:
+            A list of the subset of specids in the given specid_list that
+            are NOT stored in the SPARCL database.
+
+        Example:
+            >>> client = SparclClient(url=_PAT)
+            >>> specids = ['7972592460248666112', '3663710814482833408']
+            >>> client.missing_specids(specids + ['bad_id'])
+            ['bad_id']
+        """
+        if dataset_list is None:
+            dataset_list = self.fields.all_drs
+        assert isinstance(
+            dataset_list, (list, set)
+        ), f"DATASET_LIST must be a list. Found {dataset_list}"
+
+        verbose = verbose or self.verbose
+        uparams = dict(dataset_list=",".join(dataset_list))
+        qstr = urlencode(uparams)
+        url = f"{self.apiurl}/missing_specids/?{qstr}"
+        specids = list(specid_list)
+        if verbose:
+            print(f'Using url="{url}"')
+        res = requests.post(url, json=specids, timeout=self.timeout)
+
+        res.raise_for_status()
+        if res.status_code != 200:
+            raise Exception(res)
+        ret = res.json()
+        return ret
+        # END missing_specids()
+
     # Include fields are Science (not internal) names. But the mapping
     # of Internal to Science name depends on DataSet.  Its possible
     # for a field (Science name) to be valid in one DataSet but not
@@ -483,43 +656,39 @@ class SparclClient():  # was SparclApi()
     # (defaults to all DataSets ingested)
     def _validate_include(self, include_list, dataset_list):
         if not isinstance(include_list, (list, set)):
-            msg = f'Bad INCLUDE_LIST. Must be list. Got {include_list}'
+            msg = f"Bad INCLUDE_LIST. Must be list. Got {include_list}"
             raise ex.BadInclude(msg)
 
-        available_science = self.get_available_fields(
-            dataset_list=dataset_list)
+        avail_science = self.get_available_fields(dataset_list=dataset_list)
         inc_set = set(include_list)
-        unknown = inc_set.difference(available_science)
+        unknown = inc_set.difference(avail_science)
         if len(unknown) > 0:
-            msg = (f'The INCLUDE list ({",".join(sorted(include_list))}) '
-                   f'contains invalid data field names '
-                   f'for Data Sets ({",".join(sorted(dataset_list))}). '
-                   f'Unknown fields are: '
-                   f'{", ".join(sorted(list(unknown)))}. '
-                   f'Available fields are: '
-                   f'{", ".join(sorted(available_science))}.')
+            msg = (
+                f'The INCLUDE list ({",".join(sorted(include_list))}) '
+                f"contains invalid data field names "
+                f'for Data Sets ({",".join(sorted(dataset_list))}). '
+                f"Unknown fields are: "
+                f'{", ".join(sorted(list(unknown)))}. '
+                f"Available fields are: "
+                f'{", ".join(sorted(avail_science))}.'
+            )
             raise ex.BadInclude(msg)
         return True
 
-    def retrieve(self,  # noqa: C901
-                 uuid_list,
-                 *,
-                 svc='spectras',  # 'retrieve',
-                 format='pkl',    # 'json',
-                 include='DEFAULT',
-                 dataset_list=None,
-                 limit=500,
-                 chunk=500,
-                 verbose=None):
-        """Retrieve spectra records from the SPARC database by list of
+    def retrieve(  # noqa: C901
+        self,
+        uuid_list,
+        *,
+        include="DEFAULT",
+        dataset_list=None,
+        limit=500,
+        verbose=None,
+    ):
+        """Retrieve spectra records from the SPARCL database by list of
         sparcl_ids.
 
         Args:
             uuid_list (:obj:`list`): List of sparcl_ids.
-
-            svc (:obj:`str`, optional): Defaults to 'spectras'.
-
-            format (:obj:`str`, optional): Defaults to 'pkl'.
 
             include (:obj:`list`, optional): List of field names to include
                 in each record. Defaults to 'DEFAULT', which will return
@@ -527,13 +696,10 @@ class SparclClient():  # was SparclApi()
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
 
             limit (:obj:`int`, optional): Maximum number of records to
-                return. Defaults to 500.
-
-            chunk (:obj:`int`, optional): Size of chunks to break list into.
-                Defaults to 500.
+                return. Defaults to 500. Maximum allowed is 24,000.
 
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
@@ -543,17 +709,34 @@ class SparclClient():  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> ids = ['000017b6-56a2-4f87-8828-3a3409ba1083',]
-            >>> inc = ['id', 'flux', 'wavelength', 'model']
+            >>> ids = ['00000f0b-07db-4234-892a-6e347db79c89',]
+            >>> inc = ['sparcl_id', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve(uuid_list=ids, include=inc)
             >>> type(ret.records[0].wavelength)
             <class 'numpy.ndarray'>
         """
 
+        # Variants for async, etc.
+        #
+        # From "performance testing" docstring
+        #    svc (:obj:`str`, optional): Defaults to 'spectras'.
+        #
+        #    format (:obj:`str`, optional): Defaults to 'pkl'.
+        #
+        #
+        #    chunk (:obj:`int`, optional): Size of chunks to break list into.
+        #        Defaults to 500.
+        #
+        # These were keyword params:
+        svc = "spectras"  # retrieve, spectras
+        format = "pkl"  # 'json',
+        chunk = 500
+
         if dataset_list is None:
             dataset_list = self.fields.all_drs
-        assert isinstance(dataset_list, (list, set)), (
-            f'DATASET_LIST must be a list. Found {dataset_list}')
+        assert isinstance(
+            dataset_list, (list, set)
+        ), f"DATASET_LIST must be a list. Found {dataset_list}"
 
         verbose = self.verbose if verbose is None else verbose
 
@@ -571,73 +754,85 @@ class SparclClient():  # was SparclApi()
         #!       f'  len(uuid_list)={len(uuid_list):,d}'
         #!       f'  limit={limit}'
         #!       f'  MAX_NUM_RECORDS_RETRIEVED={MAX_NUM_RECORDS_RETRIEVED:,d}')
-        if (req_num > MAX_NUM_RECORDS_RETRIEVED):
-            msg = (f'Too many records asked for with client.retrieve().'
-                   f'  {len(uuid_list):,d} IDs provided,'
-                   f'  limit={limit}.'
-                   f'  But the maximum allowed is'
-                   f' {MAX_NUM_RECORDS_RETRIEVED:,d}.')
+        if req_num > MAX_NUM_RECORDS_RETRIEVED:
+            msg = (
+                f"Too many records asked for with client.retrieve()."
+                f"  {len(uuid_list):,d} IDs provided,"
+                f"  limit={limit}."
+                f"  But the maximum allowed is"
+                f" {MAX_NUM_RECORDS_RETRIEVED:,d}."
+            )
             raise ex.TooManyRecords(msg)
 
         com_include = self._common_internal(
-            science_fields=include_list,
-            dataset_list=dataset_list)
-        uparams = dict(include=','.join(com_include),
-                       # limit=limit,  # altered uuid_list to reflect limit
-                       chunk_len=chunk,
-                       format=format,
-                       dataset_list=','.join(dataset_list))
+            science_fields=include_list, dataset_list=dataset_list
+        )
+        uparams = {
+            "include": ",".join(com_include),
+            # limit=limit,  # altered uuid_list to reflect limit
+            #! "chunk_len": chunk,
+            "format": format,
+            #! "1thread": "yes",  # @@@ 7.3.2023
+            "dataset_list": ",".join(dataset_list),
+        }
         qstr = urlencode(uparams)
 
         #!url = f'{self.apiurl}/retrieve/?{qstr}'
-        url = f'{self.apiurl}/{svc}/?{qstr}'
+        url = f"{self.apiurl}/{svc}/?{qstr}"
         if verbose:
             print(f'Using url="{url}"')
             ut.tic()
 
+        ids = list(uuid_list) if limit is None else list(uuid_list)[:limit]
+        if self.show_curl:
+            cmd = ut.curl_retrieve_str(ids, self.rooturl, svc=svc, qstr=qstr)
+            print(cmd)
+
         try:
-            ids = list(uuid_list) if limit is None else list(uuid_list)[:limit]
-            res = requests.post(url, json=ids, timeout=self.timeout)
+            auth = TokenAuth(self.token) if self.token else None
+            res = requests.post(url, json=ids, auth=auth, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
-            raise ex.UnknownSparcl(f'ConnectTimeout: {reCT}')
+            raise ex.UnknownSparcl(f"ConnectTimeout: {reCT}")
         except requests.exceptions.ReadTimeout as reRT:
-            msg = (f'Try increasing the value of the "read_timeout" parameter'
-                   f' to "SparclClient()".'
-                   f' The current values is: {self.r_timeout} (seconds)'
-                   f'{reRT}')
+            msg = (
+                f'Try increasing the value of the "read_timeout" parameter'
+                f' to "SparclClient()".'
+                f" The current values is: {self.r_timeout} (seconds)"
+                f"{reRT}"
+            )
             raise ex.ReadTimeout(msg) from None
         except requests.exceptions.ConnectionError as reCE:
-            raise ex.UnknownSparcl(f'ConnectionError: {reCE}')
+            raise ex.UnknownSparcl(f"ConnectionError: {reCE}")
         except requests.exceptions.TooManyRedirects as reTMR:
-            raise ex.UnknownSparcl(f'TooManyRedirects: {reTMR}')
+            raise ex.UnknownSparcl(f"TooManyRedirects: {reTMR}")
         except requests.exceptions.HTTPError as reHTTP:
-            raise ex.UnknownSparcl(f'HTTPError: {reHTTP}')
+            raise ex.UnknownSparcl(f"HTTPError: {reHTTP}")
         except requests.exceptions.URLRequired as reUR:
-            raise ex.UnknownSparcl(f'URLRequired: {reUR}')
+            raise ex.UnknownSparcl(f"URLRequired: {reUR}")
         except requests.exceptions.RequestException as reRE:
-            raise ex.UnknownSparcl(f'RequestException: {reRE}')
+            raise ex.UnknownSparcl(f"RequestException: {reRE}")
         except Exception as err:  # fall through
             raise ex.UnknownSparcl(err)
 
         if verbose:
             elapsed = ut.toc()
-            print(f'Got response to post in {elapsed} seconds')
+            print(f"Got response to post in {elapsed} seconds")
         if res.status_code != 200:
             if verbose:
-                print(f'DBG: Server response=\n{res.text}')
+                print(f"DBG: Server response=\n{res.text}")
             # @@@ FAILS on invalid JSON. Maybe not json at all !!!
-            if verbose and ('traceback' in res.json()):
+            if verbose and ("traceback" in res.json()):
                 print(f'DBG: Server traceback=\n{res.json()["traceback"]}')
             raise ex.genSparclException(res, verbose=verbose)
 
-        if format == 'json':
+        if format == "json":
             results = res.json()
-        elif format == 'pkl':
+        elif format == "pkl":
             # Read chunked binary file (representing pickle file) from
             # server response. Load pickle into python data structure.
             # Python structure is list of records where first element
             # is a header.
-            with tempfile.TemporaryFile(mode='w+b') as fp:
+            with tempfile.TemporaryFile(mode="w+b") as fp:
                 for idx, chunk in enumerate(res.iter_content(chunk_size=None)):
                     fp.write(chunk)
                 # Position to start of file for pickle reading (load)
@@ -649,26 +844,31 @@ class SparclClient():  # was SparclApi()
         meta = results[0]
         if verbose:
             count = len(results) - 1
-            print(f'Got {count} spectra in '
-                  f'{elapsed:.2f} seconds ({count/elapsed:.0f} '
-                  'spectra/sec)')
+            print(
+                f"Got {count} spectra in "
+                f"{elapsed:.2f} seconds ({count/elapsed:.0f} "
+                "spectra/sec)"
+            )
             print(f'{meta["status"]}')
 
-        if len(meta['status'].get('warnings', [])) > 0:
-            warn(f"{'; '.join(meta['status'].get('warnings'))}",
-                 stacklevel=2)
+        if len(meta["status"].get("warnings", [])) > 0:
+            warn(f"{'; '.join(meta['status'].get('warnings'))}", stacklevel=2)
 
         return Retrieved(results, client=self)
 
-    def retrieve_by_specid(self,
-                           specid_list,
-                           *,
-                           svc='spectras',  # 'retrieve',
-                           format='pkl',    # 'json',
-                           include='DEFAULT',
-                           dataset_list=None,
-                           verbose=False):
-        """Retrieve spectra records from the SPARC database by list of specids.
+    def retrieve_by_specid(
+        self,
+        specid_list,
+        *,
+        svc="spectras",  # 'retrieve',
+        format="pkl",  # 'json',
+        include="DEFAULT",
+        dataset_list=None,
+        limit=500,
+        verbose=False,
+    ):
+        """Retrieve spectra records from the SPARCL database by list of
+        specids.
 
         Args:
             specid_list (:obj:`list`): List of specids.
@@ -679,7 +879,10 @@ class SparclClient():  # was SparclApi()
 
             dataset_list (:obj:`list`, optional): List of data sets from
                 which to retrieve spectra data. Defaults to None, meaning all
-                data sets hosted on the SPARC database.
+                data sets hosted on the SPARCL database.
+
+            limit (:obj:`int`, optional): Maximum number of records to
+                return. Defaults to 500. Maximum allowed is 24,000.
 
             verbose (:obj:`bool`, optional): Set to True for in-depth return
                 statement. Defaults to False.
@@ -699,37 +902,43 @@ class SparclClient():  # was SparclApi()
         #!specid_list = list(specid_list)
         assert isinstance(specid_list, list), (
             f'The "specid_list" parameter must be a python list. '
-            f'You used a value of type {type(specid_list)}.')
-        assert len(specid_list) > 0, (
-            f'The "specid_list" parameter value must be a non-empty list')
+            f"You used a value of type {type(specid_list)}."
+        )
+        assert (
+            len(specid_list) > 0
+        ), f'The "specid_list" parameter value must be a non-empty list'
         assert isinstance(specid_list[0], int), (
             f'The "specid_list" parameter must be a python list of INTEGERS. '
-            f'You used an element value of type {type(specid_list[0])}.')
+            f"You used an element value of type {type(specid_list[0])}."
+        )
 
         if dataset_list is None:
-            constraints = {'specid': specid_list}
+            constraints = {"specid": specid_list}
         else:
-            constraints = {'specid': specid_list,
-                           'data_release': dataset_list}
+            constraints = {"specid": specid_list, "data_release": dataset_list}
 
         # Science Field Name for uuid.
         dr = list(self.fields.all_drs)[0]
-        idfld = self.fields._science_name('id', dr)
+        idfld = self.fields._science_name("sparcl_id", dr)
 
-        found = self.find([idfld], constraints=constraints)
+        found = self.find([idfld], constraints=constraints, limit=limit)
         if verbose:
-            print(f'Found {found.count} matches.')
-        res = self.retrieve(found.ids,
-                            svc=svc,
-                            format=format,
-                            include=include,
-                            dataset_list=dataset_list,
-                            verbose=verbose)
+            print(f"Found {found.count} matches.")
+        res = self.retrieve(
+            found.ids,
+            #! svc=svc,
+            #! format=format,
+            include=include,
+            dataset_list=dataset_list,
+            limit=limit,
+            verbose=verbose,
+        )
         if verbose:
-            print(f'Got {res.count} records.')
+            print(f"Got {res.count} records.")
         return res
 
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

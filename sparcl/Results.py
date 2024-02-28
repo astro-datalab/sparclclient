@@ -3,15 +3,16 @@ These include results of client.retrieve() client.find().
 """
 
 from collections import UserList
+
 #!import copy
 from sparcl.utils import _AttrDict
-#from sparcl.gather_2d import bin_spectra_records
+
+# from sparcl.gather_2d import bin_spectra_records
 import sparcl.exceptions as ex
 from warnings import warn
 
 
 class Results(UserList):
-
     def __init__(self, dict_list, client=None):
         super().__init__(dict_list)
         self.hdr = dict_list[0]
@@ -19,6 +20,15 @@ class Results(UserList):
         self.client = client
         self.fields = client.fields
         self.to_science_fields()
+
+        # HACK 12/14/2023 -sp- to fix UUID problem presumably
+        # produced on stack version upgrade (to Django 4.2, postgres 13+)
+        # Done per AB for expediency since real solution will be easier
+        # after field-renaming is removed.
+        for rec in self.recs:
+            if "sparcl_id" in rec:
+                rec["sparcl_id"] = str(rec["sparcl_id"])
+        # END __init__()
 
     # https://docs.python.org/3/library/collections.html#collections.deque.clear
     def clear(self):
@@ -52,17 +62,17 @@ class Results(UserList):
         newrecs = list()
         for rec in self.recs:
             newrec = dict()
-            dr = rec['_dr']
+            dr = rec["_dr"]
             keep = True
             for orig in rec.keys():
-                if orig == '_dr':
+                if orig == "_dr":
                     # keep DR around unchanged. We need it to rename back
                     # to Internal Field Names later.
                     newrec[orig] = rec[orig]
                 else:
                     new = self.fields._science_name(orig, dr)
                     if new is None:
-                        keep = False
+                        keep = False  # We don't have name mapping, toss rec
                     newrec[new] = rec[orig]
             if keep:
                 newrecs.append(_AttrDict(newrec))
@@ -71,9 +81,9 @@ class Results(UserList):
     # Convert Science field names to Internal field names.
     def to_internal_fields(self):
         for rec in self.recs:
-            dr = rec.get('_dr')
+            dr = rec.get("_dr")
             for new in rec.keys():
-                if new == '_dr':
+                if new == "_dr":
                     # keep DR around unchanged. We need it to rename back
                     # to Internal Field Names later.
                     continue
@@ -84,10 +94,10 @@ class Results(UserList):
         newrecs = list()
         for rec in self.recs:
             newrec = dict()
-            dr = rec['_dr']
+            dr = rec["_dr"]
             keep = True
             for sci_name in rec.keys():
-                if sci_name == '_dr':
+                if sci_name == "_dr":
                     # keep DR around unchanged. We need it to rename back
                     # to Internal Field Names later.
                     newrec[sci_name] = rec[sci_name]
@@ -116,21 +126,25 @@ class Results(UserList):
 
         """
         if len(ids_og) <= 0:
-            msg = (f'The list of IDs passed to the reorder method '
-                   f'does not contain any sparcl_ids or specIDs.')
+            msg = (
+                f"The list of IDs passed to the reorder method "
+                f"does not contain any sparcl_ids or specIDs."
+            )
             raise ex.NoIDs(msg)
         elif len(self.recs) <= 0:
-            msg = (f'The retrieved or found results did not '
-                   f'contain any records.')
+            msg = (
+                "The retrieved or found results did not "
+                "contain any records."
+            )
             raise ex.NoRecords(msg)
         else:
             # Transform science fields to internal fields
             new_recs = self.science_to_internal_fields()
             # Get the ids or specids from retrieved records
-            if type(ids_og[0]) == str:
-                ids_re = [f['id'] for f in new_recs]
-            elif type(ids_og[0]) == int:
-                ids_re = [f['specid'] for f in new_recs]
+            if type(ids_og[0]) is str:
+                ids_re = [f["sparcl_id"] for f in new_recs]
+            elif type(ids_og[0]) is int:
+                ids_re = [f["specid"] for f in new_recs]
             # Enumerate the original ids
             dict_og = {x: i for i, x in enumerate(ids_og)}
             # Enumerate the retrieved ids
@@ -144,22 +158,25 @@ class Results(UserList):
             # Insert dummy record(s) if applicable
             dummy_record = "{'id': None, 'specid': None, '_dr': 'SDSS-DR16'}"
             for i in none_idx:
-                reordered.insert(i, {'id': None, 'specid': None,
-                                     '_dr': 'SDSS-DR16'})
+                reordered.insert(
+                    i, {"sparcl_id": None, "specid": None, "_dr": "SDSS-DR16"}
+                )
             reordered.insert(0, self.hdr)
             meta = reordered[0]
             if len(none_idx) > 0:
-                msg = (f'{len(none_idx)} sparcl_ids or specIDs were '
-                       f'not found in '
-                       f'the database. Use "client.missing()" '
-                       f'to get a list of the unavailable IDs. '
-                       f'To maintain correct reordering, a dummy '
-                       f'record has been placed at the indices '
-                       f'where no record was found. Those '
-                       f'indices are: {none_idx}. The dummy '
-                       f'record will appear as follows: '
-                       f'{dummy_record}. ')
-                meta['status'].update({'warnings': [msg]})
+                msg = (
+                    f"{len(none_idx)} sparcl_ids or specIDs were "
+                    f"not found in "
+                    f'the database. Use "client.missing()" '
+                    f"to get a list of the unavailable IDs. "
+                    f"To maintain correct reordering, a dummy "
+                    f"record has been placed at the indices "
+                    f"where no record was found. Those "
+                    f"indices are: {none_idx}. The dummy "
+                    f"record will appear as follows: "
+                    f"{dummy_record}. "
+                )
+                meta["status"].update({"warnings": [msg]})
                 warn(msg, stacklevel=2)
         return Results(reordered, client=self.client)
 
@@ -172,7 +189,8 @@ class Retrieved(Results):
         super().__init__(dict_list, client=client)
 
     def __repr__(self):
-        return f'Retrieved Results: {len(self.recs)} records'
+        return f"Retrieved Results: {len(self.recs)} records"
+
 
 #!    def bin_spectra(self):
 #!        """Align flux from all records by common wavelength bin.
@@ -206,12 +224,11 @@ class Found(Results):
         super().__init__(dict_list, client=client)
 
     def __repr__(self):
-        return f'Find Results: {len(self.recs)} records'
+        return f"Find Results: {len(self.recs)} records"
 
     @property
     def ids(self):
         """List of unique identifiers of matched records."""
-        dr = list(self.fields.all_drs)[0]
-        idfld = self.fields._science_name('id', dr)
+        #! dr = list(self.fields.all_drs)[0]
 
-        return [d.get(idfld) for d in self.recs]
+        return [d.get("sparcl_id") for d in self.recs]

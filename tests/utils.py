@@ -5,6 +5,7 @@ import datetime
 import time
 import socket
 from inspect import cleandoc
+
 # External packages
 #   none
 # LOCAL packages
@@ -13,7 +14,7 @@ from inspect import cleandoc
 
 # e.g. pdocstr(coexist_radec.__doc__),
 def pdocstr(docstring):
-    return cleandoc(docstring).replace('\n', ' ')
+    return cleandoc(docstring).replace("\n", " ")
 
 
 def tic():
@@ -28,7 +29,7 @@ def toc():
 def here_now():
     hostname = socket.gethostname()
     now = str(datetime.datetime.now())
-    return(hostname, now)
+    return (hostname, now)
 
 
 # dict((k,len(v)) for (k,v) in qs[0]['spzline'].items())
@@ -37,7 +38,7 @@ def objform(obj):
     if obj is None:
         return None
     elif type(obj) is list:
-        return f'CNT={len(obj)}'
+        return f"CNT={len(obj)}"
     elif type(obj) is dict:
         return dict((k, objform(v)) for (k, v) in obj.items())
     else:

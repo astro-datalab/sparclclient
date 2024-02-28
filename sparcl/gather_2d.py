@@ -1,50 +1,17 @@
 """Align or resample spectra related fields across multiple records."""
 # See client.py for Doctest example
 #
-# See:
-#   https://spectres.readthedocs.io/en/latest/
 # For info about problems with floating point,
 #   See:  https://docs.python.org/3/tutorial/floatingpoint.html
 #   Also: https://docs.python.org/3/library/decimal.html#floating-point-notes
 #
-import math
 from decimal import Decimal
+
 #
-import spectres
 import numpy as np
+
 #
 import sparcl.client
-
-
-# Per paper, should be able to pass all flux in one call to spectres
-# https://arxiv.org/pdf/1705.05165.pdf
-# Perhaps users would rather the bins uniform (1,5,20 Angstroms?)
-def _resample_flux(records, wavstep=1):
-    smallest = math.floor(min([min(r.wavelength) for r in records]))
-    largest = math.ceil(max([max(r.wavelength) for r in records]))
-
-    #!wrange = largest - smallest
-    #new_wavs = np.fromfunction(lambda i: i + smallest, (wrange,), dtype=int)
-    #flux_2d = np.ones([len(records), wrange])
-
-    new_wavs = np.array(range(smallest, largest + 1, wavstep))
-    flux_2d = np.full([len(records), len(new_wavs)], None, dtype=float)
-
-    for idx, rec in enumerate(records):
-        flux_2d[idx] = spectres.spectres(new_wavs,
-                                         rec.wavelength,
-                                         rec.flux,
-                                         verbose=False)
-    return flux_2d, new_wavs
-
-
-def _tt0(numrecs=20):
-    client = sparcl.client.SparclClient()
-    found = client.find(constraints=dict(data_release=['BOSS-DR16']),
-                        limit=numrecs)
-    got = client.retrieve(found.ids)
-    flux_2d, new_wavs = _resample_flux(got.records)
-    return flux_2d, new_wavs
 
 
 # Map every wavelength of every record to index (ri,wi)
@@ -68,11 +35,13 @@ def _tt0(numrecs=20):
 def _wavelength_offsets(records):
     # sorted list of wavelengths from ALL records
     window = sorted(
-        set(records[0].wavelength).union(*[r.wavelength for r in records[1:]]))
+        set(records[0].wavelength).union(*[r.wavelength for r in records[1:]])
+    )
     # offsets[ri] = index into WINDOW
-    offsets = {ri: window.index(rec.wavelength[0])
-               for ri, rec in enumerate(records)}
-    return(window, offsets)
+    offsets = {
+        ri: window.index(rec.wavelength[0]) for ri, rec in enumerate(records)
+    }
+    return (window, offsets)
 
 
 def _validate_wavelength_alignment(records, window, offsets, precision=None):
@@ -88,14 +57,19 @@ def _validate_wavelength_alignment(records, window, offsets, precision=None):
             else:
                 recwl = Decimal(rwl).quantize(PLACES)
             wwl = window[offsets[ri] + wi]
-            msg = (f'Wavelength in '
-                   f'Record[{ri}][{wi}] ({recwl}) does not match '
-                   f'Window[{offsets[ri]+wi} = offset[{ri}]={offsets[ri]} '
-                   f'+ {wi}]  ({wwl})'
-                   )
-            assert recwl == wwl, msg
-            # f'RecWL[{wi}] {rwl} != WindowWL[{offsets[ri+wi]}] {wwl} '
-            # f'offset={offsets[ri]}')
+            #! msg = (f'Wavelength in '
+            #!        f'Record[{ri}][{wi}] ({recwl}) does not match '
+            #!        f'Window[{offsets[ri]+wi} = offset[{ri}]={offsets[ri]} '
+            #!        f'+ {wi}]  ({wwl})'
+            #!        )
+            #! assert recwl == wwl, msg
+            if recwl != wwl:
+                msg = (
+                    f"The spectra cannot be aligned with the given"
+                    f' "precision" parameter ({precision}).'
+                    f" Try lowering the precision value."
+                )
+                raise Exception(msg)
 
 
 # We want to align a bunch of records by wavelength into a single
@@ -104,7 +78,7 @@ def _validate_wavelength_alignment(records, window, offsets, precision=None):
 # records from a single DataSet. So validate it first.
 # (If not valid, allowing wavelength slop might help.)
 def _align_wavelengths(records):
-    window, offsets = wavelength_offsets(records)
+    window, offsets = _wavelength_offsets(records)
     _validate_wavelength_alignment(records, window, offsets)
     ar = np.ones([len(records), len(window)])
     for ri, r in enumerate(records):
@@ -113,20 +87,20 @@ def _align_wavelengths(records):
     return ar
 
 
-def _tt1(numrecs=20, dr='BOSS-DR16'):
+def _tt1(numrecs=20, dr="BOSS-DR16"):
     client = sparcl.client.SparclClient()
-    found = client.find(constraints=dict(data_release=[dr]),
-                        limit=numrecs)
+    found = client.find(constraints=dict(data_release=[dr]), limit=numrecs)
     got = client.retrieve(found.ids)
     records = got.records
-    window, offsets = wavelength_offsets(records)
-    print(f'Built window len={len(window)}; offsets={offsets}')
-    #return records, window, offsets
+    window, offsets = _wavelength_offsets(records)
+    print(f"Built window len={len(window)}; offsets={offsets}")
+    # return records, window, offsets
     ar = _align_wavelengths(records)
     return ar
 
 
 # precision:: number of decimal places
+# "records" must contain "wavelength" field.
 def _wavelength_grid_offsets(records, precision=11):
     PLACES = Decimal(10) ** -precision
 
@@ -137,9 +111,11 @@ def _wavelength_grid_offsets(records, precision=11):
     grid = sorted(gset)  # 1D sorted list of wavelengths (bigger than any rec)
     #! print(f'DBG grid({len(grid)})[:10]={grid[:10]}')
     # offsets[ri] = index into GRID
-    offsets = {ri: grid.index(Decimal(rec.wavelength[0]).quantize(PLACES))
-               for ri, rec in enumerate(records)}
-    return(grid, offsets)
+    offsets = {
+        ri: grid.index(Decimal(rec.wavelength[0]).quantize(PLACES))
+        for ri, rec in enumerate(records)
+    }
+    return (grid, offsets)
 
 
 # return 2D numpy array of FLUX values that is aligned to wavelength GRID.
@@ -152,6 +128,7 @@ def _flux_grid(records, grid, offsets, precision=None):
             ar[ri, offsets[ri] + fi] = flux
     return ar
 
+
 # RETURN 2D nparray(records,wavelengthGrid) = fieldValue
 def _field_grid(records, fieldName, grid, offsets, precision=None):
     ar = np.full([len(records), len(grid)], np.nan)
@@ -159,6 +136,7 @@ def _field_grid(records, fieldName, grid, offsets, precision=None):
         for fi, fieldValue in enumerate(r[fieldName]):
             ar[ri, offsets[ri] + fi] = fieldValue
     return ar  # (wavelengthGrid, records)
+
 
 # RETURN 2D nparray(fields,wavelengthGrid) = fieldValue
 #! def rec_grid(rec, fields, grid, offsets, precision=None):
@@ -175,20 +153,32 @@ def _field_grid(records, fieldName, grid, offsets, precision=None):
 #!     ar = _flux_grid(records, grid, offsets, precision=precision)
 #!     return ar, np.array([float(x) for x in grid])
 
+
+def _validate_spectra_fields(records, fields):
+    #! spectra_fields = [
+    #!     client.fields.n2o["BOSS-DR16"][k]
+    #!     for k, v in client.fields.attrs["BOSS-DR16"].items()
+    #!     if v["storage"] == "S"
+    #! ]
+    [k for k in records[0].keys() if not k.startswith("_")]
+
+
 # TOP level: Intended for access from Jupyter NOTEBOOK.
 # Align spectra related field from records into one array using quantization.
-def align_records(records, fields=None, precision=7):
+def align_records(records, fields=["flux", "wavelength"], precision=7):
     """Align given spectra-type fields to a common wavelength grid.
 
     Args:
-        records (list): List of dictionaries. The keys for all these dictionaries
-            are Science Field Names.
+        records (list): List of dictionaries.
+            The keys for all these dictionaries are Science Field Names.
 
         fields (:obj:`list`, optional): List of Science Field Names of
             spectra related fields to align and include in the results.
+            DEFAULT=['flux', 'wavelength']
 
         precision (:obj:`int`, optional): Number of decimal points to use for
-            quantizing wavelengths into a grid. Default=7
+            quantizing wavelengths into a grid.
+            DEFAULT=7
 
     Returns:
         tuple containing:
@@ -198,23 +188,32 @@ def align_records(records, fields=None, precision=7):
 
     Example:
         >>> client = sparcl.client.SparclClient()
-        >>> specflds = ['wavelength', 'flux', 'ivar', 'mask', 'model']
+        >>> specflds = ['wavelength', 'model']
         >>> cons = {"data_release": ['BOSS-DR16']}
         >>> found = client.find(constraints=cons, limit=21)
         >>> got = client.retrieve(found.ids, include=specflds)
         >>> ar_dict, grid = align_records(got.records, fields=specflds)
         >>> ar_dict['model'].shape
-        (21, 4670)
+        (21, 4666)
 
     """
+    # Report Garbage In
+    if "wavelength" not in fields:
+        msg = (
+            f'You must provide "wavelength" in the list provided'
+            f' in the "fields" paramter.  Got: {fields}'
+        )
+        raise Exception(msg)
+    if "wavelength" not in records[0]:
+        msg = (
+            f'Records must contain the "wavelength" field.'
+            f" The first record contains fields: {sorted(records[0].keys())}"
+        )
+        raise Exception(msg)
+
+    #! _validate_spectra_fields(records, fields)
     grid, offsets = _wavelength_grid_offsets(records, precision=precision)
     _validate_wavelength_alignment(records, grid, offsets, precision=precision)
-
-    # One slice for each record; each slice a 2darray(wavelength, fieldName)=fldVal
-    #! slices = list()
-    #! for rec in records:
-    #!     ar = rec_grid(rec, fields, grid, offsets, precision=None):
-    #!     slices.append(ar)
 
     # One slice for each field; each slice a 2darray(wavelength, record)=fldVal
     adict = dict()
@@ -225,22 +224,10 @@ def align_records(records, fields=None, precision=7):
     return adict, np.array([float(x) for x in grid])
 
 
-def _tt(numrecs=9, dr='BOSS-DR16', precision=7):
-    # Get sample of NUMRECS records from DR DataSet.
-    client = sparcl.client.SparclClient()
-    found = client.find(constraints=dict(data_release=[dr]),
-                        limit=numrecs)
-    got = client.retrieve(found.ids)
-    records = got.records
-
-    #! grid, offsets = _wavelength_grid_offsets(records, precision=precision)
-    #! print(f'Built grid len={len(grid)} '
-    #!       f'offsets({len(offsets)})[:5]={list(offsets.values())[:5]}')
-    #! ar = _flux_grid(records, grid, offsets, precision=precision)
-    ar, grid = flux_records(records, precision=precision)
-    return ar, grid  # ar (numRecs,len(grid))
-# with np.printoptions(threshold=np.inf, linewidth=210, formatter=dict(float=lambda v: f'{v: > 7.3f}')): print(ar.T)  # noqa: E501
+# with np.printoptions(threshold=np.inf, linewidth=210,
+#   formatter=dict(float=lambda v: f'{v: > 7.3f}')): print(ar.T)  # noqa: E501
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
