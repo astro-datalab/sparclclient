@@ -222,7 +222,6 @@ class SparclClient:  # was SparclApi()
                 f"at {self.apiurl}."
             )
             raise Exception(msg)
-        # self.session = requests.Session() #@@@
 
         self.clientversion = client_version
         self.fields = Fields(self.apiurl)
@@ -255,22 +254,25 @@ class SparclClient:  # was SparclApi()
             return None
         if password is None:
             password = getpass.getpass(prompt="SSO Password: ")
-        # url = f"{self.apiurl}/get_token/"
-        url = "http://localhost:8060/api/get_token/"
+        url = f"{self.apiurl}/get_token/"
+        # print(f'login: get_token {url=}')
         res = requests.post(
             url,
             json=dict(email=email, password=password),
             timeout=self.timeout,
         )
-        self.session.auth = None
-        self.token = None
         try:
             res.raise_for_status()
             #!print(f"DBG: {res.content=}")
             self.token = res.json()
             self.session.auth = (email, password)
         except Exception as err:
-            msg = f"Could not login with given credentials. {err=}"
+            self.session.auth = None
+            self.token = None
+            msg = (
+                f"Could not login with given credentials. {err=}"
+                f'Reverted to "Anonymous" user.'
+            )
             return msg
 
         print(f"Logged in successfully with {email=}")
@@ -286,8 +288,11 @@ class SparclClient:  # was SparclApi()
         response = requests.get(
             f"{self.apiurl}/auth_status/", auth=auth, timeout=self.timeout
         )
+
+        #! print(f"authorise: ")
+        #! print(response.content.decode())
         auth_status = response.json()
-        print(f"{auth_status=}")
+        #!print(f"{auth_status=}")
 
         all_private_drs = set(auth_status.get("All_Private_DataReleases"))
         all_drs = self.fields.all_drs
