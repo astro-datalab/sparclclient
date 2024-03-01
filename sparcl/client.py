@@ -243,6 +243,23 @@ class SparclClient:  # was SparclApi()
         )
 
     def login(self, email, password=None):
+        """Login to the SPARCL service.
+
+        Args:
+            email (:obj:`str`): User login email.
+
+            password (:obj:`str`, optional): User SSO password.
+                If not given, the output will
+                prompt the user to enter in their SSO password.
+
+        Returns:
+            None.
+
+        Example:
+            >>> client = SparclClient()
+            >>> client.login('test_user@noirlab.edu', 'test123')
+            Logged in successfully with email='test_user@noirlab.edu'
+        """
         if email is None:  # "logout"
             old_email = self.session.auth[0] if self.session.auth else None
             self.session.auth = None
@@ -266,12 +283,12 @@ class SparclClient:  # was SparclApi()
             #!print(f"DBG: {res.content=}")
             self.token = res.json()
             self.session.auth = (email, password)
-        except Exception as err:
+        except Exception:
             self.session.auth = None
             self.token = None
             msg = (
-                f"Could not login with given credentials. {err=}"
-                f'Reverted to "Anonymous" user.'
+                "Could not login with given credentials."
+                ' Reverted to "Anonymous" user.'
             )
             return msg
 
@@ -279,6 +296,20 @@ class SparclClient:  # was SparclApi()
         return None
 
     def logout(self):
+        """Logout of the SPARCL service.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+
+        Example:
+            >>> client = SparclClient()
+            >>> client.logout()
+            Logged-out successfully.
+            Previously logged-in with email test_user@noirlab.edu.
+        """
         return self.login(None)
 
     @property
