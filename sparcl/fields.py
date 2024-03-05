@@ -1,5 +1,6 @@
 """Get Field names associated with various SPARCL conditions.
 """
+
 # Python Standard Library
 from collections import defaultdict
 

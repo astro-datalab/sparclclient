@@ -1,4 +1,5 @@
 """Align or resample spectra related fields across multiple records."""
+
 # See client.py for Doctest example
 #
 # For info about problems with floating point,

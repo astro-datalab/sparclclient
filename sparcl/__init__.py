@@ -2,7 +2,6 @@
 A client for getting spectra and meta-data from NOIRLab.
 """
 
-
 # List of packages to import when "from sparcl import *" is used
 __all__ = ["client", "align_records"]
 

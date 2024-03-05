@@ -1,6 +1,7 @@
 """Client module for SPARCL.
 This module interfaces to the SPARC-Server to get spectra data.
 """
+
 # python -m unittest tests.tests_api
 
 # ### Run tests against DEV
