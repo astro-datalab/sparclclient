@@ -92,7 +92,7 @@ find_0 = [
 
 find_1 = [
     {
-        "_dr": "SDSS-DR17",
+        "_dr": "SDSS-DR17-test",
         "dec": 1.2262562,
         "ra": 314.87155,
         "sparcl_id": "02bf79b8-060f-446f-81de-1dd88cd14db1",
@@ -103,7 +103,7 @@ find_2 = 640  # DEV
 
 find_3 = [
     {
-        "_dr": "SDSS-DR17",
+        "_dr": "SDSS-DR17-test",
         "dec": 1.2262562,
         "ra": 314.87155,
         "sparcl_id": "02bf79b8-060f-446f-81de-1dd88cd14db1",
