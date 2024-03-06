@@ -316,25 +316,22 @@ class SparclClient:  # was SparclApi()
     @property
     def authorized(self):
         auth = TokenAuth(self.token) if self.token else None
-        username = self.session.auth[0] if self.session.auth else "Anonymous"
         response = requests.get(
             f"{self.apiurl}/auth_status/", auth=auth, timeout=self.timeout
         )
-
-        #! print(f"authorise: ")
-        #! print(response.content.decode())
         auth_status = response.json()
-        #!print(f"{auth_status=}")
+        #! print(f"DBG authorized: {auth_status=}")
 
-        all_private_drs = set(auth_status.get("All_Private_DataReleases"))
-        all_drs = self.fields.all_drs
-        auth_drs = set(auth_status.get("Authorized_DataReleases"))
+        username = auth_status.get("Loggedin_User")
+        #! all_private_drs = set(auth_status.get("All_Private_Datasets"))
+        all_public_drs = set(auth_status.get("All_Public_Datasets"))
+        auth_drs = set(auth_status.get("Authorized_Private_Datasets"))
         res = dict(
             Loggedin_As=username,  # email
-            Authorized_Datasets=auth_drs,
-            Unauthorized_Datasets=all_private_drs - auth_drs,
-            All_Private_Datasets=all_private_drs,
-            All_Datasets=all_drs,
+            Authorized_Datasets=auth_drs | all_public_drs,
+            #! Unauthorized_Datasets=all_private_drs - auth_drs,
+            #! All_Private_Datasets=all_private_drs,
+            #! All_Datasets=all_drs,
         )
         return res
 
