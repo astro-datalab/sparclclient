@@ -666,3 +666,156 @@ class AlignRecordsTest(unittest.TestCase):
         with self.assertRaises(Exception, msg=msg):
             ar_dict, grid = sg.align_records(got.records, precision=11)
             # shape = ar_dict['flux'].shape
+
+class AuthTest(unittest.TestCase):
+    """Test authorization and authentication features"""
+
+    @classmethod
+    def setUpClass(cls):
+        if clverb:
+            print(
+                f"\n# Running AuthTest:setUpClass() "
+                "{str(datetime.datetime.now())}"
+            )
+
+        cls.client = sparcl.client.SparclClient(
+            url=serverurl, verbose=clverb, show_curl=showcurl
+        )
+
+        # Test users
+        cls.auth_user = 'test_user_1@noirlab.edu'
+        cls.unauth_user = 'test_user_2@noirlab.edu'
+        cls.non_user = 'test_user_3@noirlab.edu'
+        cls.usrpw = 'pass123word'
+
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['BOSS-DR16', 'SDSS-DR16']}
+        found = cls.client.find(outfields=out, constraints=cons,
+                                limit=10)
+
+        cls.uuid_list4 = [
+            "00001ebf-d030-4d59-97e5-060c47202897",
+            "ff1e9a12-f21a-4050-bada-a1e67a265885",
+        ]
+        if clverb:
+            print(
+                f"\n# Completed AuthTest:setUpClass() "
+                f"{str(datetime.datetime.now())}\n"
+            )
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def test_authorized_1(self):
+        """Test authorized method with authorized user signed in"""
+        self.client.login(self.auth_user, self.usrpw)
+        actual = self.client.authorized
+        if showact:
+            print(f"authorized_1: actual={actual}")
+
+        self.assertEqual(actual, exp.authorized_1, msg="Actual to Expected")
+        self.client.logout()
+
+    def test_authorized_2(self):
+        """Test authorized method with unauthorized user signed in"""
+        self.client.login(self.unauth_user, self.usrpw)
+        actual = self.client.authorized
+        if showact:
+            print(f"authorized_2: actual={actual}")
+
+        self.assertEqual(actual, exp.authorized_2, msg="Actual to Expected")
+        self.client.logout()
+
+    def test_authorized_3(self):
+        """Test authorized method on anonymous user not signed in"""
+        actual = self.client.authorized
+        if showact:
+            print(f"authorized_3: actual={actual}")
+
+        self.assertEqual(actual, exp.authorized_3, msg="Actual to Expected")
+
+    def test_auth_find_1(self):
+        """Test find method with authorized user; private data set
+        specified"""
+        self.client.login(self.auth_user, self.usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['SDSS-DR17-test']}
+        found = self.client.find(outfields=out, constraints=cons,
+                                limit=2, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_1: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_1), msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_find_2(self):
+        """Test find method with authorized user; no data sets specified"""
+        self.client.login(self.auth_user, self.usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9]}
+        found = self.client.find(outfields=out, constraints=cons,
+                                limit=3, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_2: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_2), msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_find_3(self):
+        """Test find method with unauthorized user; private data set
+        specified"""
+        self.client.login(self.unauth_user, self.usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['SDSS-DR17-test', 'SDSS-DR16']}
+        ### Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.find(outfields=out, constraints=cons,
+                             limit=3, sort='sparcl_id')
+        self.client.logout()
+
+    def test_auth_find_4(self):
+        """Test find method with unauthorized user; no data sets specified"""
+        self.client.login(self.unauth_user, self.usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9]}
+        found = self.client.find(outfields=out, constraints=cons,
+                                limit=10, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_4: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_4), msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_find_5(self):
+        """Test find method with anonymous user; private data set
+        specified"""
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['SDSS-DR17-test', 'SDSS-DR16']}
+        ### Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.find(outfields=out, constraints=cons,
+                             limit=3, sort='sparcl_id')
+
+    def test_auth_find_6(self):
+        """Test find method with anonymous user; no data sets specified"""
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9]}
+        found = self.client.find(outfields=out, constraints=cons,
+                                limit=10, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_6: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_6), msg="Actual to Expected")
+

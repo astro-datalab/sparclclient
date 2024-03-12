@@ -168,3 +168,43 @@ reorder_2a = ['00063e73-992e-11ee-ad57-525400aad0aa',
 #reorder_2b = [1254334738051655680, 1254335012929562624, None]
 
 reorder_2b = [39627926995470031, 39627920993422590, None]
+
+authorized_1 = {'Loggedin_As': 'test_user_1@noirlab.edu',
+                'Authorized_Datasets': {'BOSS-DR16',
+                                        'DESI-EDR',
+                                        'SDSS-DR16',
+                                        'SDSS-DR17-test'}}
+
+authorized_2 = {'Loggedin_As': 'test_user_2@noirlab.edu',
+                'Authorized_Datasets': {'BOSS-DR16', 'DESI-EDR', 'SDSS-DR16'}}
+
+authorized_3 = {'Loggedin_As': 'Anonymous',
+                'Authorized_Datasets': {'BOSS-DR16', 'DESI-EDR', 'SDSS-DR16'}}
+
+auth_find_1 = ['84452fad-dbe7-11ee-a970-525400aad0aa', '847e0be4-dbe7-11ee-b095-525400aad0aa']
+
+auth_find_2 = ['00769ec9-9931-11ee-97de-525400aad0aa',
+               '00b0904d-992f-11ee-b7f9-525400aad0aa',
+               '00c6d798-9931-11ee-af11-525400aad0aa']
+
+auth_find_4 = ['00769ec9-9931-11ee-97de-525400aad0aa',
+               '00b0904d-992f-11ee-b7f9-525400aad0aa',
+               '00c6d798-9931-11ee-af11-525400aad0aa',
+               '010eb4d0-992f-11ee-89de-525400aad0aa',
+               '014ac8ea-9931-11ee-b693-525400aad0aa',
+               '01c9187a-9931-11ee-bbbc-525400aad0aa',
+               '01db0ea0-9930-11ee-a576-525400aad0aa',
+               '020ed77c-992f-11ee-aefb-525400aad0aa',
+               '022ab30b-9931-11ee-a372-525400aad0aa',
+               '024c9ba1-9930-11ee-aa56-525400aad0aa']
+
+auth_find_6 = ['00769ec9-9931-11ee-97de-525400aad0aa',
+               '00b0904d-992f-11ee-b7f9-525400aad0aa',
+               '00c6d798-9931-11ee-af11-525400aad0aa',
+               '010eb4d0-992f-11ee-89de-525400aad0aa',
+               '014ac8ea-9931-11ee-b693-525400aad0aa',
+               '01c9187a-9931-11ee-bbbc-525400aad0aa',
+               '01db0ea0-9930-11ee-a576-525400aad0aa',
+               '020ed77c-992f-11ee-aefb-525400aad0aa',
+               '022ab30b-9931-11ee-a372-525400aad0aa',
+               '024c9ba1-9930-11ee-aa56-525400aad0aa']
