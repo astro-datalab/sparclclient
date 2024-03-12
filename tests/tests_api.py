@@ -32,6 +32,7 @@ from contextlib import contextmanager
 import unittest
 from unittest import skip
 import datetime
+from getpass import getpass
 
 #! from unittest mock, skipIf, skipUnless
 #!import warnings
@@ -686,7 +687,7 @@ class AuthTest(unittest.TestCase):
         cls.auth_user = 'test_user_1@noirlab.edu'
         cls.unauth_user = 'test_user_2@noirlab.edu'
         cls.non_user = 'test_user_3@noirlab.edu'
-        cls.usrpw = 'pass123word'
+        cls.usrpw = getpass()
 
         out = ['sparcl_id', 'data_release']
         cons = {'spectype': ['GALAXY'],
