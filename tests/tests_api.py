@@ -34,7 +34,7 @@
 # Python library
 from contextlib import contextmanager
 import unittest
-from unittest import skip
+from unittest import skip, skipUnless
 import datetime
 
 #! from unittest mock, skipIf, skipUnless
@@ -687,6 +687,7 @@ class AlignRecordsTest(unittest.TestCase):
             ar_dict, grid = sg.align_records(got.records, precision=11)
             # shape = ar_dict['flux'].shape
 
+@skipUnless('usrpw' in os.environ, 'Password is required to test auth')
 class AuthTest(unittest.TestCase):
     """Test authorization and authentication features"""
 
