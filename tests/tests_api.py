@@ -269,8 +269,10 @@ class SparclClientTest(unittest.TestCase):
 
     def test_retrieve_0(self):
         """Get spectra using small list of SPECIDS."""
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         res = self.client.retrieve_by_specid(
-            self.specid_list0, include=["sparcl_id", "specid"]
+            self.specid_list0, include=["sparcl_id", "specid"],
+            dataset_list=drs
         )
         actual = sorted([r["specid"] for r in res.records])
         if showact:
@@ -282,9 +284,10 @@ class SparclClientTest(unittest.TestCase):
         """Get spectra using small list of uuids."""
         name = "retrieve_0b"
         uuids = self.uuid_list0
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
 
         tic()
-        res = self.client.retrieve(uuids)
+        res = self.client.retrieve(uuids, dataset_list=drs)
         self.timing[name] = toc()
         actual = sorted(res.records[0].keys())
 
@@ -319,13 +322,16 @@ class SparclClientTest(unittest.TestCase):
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
         uuids = self.uuid_list0
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         with self.assertWarns(Warning):
-            self.client.retrieve(uuids + [999])
+            self.client.retrieve(uuids + [999], dataset_list=drs)
 
     def test_retrieve_5(self):
         """Limit number of records returned by retrieve_by_specid."""
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         res = self.client.retrieve_by_specid(
-            self.specid_list5, include=["specid"], limit=2
+            self.specid_list5, include=["specid"], dataset_list=drs,
+            limit=2
         )
         actual = sorted([r["specid"] for r in res.records])
         if showact:
@@ -447,7 +453,8 @@ class SparclClientTest(unittest.TestCase):
         print(f"ids: {ids}")
 
         tic()
-        res = self.client.retrieve(ids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve(ids, dataset_list=drs)
         res_ids = [r["sparcl_id"] for r in res.records]
         print(f"retrieved: {res_ids}")
         self.timing[name] = toc()
@@ -463,7 +470,8 @@ class SparclClientTest(unittest.TestCase):
         specids = self.specid_list2
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         res_reorder = res.reorder(specids)
         actual = [f["specid"] for f in res_reorder.records]
@@ -478,8 +486,9 @@ class SparclClientTest(unittest.TestCase):
         ids = self.uuid_list3
 
         tic()
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         with self.assertWarns(Warning):
-            res = self.client.retrieve(ids)
+            res = self.client.retrieve(ids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertWarns(Warning):
             res_reorder = res.reorder(ids)
@@ -495,7 +504,8 @@ class SparclClientTest(unittest.TestCase):
         specids = self.specid_list3
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertWarns(Warning):
             res_reorder = res.reorder(specids)
@@ -512,7 +522,8 @@ class SparclClientTest(unittest.TestCase):
         og_ids = []
 
         tic()
-        res = self.client.retrieve(ids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve(ids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoIDs):
             res.reorder(og_ids)
@@ -525,7 +536,8 @@ class SparclClientTest(unittest.TestCase):
         og_specids = []
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoIDs):
             res.reorder(og_specids)
@@ -537,8 +549,9 @@ class SparclClientTest(unittest.TestCase):
         ids = self.uuid_list4
 
         tic()
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         with self.assertWarns(Warning):
-            res = self.client.retrieve(ids)
+            res = self.client.retrieve(ids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoRecords):
             res.reorder(ids)
@@ -550,7 +563,8 @@ class SparclClientTest(unittest.TestCase):
         specids = self.specid_list4
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoRecords):
             res.reorder(specids)
@@ -560,7 +574,8 @@ class SparclClientTest(unittest.TestCase):
             constraints={"data_release": ["SDSS-DR16"]}, limit=1
         ).ids
         re = self.client.retrieve(
-            uuid_list=idss, include=["ra", "dec"], verbose=True
+            uuid_list=idss, include=["ra", "dec"], dataset_list=['SDSS-DR16'],
+            verbose=True
         )
         self.assertEqual(1, re.count)
 
