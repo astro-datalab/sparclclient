@@ -708,21 +708,34 @@ class AuthTest(unittest.TestCase):
         cls.unauth_user = 'test_user_2@noirlab.edu'
 
         # Sample list of sparcl_ids from each data set
-        cls.uuid_priv = [
-            '84452fad-dbe7-11ee-a970-525400aad0aa',
-            '847e0be4-dbe7-11ee-b095-525400aad0aa']
+        out = ['sparcl_id']
+        cons1 = {'data_release': ['DESI-EDR']}
+        cons2 = {'data_release': ['BOSS-DR16']}
+        cons3 = {'data_release': ['SDSS-DR16']}
+        cons4 = {'data_release': ['SDSS-DR17-test']}
+        cls.client.login(cls.auth_user, usrpw)
+        cls.uuid_desiedr = (cls.client.find(outfields=out,
+                                            constraints=cons1,
+                                            limit=2,
+                                            sort='sparcl_id')
+                            ).ids
+        cls.uuid_bossdr16 = (cls.client.find(outfields=out,
+                                             constraints=cons2,
+                                             limit=2,
+                                             sort='sparcl_id')
+                             ).ids
+        cls.uuid_sdssdr16 = (cls.client.find(outfields=out,
+                                             constraints=cons3,
+                                             limit=2,
+                                             sort='sparcl_id')
+                             ).ids
+        cls.uuid_priv = (cls.client.find(outfields=out,
+                                         constraints=cons4,
+                                         limit=2,
+                                         sort='sparcl_id')
+                         ).ids
 
-        cls.uuid_bossdr16 = [
-            '00b0904d-992f-11ee-b7f9-525400aad0aa',
-            '010eb4d0-992f-11ee-89de-525400aad0aa']
-
-        cls.uuid_sdssdr16 = [
-            '0fad3e28-992f-11ee-a9e7-525400aad0aa',
-            '12ec49f6-992f-11ee-8003-525400aad0aa']
-
-        cls.uuid_desiedr = [
-            '00769ec9-9931-11ee-97de-525400aad0aa',
-            '00c6d798-9931-11ee-af11-525400aad0aa']
+        cls.client.logout()
 
         cls.uuid_all = (cls.uuid_priv + cls.uuid_bossdr16 +
                         cls.uuid_sdssdr16 + cls.uuid_desiedr)

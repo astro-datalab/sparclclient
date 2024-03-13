@@ -237,16 +237,16 @@ auth_find_6 = ['00769ec9-9931-11ee-97de-525400aad0aa',
                '022ab30b-9931-11ee-a372-525400aad0aa',
                '024c9ba1-9930-11ee-aa56-525400aad0aa']
 
-auth_retrieve_1 = ('SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; '
+auth_retrieve_1 = ('SDSS-DR16, 3848 ; SDSS-DR16, 3848 ; '
                    'SDSS-DR17-test, 3859 ; SDSS-DR17-test, 3859 ; ')
 
-auth_retrieve_2 = ('BOSS-DR16, 4615 ; BOSS-DR16, 4615 ; '
-                   'SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; '
-                   'DESI-EDR, 7781 ; DESI-EDR, 7781 ; '
+auth_retrieve_2 = ('DESI-EDR, 7781 ; BOSS-DR16, 4615 ; '
+                   'BOSS-DR16, 4615 ; SDSS-DR16, 3848 ; '
+                   'SDSS-DR16, 3848 ; DESI-EDR, 7781 ; '
                    'SDSS-DR17-test, 3859 ; SDSS-DR17-test, 3859 ; ')
 
-auth_retrieve_5 = ('SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; '
-                   'DESI-EDR, 7781 ; DESI-EDR, 7781 ; ')
+auth_retrieve_5 = ('DESI-EDR, 7781 ; SDSS-DR16, 3848 ; '
+                   'SDSS-DR16, 3848 ; DESI-EDR, 7781 ; ')
 
 auth_retrieve_8 = ('BOSS-DR16, 4615 ; BOSS-DR16, 4615 ; '
-                   'SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; ')
+                   'SDSS-DR16, 3848 ; SDSS-DR16, 3848 ; ')
