@@ -1,38 +1,41 @@
 # Unit tests for the NOIRLab SPARCL API Client
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
-#   python -m unittest tests.tests_api
+# usrpw (User Password) is intentionally left blank in these examples.
+# When actually running tests, the User Password should be included.
+#
+#   usrpw='' python -m unittest tests.tests_api
 #
 #  ### Run Against DEV Server.
-#  serverurl=http://localhost:8050 python -m unittest tests.tests_api
-#  showact=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  showact=1 usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api  # noqa: E501
 #
 # python -m unittest  -v tests.tests_api    # VERBOSE
 # python -m unittest tests.tests_api.SparclClientTest
 # python -m unittest tests.tests_api.SparclClientTest.test_find_3
 # python3 -m unittest tests.tests_api.AlignRecordsTest
+# usrpw='' python3 -m unittest tests.tests_api.AuthTest
 #
 # showact=1 python -m unittest -k test_find_5 tests.tests_api
 #
 #  ### Run Against DEV Server.
-#  serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #
 #  ### Run tests Against PAT Server.
 #  export serverurl=https://sparc1.datalab.noirlab.edu/
-#  python -m unittest tests.tests_api
+#  usrpw='' python -m unittest tests.tests_api
 #
 #  ### Run Against STAGE Server.
 #  serverurl=https://sparclstage.datalab.noirlab.edu/
-#  python -m unittest tests.tests_api
+#  usrpw='' python -m unittest tests.tests_api
 #
 #  ### Run Against PROD Server.
-#  serverurl=https://astrosparcl.datalab.noirlab.edu/ python -m unittest tests.tests_api  # noqa: E501
+#  usrpw='' serverurl=https://astrosparcl.datalab.noirlab.edu/ python -m unittest tests.tests_api  # noqa: E501
 
 # Python library
 from contextlib import contextmanager
 import unittest
 from unittest import skip
 import datetime
-from getpass import getpass
 
 #! from unittest mock, skipIf, skipUnless
 #!import warnings
@@ -87,6 +90,7 @@ showcurl = showcurl or os.environ.get("showcurl") == "1"
 
 clverb = False
 
+usrpw = os.environ.get("usrpw")
 
 @contextmanager
 def streamhandler_to_console(lggr):
@@ -701,7 +705,6 @@ class AuthTest(unittest.TestCase):
         # Test users
         cls.auth_user = 'test_user_1@noirlab.edu'
         cls.unauth_user = 'test_user_2@noirlab.edu'
-        cls.usrpw = getpass()
 
         # Sample list of sparcl_ids from each data set
         cls.uuid_priv = [
@@ -735,7 +738,7 @@ class AuthTest(unittest.TestCase):
 
     def test_authorized_1(self):
         """Test authorized method with authorized user signed in"""
-        self.client.login(self.auth_user, self.usrpw)
+        self.client.login(self.auth_user, usrpw)
         actual = self.client.authorized
         if showact:
             print(f"authorized_1: actual={actual}")
@@ -745,7 +748,7 @@ class AuthTest(unittest.TestCase):
 
     def test_authorized_2(self):
         """Test authorized method with unauthorized user signed in"""
-        self.client.login(self.unauth_user, self.usrpw)
+        self.client.login(self.unauth_user, usrpw)
         actual = self.client.authorized
         if showact:
             print(f"authorized_2: actual={actual}")
@@ -764,7 +767,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_find_1(self):
         """Test find method with authorized user; private data set
         specified"""
-        self.client.login(self.auth_user, self.usrpw)
+        self.client.login(self.auth_user, usrpw)
         out = ['sparcl_id', 'data_release']
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9],
@@ -780,7 +783,7 @@ class AuthTest(unittest.TestCase):
 
     def test_auth_find_2(self):
         """Test find method with authorized user; no data sets specified"""
-        self.client.login(self.auth_user, self.usrpw)
+        self.client.login(self.auth_user, usrpw)
         out = ['sparcl_id', 'data_release']
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9]}
@@ -796,7 +799,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_find_3(self):
         """Test find method with unauthorized user; private data set
         specified"""
-        self.client.login(self.unauth_user, self.usrpw)
+        self.client.login(self.unauth_user, usrpw)
         out = ['sparcl_id', 'data_release']
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9],
@@ -809,7 +812,7 @@ class AuthTest(unittest.TestCase):
 
     def test_auth_find_4(self):
         """Test find method with unauthorized user; no data sets specified"""
-        self.client.login(self.unauth_user, self.usrpw)
+        self.client.login(self.unauth_user, usrpw)
         out = ['sparcl_id', 'data_release']
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9]}
@@ -850,7 +853,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_1(self):
         """Test retrieve method with authorized user; private data
         set specified"""
-        self.client.login(self.auth_user, self.usrpw)
+        self.client.login(self.auth_user, usrpw)
         inc = ['data_release', 'flux']
         drs = ['SDSS-DR16', 'SDSS-DR17-test']
         uuids = self.uuid_priv + self.uuid_sdssdr16
@@ -870,7 +873,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_2(self):
         """Test retrieve method with authorized user; no data
         sets specified"""
-        self.client.login(self.auth_user, self.usrpw)
+        self.client.login(self.auth_user, usrpw)
         inc = ['data_release', 'wavelength']
         got = self.client.retrieve(uuid_list=self.uuid_all,
                                    include=inc)
@@ -888,7 +891,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_3(self):
         """Test retrieve method with unauthorized user; private data
         set specified"""
-        self.client.login(self.unauth_user, self.usrpw)
+        self.client.login(self.unauth_user, usrpw)
         inc = ['data_release', 'ivar']
         drs = ['DESI-EDR', 'SDSS-DR17-test']
         uuids = self.uuid_desiedr + self.uuid_priv
@@ -902,7 +905,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_4(self):
         """Test retrieve method with unauthorized user; no data
         sets specified"""
-        self.client.login(self.unauth_user, self.usrpw)
+        self.client.login(self.unauth_user, usrpw)
         inc = ['data_release', 'wave_sigma']
         # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
@@ -913,7 +916,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_5(self):
         """Test retrieve method with unauthorized user; public data
         sets specified"""
-        self.client.login(self.unauth_user, self.usrpw)
+        self.client.login(self.unauth_user, usrpw)
         inc = ['data_release', 'wave_sigma']
         drs = ['SDSS-DR16', 'DESI-EDR']
         uuids = self.uuid_sdssdr16 + self.uuid_desiedr
