@@ -1,36 +1,40 @@
 # Unit tests for the NOIRLab SPARCL API Client
 # EXAMPLES: (do after activating venv, in sandbox/sparclclient/)
-#   python -m unittest tests.tests_api
+# usrpw (User Password) is intentionally left blank in these examples.
+# When actually running tests, the User Password should be included.
+#
+#   usrpw='' python -m unittest tests.tests_api
 #
 #  ### Run Against DEV Server.
-#  serverurl=http://localhost:8050 python -m unittest tests.tests_api
-#  showact=1 serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  showact=1 usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api  # noqa: E501
 #
 # python -m unittest  -v tests.tests_api    # VERBOSE
 # python -m unittest tests.tests_api.SparclClientTest
 # python -m unittest tests.tests_api.SparclClientTest.test_find_3
 # python3 -m unittest tests.tests_api.AlignRecordsTest
+# usrpw='' python3 -m unittest tests.tests_api.AuthTest
 #
 # showact=1 python -m unittest -k test_find_5 tests.tests_api
 #
 #  ### Run Against DEV Server.
-#  serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api
 #
 #  ### Run tests Against PAT Server.
 #  export serverurl=https://sparc1.datalab.noirlab.edu/
-#  python -m unittest tests.tests_api
+#  usrpw='' python -m unittest tests.tests_api
 #
 #  ### Run Against STAGE Server.
 #  serverurl=https://sparclstage.datalab.noirlab.edu/
-#  python -m unittest tests.tests_api
+#  usrpw='' python -m unittest tests.tests_api
 #
 #  ### Run Against PROD Server.
-#  serverurl=https://astrosparcl.datalab.noirlab.edu/ python -m unittest tests.tests_api  # noqa: E501
+#  usrpw='' serverurl=https://astrosparcl.datalab.noirlab.edu/ python -m unittest tests.tests_api  # noqa: E501
 
 # Python library
 from contextlib import contextmanager
 import unittest
-from unittest import skip
+from unittest import skip, skipUnless
 import datetime
 
 #! from unittest mock, skipIf, skipUnless
@@ -42,6 +46,7 @@ from urllib.parse import urlparse
 
 #!from unittest.mock import MagicMock, create_autospec
 import os
+import io
 
 # External Packages
 import numpy
@@ -86,6 +91,7 @@ showcurl = showcurl or os.environ.get("showcurl") == "1"
 
 clverb = False
 
+usrpw = os.environ.get("usrpw")
 
 @contextmanager
 def streamhandler_to_console(lggr):
@@ -268,8 +274,10 @@ class SparclClientTest(unittest.TestCase):
 
     def test_retrieve_0(self):
         """Get spectra using small list of SPECIDS."""
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         res = self.client.retrieve_by_specid(
-            self.specid_list0, include=["sparcl_id", "specid"]
+            self.specid_list0, include=["sparcl_id", "specid"],
+            dataset_list=drs
         )
         actual = sorted([r["specid"] for r in res.records])
         if showact:
@@ -281,9 +289,10 @@ class SparclClientTest(unittest.TestCase):
         """Get spectra using small list of uuids."""
         name = "retrieve_0b"
         uuids = self.uuid_list0
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
 
         tic()
-        res = self.client.retrieve(uuids)
+        res = self.client.retrieve(uuids, dataset_list=drs)
         self.timing[name] = toc()
         actual = sorted(res.records[0].keys())
 
@@ -318,13 +327,16 @@ class SparclClientTest(unittest.TestCase):
     def test_retrieve_3(self):
         """Issue warning when some sids do not exist."""
         uuids = self.uuid_list0
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         with self.assertWarns(Warning):
-            self.client.retrieve(uuids + [999])
+            self.client.retrieve(uuids + [999], dataset_list=drs)
 
     def test_retrieve_5(self):
         """Limit number of records returned by retrieve_by_specid."""
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         res = self.client.retrieve_by_specid(
-            self.specid_list5, include=["specid"], limit=2
+            self.specid_list5, include=["specid"], dataset_list=drs,
+            limit=2
         )
         actual = sorted([r["specid"] for r in res.records])
         if showact:
@@ -446,7 +458,8 @@ class SparclClientTest(unittest.TestCase):
         print(f"ids: {ids}")
 
         tic()
-        res = self.client.retrieve(ids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve(ids, dataset_list=drs)
         res_ids = [r["sparcl_id"] for r in res.records]
         print(f"retrieved: {res_ids}")
         self.timing[name] = toc()
@@ -462,7 +475,8 @@ class SparclClientTest(unittest.TestCase):
         specids = self.specid_list2
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         res_reorder = res.reorder(specids)
         actual = [f["specid"] for f in res_reorder.records]
@@ -477,8 +491,9 @@ class SparclClientTest(unittest.TestCase):
         ids = self.uuid_list3
 
         tic()
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         with self.assertWarns(Warning):
-            res = self.client.retrieve(ids)
+            res = self.client.retrieve(ids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertWarns(Warning):
             res_reorder = res.reorder(ids)
@@ -494,7 +509,8 @@ class SparclClientTest(unittest.TestCase):
         specids = self.specid_list3
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertWarns(Warning):
             res_reorder = res.reorder(specids)
@@ -511,7 +527,8 @@ class SparclClientTest(unittest.TestCase):
         og_ids = []
 
         tic()
-        res = self.client.retrieve(ids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve(ids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoIDs):
             res.reorder(og_ids)
@@ -524,7 +541,8 @@ class SparclClientTest(unittest.TestCase):
         og_specids = []
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoIDs):
             res.reorder(og_specids)
@@ -536,8 +554,9 @@ class SparclClientTest(unittest.TestCase):
         ids = self.uuid_list4
 
         tic()
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
         with self.assertWarns(Warning):
-            res = self.client.retrieve(ids)
+            res = self.client.retrieve(ids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoRecords):
             res.reorder(ids)
@@ -549,7 +568,8 @@ class SparclClientTest(unittest.TestCase):
         specids = self.specid_list4
 
         tic()
-        res = self.client.retrieve_by_specid(specids)
+        drs = ['SDSS-DR16', 'BOSS-DR16', 'DESI-EDR']
+        res = self.client.retrieve_by_specid(specids, dataset_list=drs)
         self.timing[name] = toc()
         with self.assertRaises(ex.NoRecords):
             res.reorder(specids)
@@ -559,7 +579,8 @@ class SparclClientTest(unittest.TestCase):
             constraints={"data_release": ["SDSS-DR16"]}, limit=1
         ).ids
         re = self.client.retrieve(
-            uuid_list=idss, include=["ra", "dec"], verbose=True
+            uuid_list=idss, include=["ra", "dec"], dataset_list=['SDSS-DR16'],
+            verbose=True
         )
         self.assertEqual(1, re.count)
 
@@ -666,3 +687,306 @@ class AlignRecordsTest(unittest.TestCase):
         with self.assertRaises(Exception, msg=msg):
             ar_dict, grid = sg.align_records(got.records, precision=11)
             # shape = ar_dict['flux'].shape
+
+@skipUnless('usrpw' in os.environ, 'Password is required to test auth')
+class AuthTest(unittest.TestCase):
+    """Test authorization and authentication features"""
+
+    @classmethod
+    def setUpClass(cls):
+        if clverb:
+            print(
+                f"\n# Running AuthTest:setUpClass() "
+                "{str(datetime.datetime.now())}"
+            )
+
+        cls.client = sparcl.client.SparclClient(
+            url=serverurl, verbose=clverb, show_curl=showcurl
+        )
+
+        # Test users
+        cls.auth_user = 'test_user_1@noirlab.edu'
+        cls.unauth_user = 'test_user_2@noirlab.edu'
+
+        # Sample list of sparcl_ids from each data set
+        out = ['sparcl_id']
+        cons1 = {'data_release': ['DESI-EDR']}
+        cons2 = {'data_release': ['BOSS-DR16']}
+        cons3 = {'data_release': ['SDSS-DR16']}
+        cons4 = {'data_release': ['SDSS-DR17-test']}
+        # Silence output from login/logout
+        sys.stdout = io.StringIO()
+        cls.client.login(cls.auth_user, usrpw)
+        cls.uuid_desiedr = (cls.client.find(outfields=out,
+                                            constraints=cons1,
+                                            limit=2,
+                                            sort='sparcl_id')
+                            ).ids
+        cls.uuid_bossdr16 = (cls.client.find(outfields=out,
+                                             constraints=cons2,
+                                             limit=2,
+                                             sort='sparcl_id')
+                             ).ids
+        cls.uuid_sdssdr16 = (cls.client.find(outfields=out,
+                                             constraints=cons3,
+                                             limit=2,
+                                             sort='sparcl_id')
+                             ).ids
+        cls.uuid_priv = (cls.client.find(outfields=out,
+                                         constraints=cons4,
+                                         limit=2,
+                                         sort='sparcl_id')
+                         ).ids
+
+        cls.client.logout()
+
+        cls.uuid_all = (cls.uuid_priv + cls.uuid_bossdr16 +
+                        cls.uuid_sdssdr16 + cls.uuid_desiedr)
+
+        if clverb:
+            print(
+                f"\n# Completed AuthTest:setUpClass() "
+                f"{str(datetime.datetime.now())}\n"
+            )
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def test_authorized_1(self):
+        """Test authorized method with authorized user signed in"""
+        self.client.login(self.auth_user, usrpw)
+        actual = self.client.authorized
+        if showact:
+            print(f"authorized_1: actual={actual}")
+
+        self.assertEqual(actual, exp.authorized_1, msg="Actual to Expected")
+        self.client.logout()
+
+    def test_authorized_2(self):
+        """Test authorized method with unauthorized user signed in"""
+        self.client.login(self.unauth_user, usrpw)
+        actual = self.client.authorized
+        if showact:
+            print(f"authorized_2: actual={actual}")
+
+        self.assertEqual(actual, exp.authorized_2, msg="Actual to Expected")
+        self.client.logout()
+
+    def test_authorized_3(self):
+        """Test authorized method on anonymous user not signed in"""
+        actual = self.client.authorized
+        if showact:
+            print(f"authorized_3: actual={actual}")
+
+        self.assertEqual(actual, exp.authorized_3, msg="Actual to Expected")
+
+    def test_auth_find_1(self):
+        """Test find method with authorized user; private data set
+        specified"""
+        self.client.login(self.auth_user, usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['SDSS-DR17-test']}
+        found = self.client.find(outfields=out, constraints=cons,
+                                 limit=2, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_1: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_1),
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_find_2(self):
+        """Test find method with authorized user; no data sets specified"""
+        self.client.login(self.auth_user, usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9]}
+        found = self.client.find(outfields=out, constraints=cons,
+                                 limit=3, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_2: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_2),
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_find_3(self):
+        """Test find method with unauthorized user; private data set
+        specified"""
+        self.client.login(self.unauth_user, usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['SDSS-DR17-test', 'SDSS-DR16']}
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.find(outfields=out, constraints=cons,
+                             limit=3, sort='sparcl_id')
+        self.client.logout()
+
+    def test_auth_find_4(self):
+        """Test find method with unauthorized user; no data sets specified"""
+        self.client.login(self.unauth_user, usrpw)
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9]}
+        found = self.client.find(outfields=out, constraints=cons,
+                                 limit=10, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_4: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_4),
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_find_5(self):
+        """Test find method with anonymous user; private data set
+        specified"""
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9],
+                'data_release': ['SDSS-DR17-test', 'SDSS-DR16']}
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.find(outfields=out, constraints=cons,
+                             limit=3, sort='sparcl_id')
+
+    def test_auth_find_6(self):
+        """Test find method with anonymous user; no data sets specified"""
+        out = ['sparcl_id', 'data_release']
+        cons = {'spectype': ['GALAXY'],
+                'redshift': [0.5, 0.9]}
+        found = self.client.find(outfields=out, constraints=cons,
+                                 limit=10, sort='sparcl_id')
+        actual = sorted(found.ids)
+        if showact:
+            print(f"auth_find_6: actual={pf(actual)}")
+        self.assertEqual(actual, sorted(exp.auth_find_6),
+                         msg="Actual to Expected")
+
+    def test_auth_retrieve_1(self):
+        """Test retrieve method with authorized user; private data
+        set specified"""
+        self.client.login(self.auth_user, usrpw)
+        inc = ['data_release', 'flux']
+        drs = ['SDSS-DR16', 'SDSS-DR17-test']
+        uuids = self.uuid_priv + self.uuid_sdssdr16
+        got = self.client.retrieve(uuid_list=uuids,
+                                   include=inc,
+                                   dataset_list=drs)
+        actual = ''
+        for rec in got.records:
+            actual1 = rec.data_release + ', ' + str(len(rec.flux)) + ' ; '
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_1: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_1,
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_retrieve_2(self):
+        """Test retrieve method with authorized user; no data
+        sets specified"""
+        self.client.login(self.auth_user, usrpw)
+        inc = ['data_release', 'wavelength']
+        got = self.client.retrieve(uuid_list=self.uuid_all,
+                                   include=inc)
+        actual = ''
+        for rec in got.records:
+            actual1 = (rec.data_release + ', ' +
+                       str(len(rec.wavelength)) + ' ; ')
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_2: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_2,
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_retrieve_3(self):
+        """Test retrieve method with unauthorized user; private data
+        set specified"""
+        self.client.login(self.unauth_user, usrpw)
+        inc = ['data_release', 'ivar']
+        drs = ['DESI-EDR', 'SDSS-DR17-test']
+        uuids = self.uuid_desiedr + self.uuid_priv
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=uuids,
+                                 include=inc,
+                                 dataset_list=drs)
+        self.client.logout()
+
+    def test_auth_retrieve_4(self):
+        """Test retrieve method with unauthorized user; no data
+        sets specified"""
+        self.client.login(self.unauth_user, usrpw)
+        inc = ['data_release', 'wave_sigma']
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=self.uuid_all,
+                                 include=inc)
+        self.client.logout()
+
+    def test_auth_retrieve_5(self):
+        """Test retrieve method with unauthorized user; public data
+        sets specified"""
+        self.client.login(self.unauth_user, usrpw)
+        inc = ['data_release', 'wave_sigma']
+        drs = ['SDSS-DR16', 'DESI-EDR']
+        uuids = self.uuid_sdssdr16 + self.uuid_desiedr
+        got = self.client.retrieve(uuid_list=uuids,
+                                   include=inc,
+                                   dataset_list=drs)
+        actual = ''
+        for rec in got.records:
+            actual1 = (rec.data_release + ', ' +
+                       str(len(rec.wave_sigma)) + ' ; ')
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_5: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_5,
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_retrieve_6(self):
+        """Test retrieve method with anonymous user; private data
+        set specified"""
+        inc = ['data_release', 'flux']
+        drs = ['SDSS-DR17-test', 'BOSS-DR16']
+        uuids = self.uuid_priv + self.uuid_bossdr16
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=uuids,
+                                 include=inc,
+                                 dataset_list=drs)
+
+    def test_auth_retrieve_7(self):
+        """Test retrieve method with anonymous user; no data
+        sets specified"""
+        inc = ['data_release', 'model']
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=self.uuid_all,
+                                 include=inc)
+
+    def test_auth_retrieve_8(self):
+        """Test retrieve method with anonymous user; public data
+        sets specified"""
+        inc = ['data_release', 'model']
+        drs = ['SDSS-DR16', 'BOSS-DR16']
+        uuids = self.uuid_sdssdr16 + self.uuid_bossdr16
+        got = self.client.retrieve(uuid_list=uuids,
+                                   include=inc,
+                                   dataset_list=drs)
+        actual = ''
+        for rec in got.records:
+            actual1 = (rec.data_release + ', ' +
+                       str(len(rec.model)) + ' ; ')
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_8: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_8,
+                         msg="Actual to Expected")
