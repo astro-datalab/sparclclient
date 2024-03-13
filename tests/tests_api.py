@@ -46,6 +46,7 @@ from urllib.parse import urlparse
 
 #!from unittest.mock import MagicMock, create_autospec
 import os
+import io
 
 # External Packages
 import numpy
@@ -713,6 +714,8 @@ class AuthTest(unittest.TestCase):
         cons2 = {'data_release': ['BOSS-DR16']}
         cons3 = {'data_release': ['SDSS-DR16']}
         cons4 = {'data_release': ['SDSS-DR17-test']}
+        # Silence output from login/logout
+        sys.stdout = io.StringIO()
         cls.client.login(cls.auth_user, usrpw)
         cls.uuid_desiedr = (cls.client.find(outfields=out,
                                             constraints=cons1,
