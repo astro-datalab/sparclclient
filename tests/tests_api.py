@@ -686,20 +686,28 @@ class AuthTest(unittest.TestCase):
         # Test users
         cls.auth_user = 'test_user_1@noirlab.edu'
         cls.unauth_user = 'test_user_2@noirlab.edu'
-        cls.non_user = 'test_user_3@noirlab.edu'
         cls.usrpw = getpass()
 
-        out = ['sparcl_id', 'data_release']
-        cons = {'spectype': ['GALAXY'],
-                'redshift': [0.5, 0.9],
-                'data_release': ['BOSS-DR16', 'SDSS-DR16']}
-        found = cls.client.find(outfields=out, constraints=cons,
-                                limit=10)
+        # Sample list of sparcl_ids from each data set
+        cls.uuid_priv = [
+            '84452fad-dbe7-11ee-a970-525400aad0aa',
+            '847e0be4-dbe7-11ee-b095-525400aad0aa']
 
-        cls.uuid_list4 = [
-            "00001ebf-d030-4d59-97e5-060c47202897",
-            "ff1e9a12-f21a-4050-bada-a1e67a265885",
-        ]
+        cls.uuid_bossdr16 = [
+            '00b0904d-992f-11ee-b7f9-525400aad0aa',
+            '010eb4d0-992f-11ee-89de-525400aad0aa']
+
+        cls.uuid_sdssdr16 = [
+            '0fad3e28-992f-11ee-a9e7-525400aad0aa',
+            '12ec49f6-992f-11ee-8003-525400aad0aa']
+
+        cls.uuid_desiedr = [
+            '00769ec9-9931-11ee-97de-525400aad0aa',
+            '00c6d798-9931-11ee-af11-525400aad0aa']
+
+        cls.uuid_all = (cls.uuid_priv + cls.uuid_bossdr16 +
+                        cls.uuid_sdssdr16 + cls.uuid_desiedr)
+
         if clverb:
             print(
                 f"\n# Completed AuthTest:setUpClass() "
@@ -747,11 +755,12 @@ class AuthTest(unittest.TestCase):
                 'redshift': [0.5, 0.9],
                 'data_release': ['SDSS-DR17-test']}
         found = self.client.find(outfields=out, constraints=cons,
-                                limit=2, sort='sparcl_id')
+                                 limit=2, sort='sparcl_id')
         actual = sorted(found.ids)
         if showact:
             print(f"auth_find_1: actual={pf(actual)}")
-        self.assertEqual(actual, sorted(exp.auth_find_1), msg="Actual to Expected")
+        self.assertEqual(actual, sorted(exp.auth_find_1),
+                         msg="Actual to Expected")
         self.client.logout()
 
     def test_auth_find_2(self):
@@ -761,11 +770,12 @@ class AuthTest(unittest.TestCase):
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9]}
         found = self.client.find(outfields=out, constraints=cons,
-                                limit=3, sort='sparcl_id')
+                                 limit=3, sort='sparcl_id')
         actual = sorted(found.ids)
         if showact:
             print(f"auth_find_2: actual={pf(actual)}")
-        self.assertEqual(actual, sorted(exp.auth_find_2), msg="Actual to Expected")
+        self.assertEqual(actual, sorted(exp.auth_find_2),
+                         msg="Actual to Expected")
         self.client.logout()
 
     def test_auth_find_3(self):
@@ -776,7 +786,7 @@ class AuthTest(unittest.TestCase):
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9],
                 'data_release': ['SDSS-DR17-test', 'SDSS-DR16']}
-        ### Replace exception name below once real one is created
+        # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.find(outfields=out, constraints=cons,
                              limit=3, sort='sparcl_id')
@@ -789,11 +799,12 @@ class AuthTest(unittest.TestCase):
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9]}
         found = self.client.find(outfields=out, constraints=cons,
-                                limit=10, sort='sparcl_id')
+                                 limit=10, sort='sparcl_id')
         actual = sorted(found.ids)
         if showact:
             print(f"auth_find_4: actual={pf(actual)}")
-        self.assertEqual(actual, sorted(exp.auth_find_4), msg="Actual to Expected")
+        self.assertEqual(actual, sorted(exp.auth_find_4),
+                         msg="Actual to Expected")
         self.client.logout()
 
     def test_auth_find_5(self):
@@ -803,7 +814,7 @@ class AuthTest(unittest.TestCase):
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9],
                 'data_release': ['SDSS-DR17-test', 'SDSS-DR16']}
-        ### Replace exception name below once real one is created
+        # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.find(outfields=out, constraints=cons,
                              limit=3, sort='sparcl_id')
@@ -814,9 +825,133 @@ class AuthTest(unittest.TestCase):
         cons = {'spectype': ['GALAXY'],
                 'redshift': [0.5, 0.9]}
         found = self.client.find(outfields=out, constraints=cons,
-                                limit=10, sort='sparcl_id')
+                                 limit=10, sort='sparcl_id')
         actual = sorted(found.ids)
         if showact:
             print(f"auth_find_6: actual={pf(actual)}")
-        self.assertEqual(actual, sorted(exp.auth_find_6), msg="Actual to Expected")
+        self.assertEqual(actual, sorted(exp.auth_find_6),
+                         msg="Actual to Expected")
 
+    def test_auth_retrieve_1(self):
+        """Test retrieve method with authorized user; private data
+        set specified"""
+        self.client.login(self.auth_user, self.usrpw)
+        inc = ['data_release', 'flux']
+        drs = ['SDSS-DR16', 'SDSS-DR17-test']
+        uuids = self.uuid_priv + self.uuid_sdssdr16
+        got = self.client.retrieve(uuid_list=uuids,
+                                   include=inc,
+                                   dataset_list=drs)
+        actual = ''
+        for rec in got.records:
+            actual1 = rec.data_release + ', ' + str(len(rec.flux)) + ' ; '
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_1: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_1,
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_retrieve_2(self):
+        """Test retrieve method with authorized user; no data
+        sets specified"""
+        self.client.login(self.auth_user, self.usrpw)
+        inc = ['data_release', 'wavelength']
+        got = self.client.retrieve(uuid_list=self.uuid_all,
+                                   include=inc)
+        actual = ''
+        for rec in got.records:
+            actual1 = (rec.data_release + ', ' +
+                       str(len(rec.wavelength)) + ' ; ')
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_2: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_2,
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_retrieve_3(self):
+        """Test retrieve method with unauthorized user; private data
+        set specified"""
+        self.client.login(self.unauth_user, self.usrpw)
+        inc = ['data_release', 'ivar']
+        drs = ['DESI-EDR', 'SDSS-DR17-test']
+        uuids = self.uuid_desiedr + self.uuid_priv
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=uuids,
+                                 include=inc,
+                                 dataset_list=drs)
+        self.client.logout()
+
+    def test_auth_retrieve_4(self):
+        """Test retrieve method with unauthorized user; no data
+        sets specified"""
+        self.client.login(self.unauth_user, self.usrpw)
+        inc = ['data_release', 'wave_sigma']
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=self.uuid_all,
+                                 include=inc)
+        self.client.logout()
+
+    def test_auth_retrieve_5(self):
+        """Test retrieve method with unauthorized user; public data
+        sets specified"""
+        self.client.login(self.unauth_user, self.usrpw)
+        inc = ['data_release', 'wave_sigma']
+        drs = ['SDSS-DR16', 'DESI-EDR']
+        uuids = self.uuid_sdssdr16 + self.uuid_desiedr
+        got = self.client.retrieve(uuid_list=uuids,
+                                   include=inc,
+                                   dataset_list=drs)
+        actual = ''
+        for rec in got.records:
+            actual1 = (rec.data_release + ', ' +
+                       str(len(rec.wave_sigma)) + ' ; ')
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_5: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_5,
+                         msg="Actual to Expected")
+        self.client.logout()
+
+    def test_auth_retrieve_6(self):
+        """Test retrieve method with anonymous user; private data
+        set specified"""
+        inc = ['data_release', 'flux']
+        drs = ['SDSS-DR17-test', 'BOSS-DR16']
+        uuids = self.uuid_priv + self.uuid_bossdr16
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=uuids,
+                                 include=inc,
+                                 dataset_list=drs)
+
+    def test_auth_retrieve_7(self):
+        """Test retrieve method with anonymous user; no data
+        sets specified"""
+        inc = ['data_release', 'model']
+        # Replace exception name below once real one is created
+        with self.assertRaises(ex.UnknownServerError):
+            self.client.retrieve(uuid_list=self.uuid_all,
+                                 include=inc)
+
+    def test_auth_retrieve_8(self):
+        """Test retrieve method with anonymous user; public data
+        sets specified"""
+        inc = ['data_release', 'model']
+        drs = ['SDSS-DR16', 'BOSS-DR16']
+        uuids = self.uuid_sdssdr16 + self.uuid_bossdr16
+        got = self.client.retrieve(uuid_list=uuids,
+                                   include=inc,
+                                   dataset_list=drs)
+        actual = ''
+        for rec in got.records:
+            actual1 = (rec.data_release + ', ' +
+                       str(len(rec.model)) + ' ; ')
+            actual = actual + actual1
+        if showact:
+            print(f"auth_retrieve_8: actual={pf(actual)}")
+        self.assertEqual(actual, exp.auth_retrieve_8,
+                         msg="Actual to Expected")

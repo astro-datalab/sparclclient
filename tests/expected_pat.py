@@ -181,7 +181,8 @@ authorized_2 = {'Loggedin_As': 'test_user_2@noirlab.edu',
 authorized_3 = {'Loggedin_As': 'Anonymous',
                 'Authorized_Datasets': {'BOSS-DR16', 'DESI-EDR', 'SDSS-DR16'}}
 
-auth_find_1 = ['84452fad-dbe7-11ee-a970-525400aad0aa', '847e0be4-dbe7-11ee-b095-525400aad0aa']
+auth_find_1 = ['84452fad-dbe7-11ee-a970-525400aad0aa',
+               '847e0be4-dbe7-11ee-b095-525400aad0aa']
 
 auth_find_2 = ['00769ec9-9931-11ee-97de-525400aad0aa',
                '00b0904d-992f-11ee-b7f9-525400aad0aa',
@@ -208,3 +209,17 @@ auth_find_6 = ['00769ec9-9931-11ee-97de-525400aad0aa',
                '020ed77c-992f-11ee-aefb-525400aad0aa',
                '022ab30b-9931-11ee-a372-525400aad0aa',
                '024c9ba1-9930-11ee-aa56-525400aad0aa']
+
+auth_retrieve_1 = ('SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; '
+                   'SDSS-DR17-test, 3859 ; SDSS-DR17-test, 3859 ; ')
+
+auth_retrieve_2 = ('BOSS-DR16, 4615 ; BOSS-DR16, 4615 ; '
+                   'SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; '
+                   'DESI-EDR, 7781 ; DESI-EDR, 7781 ; '
+                   'SDSS-DR17-test, 3859 ; SDSS-DR17-test, 3859 ; ')
+
+auth_retrieve_5 = ('SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; '
+                   'DESI-EDR, 7781 ; DESI-EDR, 7781 ; ')
+
+auth_retrieve_8 = ('BOSS-DR16, 4615 ; BOSS-DR16, 4615 ; '
+                   'SDSS-DR16, 3878 ; SDSS-DR16, 3878 ; ')
