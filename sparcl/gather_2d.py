@@ -195,7 +195,7 @@ def align_records(records, fields=["flux", "wavelength"], precision=7):
         >>> got = client.retrieve(found.ids, include=specflds)
         >>> ar_dict, grid = align_records(got.records, fields=specflds)
         >>> ar_dict['model'].shape
-        (21, 4666)
+        (21, 4669)
 
     """
     # Report Garbage In
