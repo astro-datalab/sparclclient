@@ -34,7 +34,7 @@
 # Python library
 from contextlib import contextmanager
 import unittest
-from unittest import skip, skipUnless
+from unittest import skip, skipUnless, skipIf
 import datetime
 
 #! from unittest mock, skipIf, skipUnless
@@ -687,6 +687,13 @@ class AlignRecordsTest(unittest.TestCase):
         with self.assertRaises(Exception, msg=msg):
             ar_dict, grid = sg.align_records(got.records, precision=11)
             # shape = ar_dict['flux'].shape
+
+@skipIf('usrpw' in os.environ, 'Ran with usrpw provided')
+class NoopTest(unittest.TestCase):
+    """Non-tests."""
+
+    def test_noop(self):
+        print('<Skipped-AuthTest>', end='', flush=True)
 
 @skipUnless('usrpw' in os.environ, 'Password is required to test auth')
 class AuthTest(unittest.TestCase):
