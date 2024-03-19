@@ -250,17 +250,19 @@ class SparclClient:  # was SparclApi()
             email (:obj:`str`): User login email.
 
             password (:obj:`str`, optional): User SSO password.
-                If not given, the output will
-                prompt the user to enter in their SSO password.
+                If not given, the output will prompt the user
+                to enter in their SSO password.
 
         Returns:
             None.
 
         Example:
-            >>> client = SparclClient()
-            >>> client.login('test_user@noirlab.edu', 'test123')
+            >>>
+            >> client = SparclClient()
+            >> client.login('test_user@noirlab.edu', 'testpw')
             Logged in successfully with email='test_user@noirlab.edu'
         """
+
         if email is None:  # "logout"
             old_email = self.session.auth[0] if self.session.auth else None
             self.session.auth = None
@@ -308,9 +310,9 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.logout()
-            Logged-out successfully.
-            Previously logged-in with email test_user@noirlab.edu.
+            Logged-out successfully.  Previously logged-in with email None.
         """
+
         return self.login(None)
 
     @property
@@ -446,7 +448,8 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> sorted(client.get_available_fields())
-            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'dirpath', 'exptime', 'extra_files', 'filename', 'filesize', 'flux', 'instrument', 'ivar', 'mask', 'model', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'site', 'sparcl_id', 'specid', 'specprimary', 'spectype', 'survey', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+            ['data_release', 'datasetgroup', 'dateobs', 'dateobs_center', 'dec', 'exptime', 'extra_files', 'file', 'flux', 'instrument', 'ivar', 'mask', 'model', 'ra', 'redshift', 'redshift_err', 'redshift_warning', 'site', 'sparcl_id', 'specid', 'specprimary', 'spectype', 'survey', 'targetid', 'telescope', 'updated', 'wave_sigma', 'wavelength', 'wavemax', 'wavemin']
+
         """  # noqa: E501
 
         drs = self.fields.all_drs if dataset_list is None else dataset_list
@@ -465,7 +468,7 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.version
-            9.0
+            11.0
         """
 
         if self.apiversion is None:
@@ -656,7 +659,8 @@ class SparclClient:  # was SparclApi()
 
         Example:
             >>> client = SparclClient(url=_PAT)
-            >>> specids = ['7972592460248666112', '3663710814482833408']
+            >>> found = client.find(outfields=['specid'], limit=2)
+            >>> specids = [f.specid for f in found.records]
             >>> client.missing_specids(specids + ['bad_id'])
             ['bad_id']
         """
@@ -743,7 +747,7 @@ class SparclClient:  # was SparclApi()
 
         Example:
             >>> client = SparclClient()
-            >>> ids = ['00000f0b-07db-4234-892a-6e347db79c89',]
+            >>> ids = client.find(limit=1).ids
             >>> inc = ['sparcl_id', 'flux', 'wavelength', 'model']
             >>> ret = client.retrieve(uuid_list=ids, include=inc)
             >>> type(ret.records[0].wavelength)
