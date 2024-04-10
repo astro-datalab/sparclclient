@@ -733,7 +733,9 @@ class AuthTest(unittest.TestCase):
         cls.unauth_user = "test_user_2@noirlab.edu"
 
         # Dataset lists
-        cls.PrivPub = ["SDSS-DR17-test", "SDSS-DR16"]
+        cls.Priv = "SDSS-DR17-test"
+        cls.Pub = "SDSS-DR16"
+        cls.PrivPub = [cls.Priv, cls.Pub]
 
         # Sample list of sparcl_ids from each data set
         out = ["sparcl_id"]
@@ -842,14 +844,21 @@ class AuthTest(unittest.TestCase):
         cons = {
             "spectype": ["GALAXY"],
             "redshift": [0.5, 0.9],
-            "data_release": ["SDSS-DR17-test"],  # , "SDSS-DR16"],
+            "data_release": [self.Priv],  # [self.Pub],
+            # "data_release": ["SDSS-DR17-test", "SDSS-DR16"],
         }
         found = self.client.find(
             outfields=self.outflds, constraints=cons, limit=2, sort="sparcl_id"
         )
-        actual = sorted(found.ids)
         if showact:
-            print(f"auth_find_1: actual={pf(actual)}")
+            print(f"{found.records=}")
+
+        #!actual = sorted(found.ids)
+        actual = sorted(
+            [(r.sparcl_id, r._dr) for r in found.records], key=lambda r: r[0]
+        )
+        if showact:
+            print(f"auth_find_1: actual={actual}")
         self.assertEqual(
             actual, sorted(exp.auth_find_1), msg="Actual to Expected"
         )
