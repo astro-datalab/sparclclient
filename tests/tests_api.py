@@ -726,16 +726,17 @@ class AuthTest(unittest.TestCase):
             f"  {cls.client=}\n"
         )
 
+        cls.outflds = ["sparcl_id", "data_release"]
+
         # Test users
         cls.auth_user = "test_user_1@noirlab.edu"
         cls.unauth_user = "test_user_2@noirlab.edu"
 
+        # Dataset lists
+        cls.PrivPub = ["SDSS-DR17-test", "SDSS-DR16"]
+
         # Sample list of sparcl_ids from each data set
         out = ["sparcl_id"]
-        cons1 = {"data_release": ["DESI-EDR"]}
-        cons2 = {"data_release": ["BOSS-DR16"]}
-        cons3 = {"data_release": ["SDSS-DR16"]}
-        cons4 = {"data_release": ["SDSS-DR17-test"]}
         # Silence output from login/logout
         #! sys.stdout = io.StringIO()  # This persists for all remaining tests!
 
@@ -745,22 +746,34 @@ class AuthTest(unittest.TestCase):
             cls.client.login(cls.auth_user, usrpw)
         cls.uuid_desiedr = (
             cls.client.find(
-                outfields=out, constraints=cons1, limit=2, sort="sparcl_id"
+                outfields=out,
+                constraints={"data_release": ["DESI-EDR"]},
+                limit=2,
+                sort="sparcl_id",
             )
         ).ids
         cls.uuid_bossdr16 = (
             cls.client.find(
-                outfields=out, constraints=cons2, limit=2, sort="sparcl_id"
+                outfields=out,
+                constraints={"data_release": ["BOSS-DR16"]},
+                limit=2,
+                sort="sparcl_id",
             )
         ).ids
         cls.uuid_sdssdr16 = (
             cls.client.find(
-                outfields=out, constraints=cons3, limit=2, sort="sparcl_id"
+                outfields=out,
+                constraints={"data_release": ["SDSS-DR16"]},
+                limit=2,
+                sort="sparcl_id",
             )
         ).ids
         cls.uuid_priv = (
             cls.client.find(
-                outfields=out, constraints=cons4, limit=2, sort="sparcl_id"
+                outfields=out,
+                constraints={"data_release": ["SDSS-DR17-test"]},
+                limit=2,
+                sort="sparcl_id",
             )
         ).ids
 
@@ -818,7 +831,6 @@ class AuthTest(unittest.TestCase):
         actual = self.client.authorized
         if showact:
             print(f"authorized_3: actual={actual}")
-
         self.assertEqual(actual, exp.authorized_3, msg="Actual to Expected")
 
     # | METHOD | USER | DATASETS |
@@ -827,14 +839,13 @@ class AuthTest(unittest.TestCase):
         """Test find method with authorized user; private data set
         specified"""
         self.silent_login(self.auth_user, usrpw)
-        out = ["sparcl_id", "data_release"]
         cons = {
             "spectype": ["GALAXY"],
             "redshift": [0.5, 0.9],
             "data_release": ["SDSS-DR17-test"],  # , "SDSS-DR16"],
         }
         found = self.client.find(
-            outfields=out, constraints=cons, limit=2, sort="sparcl_id"
+            outfields=self.outflds, constraints=cons, limit=2, sort="sparcl_id"
         )
         actual = sorted(found.ids)
         if showact:
@@ -848,10 +859,9 @@ class AuthTest(unittest.TestCase):
     def test_auth_find_2(self):
         """Test find method with authorized user; no data sets specified"""
         self.silent_login(self.auth_user, usrpw)
-        out = ["sparcl_id", "data_release"]
         cons = {"spectype": ["GALAXY"], "redshift": [0.5, 0.9]}
         found = self.client.find(
-            outfields=out, constraints=cons, limit=3, sort="sparcl_id"
+            outfields=self.outflds, constraints=cons, limit=3, sort="sparcl_id"
         )
         actual = sorted(found.ids)
         if showact:
@@ -866,16 +876,18 @@ class AuthTest(unittest.TestCase):
         """Test find method with unauthorized user; private data set
         specified"""
         self.silent_login(self.unauth_user, usrpw)
-        out = ["sparcl_id", "data_release"]
         cons = {
             "spectype": ["GALAXY"],
             "redshift": [0.5, 0.9],
-            "data_release": ["SDSS-DR17-test", "SDSS-DR16"],
+            "data_release": self.PrivPub,
         }
         # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.find(
-                outfields=out, constraints=cons, limit=3, sort="sparcl_id"
+                outfields=self.outflds,
+                constraints=cons,
+                limit=3,
+                sort="sparcl_id",
             )
         self.silent_logout()
 
@@ -883,10 +895,12 @@ class AuthTest(unittest.TestCase):
     def test_auth_find_4(self):
         """Test find method with unauthorized user; no data sets specified"""
         self.silent_login(self.unauth_user, usrpw)
-        out = ["sparcl_id", "data_release"]
         cons = {"spectype": ["GALAXY"], "redshift": [0.5, 0.9]}
         found = self.client.find(
-            outfields=out, constraints=cons, limit=10, sort="sparcl_id"
+            outfields=self.outflds,
+            constraints=cons,
+            limit=10,
+            sort="sparcl_id",
         )
         actual = sorted(found.ids)
         if showact:
@@ -901,26 +915,30 @@ class AuthTest(unittest.TestCase):
         """Test find method with anonymous user; private data set
         specified"""
         self.silent_logout()
-        out = ["sparcl_id", "data_release"]
         cons = {
             "spectype": ["GALAXY"],
             "redshift": [0.5, 0.9],
-            "data_release": ["SDSS-DR17-test", "SDSS-DR16"],
+            "data_release": self.PrivPub,
         }
         # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.find(
-                outfields=out, constraints=cons, limit=3, sort="sparcl_id"
+                outfields=self.outflds,
+                constraints=cons,
+                limit=3,
+                sort="sparcl_id",
             )
 
     # | find | Anon | None |
     def test_auth_find_6(self):
         """Test find method with anonymous user; no data sets specified"""
         self.silent_logout()
-        out = ["sparcl_id", "data_release"]
         cons = {"spectype": ["GALAXY"], "redshift": [0.5, 0.9]}
         found = self.client.find(
-            outfields=out, constraints=cons, limit=10, sort="sparcl_id"
+            outfields=self.outflds,
+            constraints=cons,
+            limit=10,
+            sort="sparcl_id",
         )
         actual = sorted(found.ids)
         if showact:
@@ -934,7 +952,7 @@ class AuthTest(unittest.TestCase):
         """Retrieve method with authorized user; private data set specified"""
         self.silent_login(self.auth_user, usrpw)
         inc = ["data_release", "flux"]
-        drs = ["SDSS-DR16", "SDSS-DR17-test"]
+        drs = self.PrivPub
         uuids = self.uuid_priv + self.uuid_sdssdr16
         got = self.client.retrieve(
             uuid_list=uuids, include=inc, dataset_list=drs
@@ -968,7 +986,8 @@ class AuthTest(unittest.TestCase):
         """Retrieve method with unauthorized user; private dataset specified"""
         self.silent_login(self.unauth_user, usrpw)
         inc = ["data_release", "ivar"]
-        drs = ["DESI-EDR", "SDSS-DR17-test"]
+        #!drs = ["DESI-EDR", "SDSS-DR17-test"]
+        drs = self.PrivPub
         uuids = self.uuid_desiedr + self.uuid_priv
         # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
@@ -993,7 +1012,6 @@ class AuthTest(unittest.TestCase):
         if showact:
             print(f"auth_retrieve_4: {pf(actual)=}")
         self.assertEqual(actual, exp.auth_retrieve_4, msg="Actual to Expected")
-
         self.silent_logout()
 
     # | retrieve | Unauth | Pub |
@@ -1025,7 +1043,8 @@ class AuthTest(unittest.TestCase):
         """Retrieve method with anonymous user; private data set specified"""
         self.silent_logout()
         inc = ["data_release", "flux"]
-        drs = ["SDSS-DR17-test", "BOSS-DR16"]
+        #!drs = ["SDSS-DR17-test", "BOSS-DR16"]
+        drs = self.PrivPub
         uuids = self.uuid_priv + self.uuid_bossdr16
         # Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
@@ -1049,7 +1068,6 @@ class AuthTest(unittest.TestCase):
         if showact:
             print(f"auth_retrieve_7: {pf(actual)=}")
         self.assertEqual(actual, exp.auth_retrieve_7, msg="Actual to Expected")
-
         self.silent_logout()
 
     # | retrieve | Anon | Pub |
