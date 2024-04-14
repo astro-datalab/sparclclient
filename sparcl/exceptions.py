@@ -34,7 +34,7 @@ class BaseSparclException(Exception):
 
     error_code = "UNKNOWN"
     error_message = "<NA>"
-    traceback = None
+    traceback = True
 
     def get_subclass_name(self):
         return self.__class__.__name__
