@@ -770,6 +770,7 @@ class SparclClient:  # was SparclApi()
         format = "pkl"  # 'json',
         chunk = 500
 
+        orig_dataset_list = dataset_list
         if dataset_list is None:
             dataset_list = self.fields.all_drs
         assert isinstance(
@@ -811,8 +812,13 @@ class SparclClient:  # was SparclApi()
             #! "chunk_len": chunk,
             "format": format,
             #! "1thread": "yes",  # @@@ 7.3.2023
-            "dataset_list": ",".join(dataset_list),
+            #!"dataset_list": ",".join(dataset_list),
         }
+        # Do not put dataset_list in server call if it wasn't in client call.
+        # Else will interfer with defaulting behavior of AUTH (DLS-504).
+        if orig_dataset_list is not None:
+            uparams["dataset_list"] = ",".join(dataset_list)
+
         qstr = urlencode(uparams)
 
         #!url = f'{self.apiurl}/retrieve/?{qstr}'
