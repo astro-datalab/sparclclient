@@ -855,7 +855,6 @@ class AuthTest(unittest.TestCase):
         if showact:
             print(f"{found.records=}")
 
-        #!actual = sorted(found.ids)
         actual = sorted(
             [(r.sparcl_id, r._dr) for r in found.records], key=lambda r: r[0]
         )
@@ -892,7 +891,7 @@ class AuthTest(unittest.TestCase):
         cons = dict(data_release=self.PrivPub)
         cons.update(self.cons)
 
-        # Replace exception name below once real one is created
+        # @@@ Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.find(
                 outfields=self.outflds,
@@ -928,7 +927,7 @@ class AuthTest(unittest.TestCase):
         cons = dict(data_release=self.PrivPub)
         cons.update(self.cons)
 
-        # Replace exception name below once real one is created
+        # @@@ Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.find(
                 outfields=self.outflds,
@@ -958,15 +957,11 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_1(self):
         """Retrieve method with authorized user; private data set specified"""
         self.silent_login(self.auth_user, usrpw)
-        #!inc = ["data_release", "flux"]
-        #!uuids = self.uuid_priv + self.uuid_sdssdr16
         uuids = self.uuid_priv + self.uuid_pub
         got = self.client.retrieve(
             uuid_list=uuids, include=self.inc, dataset_list=self.PrivPub
         )
-        actual = ""
-        for rec in got.records:
-            actual += rec.data_release + ", " + str(len(rec.flux)) + " ; "
+        actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
         if showact:
             print(f"auth_retrieve_1: actual={pf(actual)}")
         self.assertEqual(actual, exp.auth_retrieve_1, msg="Actual to Expected")
@@ -976,10 +971,10 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_2(self):
         """Retrieve method with authorized user; no data sets specified"""
         self.silent_login(self.auth_user, usrpw)
+        print(f"uuids: {self.uuid_all}")
+        print(f"include: {self.inc}")
         got = self.client.retrieve(uuid_list=self.uuid_all, include=self.inc)
-        actual = ""
-        for rec in got.records:
-            actual += rec.data_release + ", " + str(len(rec.flux)) + " ; "
+        actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
         if showact:
             print(f"auth_retrieve_2: actual={pf(actual)}")
         self.assertEqual(actual, exp.auth_retrieve_2, msg="Actual to Expected")
@@ -989,10 +984,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_3(self):
         """Retrieve method with unauthorized user; private dataset specified"""
         self.silent_login(self.unauth_user, usrpw)
-        # inc = ["data_release", "ivar"]
-        #!drs = ["DESI-EDR", "SDSS-DR17-test"]
-        #!uuids = self.uuid_desiedr + self.uuid_priv
-        # Replace exception name below once real one is created
+        # @@@ Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.retrieve(
                 uuid_list=self.uuid_privpub,
@@ -1001,19 +993,12 @@ class AuthTest(unittest.TestCase):
             )
         self.silent_logout()
 
-    # | retrieve | Unauth | None|
-    # Should PASS since default (no data sets) means only
-    # retrieve from authorized datasets (Public, in this case)
+    # | retrieve | Unauth | None |
     def test_auth_retrieve_4(self):
         """Retrieve method with unauthorized user; no datasets specified"""
         self.silent_login(self.unauth_user, usrpw)
-        #!inc = ["data_release", "wave_sigma"]
-        #!# Replace exception name below once real one is created
-        #!with self.assertRaises(ex.UnknownServerError):
-        #!    self.client.retrieve(uuid_list=self.uuid_all, include=inc)
-
         got = self.client.retrieve(uuid_list=self.uuid_all, include=self.inc)
-        actual = got
+        actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
         if showact:
             print(f"auth_retrieve_4: {pf(actual)=}")
         self.assertEqual(actual, exp.auth_retrieve_4, msg="Actual to Expected")
@@ -1023,19 +1008,10 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_5(self):
         """Retrieve method with unauthorized user; public datasets specified"""
         self.silent_login(self.unauth_user, usrpw)
-        #!inc = ["data_release", "wave_sigma"]
-        #!drs = ["SDSS-DR16", "DESI-EDR"]
-        #!uuids = self.uuid_pub + self.uuid_desiedr  # self.uuid_pub @@@
         got = self.client.retrieve(
             uuid_list=self.uuid_pub, include=self.inc, dataset_list=self.Pub
         )
-        actual = ""
-        for rec in got.records:
-            actual1 = rec.data_release + ", " + str(len(rec.flux)) + " ; "
-            actual = actual + actual1
-        # BETTER of above: @@@
-        # actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
-
+        actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
         if showact:
             print(f"auth_retrieve_5: actual={pf(actual)}")
         self.assertEqual(actual, exp.auth_retrieve_5, msg="Actual to Expected")
@@ -1045,11 +1021,7 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_6(self):
         """Retrieve method with anonymous user; private data set specified"""
         self.silent_logout()
-        #!inc = ["data_release", "flux"]
-        #!drs = ["SDSS-DR17-test", "BOSS-DR16"]
-        #!drs = self.PrivPub
-        #!uuids = self.uuid_priv + self.uuid_bossdr16
-        # Replace exception name below once real one is created
+        # @@@ Replace exception name below once real one is created
         with self.assertRaises(ex.UnknownServerError):
             self.client.retrieve(
                 uuid_list=self.uuid_privpub,  # uuids,
@@ -1058,18 +1030,11 @@ class AuthTest(unittest.TestCase):
             )
 
     # | retrieve | Anon | None |
-    # Should PASS since default (no data sets) means only
-    # retrieve from authorized datasets (Public, in this case)
     def test_auth_retrieve_7(self):
         """Retrieve method with anonymous user; no data sets specified"""
         self.silent_logout()
-        #!inc = ["data_release", "model"]
-        # Replace exception name below once real one is created
-        #! with self.assertRaises(ex.UnknownServerError):
-        #!     self.client.retrieve(uuid_list=self.uuid_all, include=inc)
-
         got = self.client.retrieve(uuid_list=self.uuid_all, include=self.inc)
-        actual = got
+        actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
         if showact:
             print(f"auth_retrieve_7: {pf(actual)=}")
         self.assertEqual(actual, exp.auth_retrieve_7, msg="Actual to Expected")
@@ -1079,16 +1044,10 @@ class AuthTest(unittest.TestCase):
     def test_auth_retrieve_8(self):
         """Retrieve method with anonymous user; public data sets specified"""
         self.silent_logout()
-        #!inc = ["data_release", "model"]
-        #!drs = ["SDSS-DR16", "BOSS-DR16"]
-        #!uuids = self.uuid_pub + self.uuid_bossdr16
         got = self.client.retrieve(
             include=self.inc, uuid_list=self.uuid_pub, dataset_list=self.Pub
         )
-        actual = ""
-        for rec in got.records:
-            actual1 = rec.data_release + ", " + str(len(rec.flux)) + " ; "
-            actual = actual + actual1
+        actual = [f'{r.data_release}, {len(r.flux)} ; ' for r in got.records]
         if showact:
             print(f"auth_retrieve_8: actual={pf(actual)}")
         self.assertEqual(actual, exp.auth_retrieve_8, msg="Actual to Expected")
