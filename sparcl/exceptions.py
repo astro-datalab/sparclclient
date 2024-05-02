@@ -21,6 +21,8 @@ def genSparclException(response, verbose=False):
         return UnknownField(status.get("errorMessage"))
     elif status.get("errorCode") == "BADCONST":
         return BadSearchConstraint(status.get("errorMessage"))
+    elif status.get("errorCode") == "NODRACCESS":
+        return AccessNotAllowed(status.get("errorMessage"))
     else:
         return UnknownServerError(
             f"{status.get('errorMessage')} "
@@ -138,6 +140,10 @@ class NoIDs(BaseSparclException):
     method was zero"""
 
     error_code = "NOIDS"
+
+
+class AccessNotAllowed(BaseSparclException):
+    error_code = "DSDENIED"
 
 
 # error_code values should be no bigger than 8 characters 12345678

@@ -41,6 +41,7 @@ retrieve_0 = [39627920993422590, 39627926995470031]
 
 retrieve_0b = ["_dr", "dec", "flux", "ra", "sparcl_id", "specid", "wavelength"]
 
+
 # OLD as of Dec 14, 2023
 # retrieve_5 = [1254334738051655680, 1254335012929562624]
 
@@ -61,6 +62,7 @@ retrieve_5 = [39627920993422590, 39627926995470031]
 #        "sparcl_id": "61357ba4-75d8-11ee-a1b5-525400aad0aa",
 #    },
 # ]
+
 
 find_0 = [
     {
@@ -240,55 +242,17 @@ authorized_3 = {
     "Authorized_Datasets": {"BOSS-DR16", "DESI-EDR", "SDSS-DR16"},
 }
 
-auth_find_1 = [
-    ("84452fad-dbe7-11ee-a970-525400aad0aa", "SDSS-DR17-test"),
-    ("847e0be4-dbe7-11ee-b095-525400aad0aa", "SDSS-DR17-test"),
-]
-
-auth_find_2 = [
-    "00769ec9-9931-11ee-97de-525400aad0aa",
-    "00b0904d-992f-11ee-b7f9-525400aad0aa",
-    "00c6d798-9931-11ee-af11-525400aad0aa",
-]
-
-auth_find_4 = [
-    "00769ec9-9931-11ee-97de-525400aad0aa",
-    "00b0904d-992f-11ee-b7f9-525400aad0aa",
-    "00c6d798-9931-11ee-af11-525400aad0aa",
-    "010eb4d0-992f-11ee-89de-525400aad0aa",
-    "014ac8ea-9931-11ee-b693-525400aad0aa",
-    "01c9187a-9931-11ee-bbbc-525400aad0aa",
-    "01db0ea0-9930-11ee-a576-525400aad0aa",
-    "020ed77c-992f-11ee-aefb-525400aad0aa",
-    "022ab30b-9931-11ee-a372-525400aad0aa",
-    "024c9ba1-9930-11ee-aa56-525400aad0aa",
-]
-
-auth_find_6 = [
-    "00769ec9-9931-11ee-97de-525400aad0aa",
-    "00b0904d-992f-11ee-b7f9-525400aad0aa",
-    "00c6d798-9931-11ee-af11-525400aad0aa",
-    "010eb4d0-992f-11ee-89de-525400aad0aa",
-    "014ac8ea-9931-11ee-b693-525400aad0aa",
-    "01c9187a-9931-11ee-bbbc-525400aad0aa",
-    "01db0ea0-9930-11ee-a576-525400aad0aa",
-    "020ed77c-992f-11ee-aefb-525400aad0aa",
-    "022ab30b-9931-11ee-a372-525400aad0aa",
-    "024c9ba1-9930-11ee-aa56-525400aad0aa",
-]
-
-auth_retrieve_1 = (
-    "SDSS-DR16, 3848 ; SDSS-DR16, 3848 ; "
-    "SDSS-DR17-test, 3859 ; SDSS-DR17-test, 3859 ; "
-)
-
-auth_retrieve_2 = (
-    "DESI-EDR, 7781 ; BOSS-DR16, 4615 ; "
-    "BOSS-DR16, 4615 ; SDSS-DR16, 3848 ; "
-    "SDSS-DR16, 3848 ; DESI-EDR, 7781 ; "
-    "SDSS-DR17-test, 3859 ; SDSS-DR17-test, 3859 ; "
-)
-
-auth_retrieve_5 = "SDSS-DR16, 3848 ; SDSS-DR16, 3848 ; "
-
-auth_retrieve_8 = "SDSS-DR16, 3848 ; SDSS-DR16, 3848 ; "
+# Private and Public
+pub = ["BOSS-DR16", "DESI-EDR", "SDSS-DR16"]
+priv = ["SDSS-DR17-test"]
+unauth = "test_user_2@noirlab.edu"
+#
+auth_find_1 = auth_find_2 = pub + priv
+auth_find_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
+auth_find_4 = auth_find_6 = pub
+auth_find_5 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"
+#
+auth_retrieve_1 = auth_retrieve_2 = pub + priv
+auth_retrieve_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
+auth_retrieve_4 = auth_retrieve_5 = auth_retrieve_7 = auth_retrieve_8 = pub
+auth_retrieve_6 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"
