@@ -36,6 +36,8 @@ from contextlib import contextmanager
 import unittest
 from unittest import skip, skipUnless, skipIf
 import datetime
+
+#!import time
 from contextlib import redirect_stdout
 
 #! from unittest mock, skipIf, skipUnless
@@ -92,6 +94,11 @@ showcurl = showcurl or os.environ.get("showcurl") == "1"
 
 clverb = False
 clverb = clverb or os.environ.get("clverb") == "1"
+
+showall = False
+showall = showall or os.environ.get("showall") == "1"
+if showall:
+    showact = showcurl = clverb = True
 
 usrpw = os.environ.get("usrpw")
 
@@ -774,8 +781,11 @@ class AuthTest(unittest.TestCase):
                 f"{str(datetime.datetime.now())}\n"
             )
 
-    def silent_login(cls, usr, usrpw):
-        with redirect_stdout(io.StringIO()):  # as f:
+    def silent_login(cls, usr, usrpw, silent=True):
+        if silent:
+            with redirect_stdout(io.StringIO()):  # as f:
+                cls.client.login(usr, usrpw)
+        else:
             cls.client.login(usr, usrpw)
 
     def silent_logout(cls):
@@ -791,8 +801,11 @@ class AuthTest(unittest.TestCase):
         self.silent_login(self.auth_user, usrpw)
         actual = self.client.authorized
         if showact:
-            print(f"authorized_1: actual={actual}")
-
+            print(f"1 authorized_1: {actual=}")
+            #!time.sleep(1)
+            #!print(f"2 authorized_1: {self.client.authorized}")
+            #!time.sleep(20)
+            #!print(f"3 authorized_1: {self.client.authorized}")
         self.assertEqual(actual, exp.authorized_1, msg="Actual to Expected")
         self.silent_logout()
 
@@ -816,6 +829,7 @@ class AuthTest(unittest.TestCase):
 
     def auth_find(self, user, drs, expvar, limit=None):
         expected = eval(expvar)  # e.g. 'ep.retrieve_N'
+        #!print(f'{expvar}: {user=} {drs=} ')
         self.silent_login(user, usrpw)
         #!print(f'{expvar}: {self.client.authorized=} {user=} {drs=} ')
         out = self.outflds
@@ -828,6 +842,9 @@ class AuthTest(unittest.TestCase):
                     constraints=dict(data_release=drs),
                     limit=limit,
                 )
+            #!if showact:
+            #!    print(f"{expvar}: {found.records=}")
+
             actual = sorted(set([r._dr for r in found.records]))
         except Exception as err:
             actual = str(err)
