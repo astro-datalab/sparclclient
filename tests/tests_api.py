@@ -7,6 +7,7 @@
 #
 #  ### Run Against DEV Server.
 #  usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api
+#  usrpw='' serverurl=http://sparcdev2.csdc.noirlab.edu:8050 python -m unittest tests.tests_api  # noqa: E501
 #  showact=1 usrpw='' serverurl=http://localhost:8050 python -m unittest tests.tests_api  # noqa: E501
 #
 # python -m unittest  -v tests.tests_api    # VERBOSE (show what is skipped)
@@ -55,6 +56,7 @@ import io
 import numpy
 import logging
 import sys
+import warnings
 
 # Local Packages
 from tests.utils import tic, toc
@@ -182,8 +184,9 @@ class SparclClientTest(unittest.TestCase):
             zip(*[(r["sparcl_id"], r["specid"]) for r in found.records])
         )
         sparc_ids, spec_ids = list(sparc_tups), list(spec_tups)
-        print(f"sparc_ids={sparc_ids}")
-        print(f"spec_ids={spec_ids}")
+        if showact:
+            print(f"sparc_ids={sparc_ids}")
+            print(f"spec_ids={spec_ids}")
 
         # Lists of SPECID
         cls.specid_list0 = spec_ids[:2]
@@ -275,7 +278,7 @@ class SparclClientTest(unittest.TestCase):
         """Specids (not UUID) missing"""
         badid = "NOT_SPEC_ID"
         specids = set([badid] + self.specid_list0[:1])
-        missing = set(self.client.missing_specids(specids, verbose=True))
+        missing = set(self.client.missing_specids(specids, verbose=False))
         if showact:
             print(f"missing_specids_1: specids={specids}")
             print(f"missing_specids_1: missing={missing}")
@@ -472,13 +475,10 @@ class SparclClientTest(unittest.TestCase):
         """Reorder retrieved records by sparcl_id."""
         name = "reorder_1a"
         ids = self.uuid_list2
-        print(f"ids: {ids}")
 
         tic()
         drs = ["SDSS-DR16", "BOSS-DR16", "DESI-EDR"]
         res = self.client.retrieve(ids, dataset_list=drs)
-        res_ids = [r["sparcl_id"] for r in res.records]
-        print(f"retrieved: {res_ids}")
         self.timing[name] = toc()
         res_reorder = res.reorder(ids)
         actual = [f["sparcl_id"] for f in res_reorder.records]
@@ -600,7 +600,7 @@ class SparclClientTest(unittest.TestCase):
             uuid_list=idss,
             include=["ra", "dec"],
             dataset_list=["SDSS-DR16"],
-            verbose=True,
+            verbose=False,
         )
         self.assertEqual(1, re.count)
 
@@ -731,15 +731,6 @@ class AuthTest(unittest.TestCase):
 
         cls.client = sparcl.client.SparclClient(
             url=serverurl, verbose=clverb, show_curl=showcurl
-        )
-
-        print(
-            f"Running Client tests\n"
-            f'  against Server: "{urlparse(serverurl).netloc}"\n'
-            f"  comparing to: {exp.__name__}\n"
-            f"  {showact=}\n"
-            f"  {showcurl=}\n"
-            f"  {cls.client=}\n"
         )
 
         cls.outflds = ["sparcl_id", "data_release"]
@@ -969,12 +960,14 @@ class AuthTest(unittest.TestCase):
     # retrieve from authorized datasets (Public, in this case)
     def test_auth_retrieve_4(self):
         """Retrieve method with unauthorized user; no datasets specified"""
+        warnings.filterwarnings("ignore")
         exp = "exp.auth_retrieve_4"
         self.auth_retrieve(self.unauth_user, None, exp)
 
     # | retrieve | Unauth | Pub | PASS |
     def test_auth_retrieve_5(self):
         """Retrieve method with unauthorized user; public datasets specified"""
+        warnings.filterwarnings("ignore")
         exp = "exp.auth_retrieve_5"
         self.auth_retrieve(self.unauth_user, self.Pub, exp)
 
@@ -991,11 +984,13 @@ class AuthTest(unittest.TestCase):
     # retrieve from authorized datasets (Public, in this case)
     def test_auth_retrieve_7(self):
         """Retrieve method with anonymous user; no data sets specified"""
+        warnings.filterwarnings("ignore")
         exp = "exp.auth_retrieve_7"
         self.auth_retrieve(None, None, exp)
 
     # | retrieve | Anon | Pub | PASS |
     def test_auth_retrieve_8(self):
         """Retrieve method with anonymous user; public data sets specified"""
+        warnings.filterwarnings("ignore")
         exp = "exp.auth_retrieve_8"
         self.auth_retrieve(None, self.Pub, exp)
