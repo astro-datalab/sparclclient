@@ -168,7 +168,7 @@ class SparclClientTest(unittest.TestCase):
         cls.count = dict()
 
         print(
-            f"Running Client tests\n"
+            f"Running Basic Client Tests\n"
             f'  against Server: "{urlparse(serverurl).netloc}"\n'
             f"  comparing to: {exp.__name__}\n"
             f"  showact={showact}\n"
@@ -621,6 +621,14 @@ class AlignRecordsTest(unittest.TestCase):
         cls.client = sparcl.client.SparclClient(
             url=serverurl, verbose=clverb, show_curl=showcurl
         )
+        print(
+            f"Running Align Records Client Tests\n"
+            f'  against Server: "{urlparse(serverurl).netloc}"\n'
+            f"  comparing to: {exp.__name__}\n"
+            f"  showact={showact}\n"
+            f"  showcurl={showcurl}\n"
+            f"  client={cls.client}\n"
+        )
         found = cls.client.find(
             constraints={"data_release": ["BOSS-DR16"]}, limit=20
         )
@@ -732,7 +740,14 @@ class AuthTest(unittest.TestCase):
         cls.client = sparcl.client.SparclClient(
             url=serverurl, verbose=clverb, show_curl=showcurl
         )
-
+        print(
+            f"Running Auth Client Tests\n"
+            f'  against Server: "{urlparse(serverurl).netloc}"\n'
+            f"  comparing to: {exp.__name__}\n"
+            f"  showact={showact}\n"
+            f"  showcurl={showcurl}\n"
+            f"  client={cls.client}\n"
+        )
         cls.outflds = ["sparcl_id", "data_release"]
         cls.inc = ["data_release", "flux"]
 
