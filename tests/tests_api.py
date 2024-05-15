@@ -79,7 +79,7 @@ _PAT1 = "https://sparc1.datalab.noirlab.edu"  # noqa: E221
 _STAGE = "https://sparclstage.datalab.noirlab.edu"  # noqa: E221
 _PROD = "https://astrosparcl.datalab.noirlab.edu"  # noqa: E221
 
-serverurl = os.environ.get("serverurl", _PAT1)
+serverurl = os.environ.get("serverurl", _PROD)
 #!DEV_SERVERS = [_DEV1,]
 DEV_SERVERS = []
 
@@ -104,6 +104,8 @@ if showall:
 
 usrpw = os.environ.get("usrpw")
 
+check1 = False
+check2 = True
 
 @contextmanager
 def streamhandler_to_console(lggr):
@@ -167,14 +169,19 @@ class SparclClientTest(unittest.TestCase):
         cls.doc = dict()
         cls.count = dict()
 
-        print(
-            f"Running Basic Client Tests\n"
-            f'  against Server: "{urlparse(serverurl).netloc}"\n'
-            f"  comparing to: {exp.__name__}\n"
-            f"  showact={showact}\n"
-            f"  showcurl={showcurl}\n"
-            f"  client={cls.client}\n"
-        )
+        global check1
+        global check2
+
+        if check1 is False:
+            print(
+                f"Running Client Tests\n"
+                f'  against Server: "{urlparse(serverurl).netloc}"\n'
+                f"  comparing to: {exp.__name__}\n"
+                f"  showact={showact}\n"
+                f"  showcurl={showcurl}\n"
+                f"  client={cls.client}\n"
+            )
+            check2 = False
 
         # Get some id_lists to use in tests
         found = cls.client.find(
@@ -621,14 +628,6 @@ class AlignRecordsTest(unittest.TestCase):
         cls.client = sparcl.client.SparclClient(
             url=serverurl, verbose=clverb, show_curl=showcurl
         )
-        print(
-            f"Running Align Records Client Tests\n"
-            f'  against Server: "{urlparse(serverurl).netloc}"\n'
-            f"  comparing to: {exp.__name__}\n"
-            f"  showact={showact}\n"
-            f"  showcurl={showcurl}\n"
-            f"  client={cls.client}\n"
-        )
         found = cls.client.find(
             constraints={"data_release": ["BOSS-DR16"]}, limit=20
         )
@@ -740,14 +739,21 @@ class AuthTest(unittest.TestCase):
         cls.client = sparcl.client.SparclClient(
             url=serverurl, verbose=clverb, show_curl=showcurl
         )
-        print(
-            f"Running Auth Client Tests\n"
-            f'  against Server: "{urlparse(serverurl).netloc}"\n'
-            f"  comparing to: {exp.__name__}\n"
-            f"  showact={showact}\n"
-            f"  showcurl={showcurl}\n"
-            f"  client={cls.client}\n"
-        )
+
+        global check1
+        global check2
+
+        if check2 is True:
+            print(
+                f"Running Client Tests\n"
+                f'  against Server: "{urlparse(serverurl).netloc}"\n'
+                f"  comparing to: {exp.__name__}\n"
+                f"  showact={showact}\n"
+                f"  showcurl={showcurl}\n"
+                f"  client={cls.client}\n"
+            )
+            check1 = True
+
         cls.outflds = ["sparcl_id", "data_release"]
         cls.inc = ["data_release", "flux"]
 
