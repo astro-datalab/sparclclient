@@ -104,8 +104,7 @@ if showall:
 
 usrpw = os.environ.get("usrpw")
 
-check1 = False
-check2 = True
+show_run_context = True
 
 @contextmanager
 def streamhandler_to_console(lggr):
@@ -169,10 +168,9 @@ class SparclClientTest(unittest.TestCase):
         cls.doc = dict()
         cls.count = dict()
 
-        global check1
-        global check2
+        global show_run_context
 
-        if check1 is False:
+        if show_run_context:
             print(
                 f"Running Client Tests\n"
                 f'  against Server: "{urlparse(serverurl).netloc}"\n'
@@ -181,7 +179,7 @@ class SparclClientTest(unittest.TestCase):
                 f"  showcurl={showcurl}\n"
                 f"  client={cls.client}\n"
             )
-            check2 = False
+            show_run_context = False
 
         # Get some id_lists to use in tests
         found = cls.client.find(
@@ -740,10 +738,9 @@ class AuthTest(unittest.TestCase):
             url=serverurl, verbose=clverb, show_curl=showcurl
         )
 
-        global check1
-        global check2
+        global show_run_context
 
-        if check2 is True:
+        if show_run_context:
             print(
                 f"Running Client Tests\n"
                 f'  against Server: "{urlparse(serverurl).netloc}"\n'
@@ -752,7 +749,7 @@ class AuthTest(unittest.TestCase):
                 f"  showcurl={showcurl}\n"
                 f"  client={cls.client}\n"
             )
-            check1 = True
+            show_run_context = False
 
         cls.outflds = ["sparcl_id", "data_release"]
         cls.inc = ["data_release", "flux"]
