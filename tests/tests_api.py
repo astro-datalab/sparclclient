@@ -37,6 +37,7 @@ from contextlib import contextmanager
 import unittest
 from unittest import skip, skipUnless, skipIf
 import datetime
+import requests
 
 #!import time
 from contextlib import redirect_stdout
@@ -105,6 +106,7 @@ if showall:
 usrpw = os.environ.get("usrpw")
 
 show_run_context = True
+
 
 @contextmanager
 def streamhandler_to_console(lggr):
@@ -353,8 +355,10 @@ class SparclClientTest(unittest.TestCase):
         """Limit number of records returned by retrieve_by_specid."""
         drs = ["SDSS-DR16", "BOSS-DR16", "DESI-EDR"]
         res = self.client.retrieve_by_specid(
-            self.specid_list5, include=["specid", "ivar"], dataset_list=drs,
-            limit=2
+            self.specid_list5,
+            include=["specid", "ivar"],
+            dataset_list=drs,
+            limit=2,
         )
         actual = len(res.records)
         if showact:
@@ -371,10 +375,10 @@ class SparclClientTest(unittest.TestCase):
         # To get suitable constraints (in sparc-shell on Server):
         #   sorted(FitsRecord.objects.all().values('ra','dec'),
         #          key=lambda r: r['dec'])
-        #if serverurl in DEV_SERVERS:
+        # if serverurl in DEV_SERVERS:
         #    !constraints = {"ra": [246.0, 247.0], "dec": [+34.7, +34.8]}
         #    constraints = {"ra": [194.0, 195.0], "dec": [+27.5, +27.6]}
-        #else:
+        # else:
         #    constraints = {"ra": [340.0, 341.0], "dec": [+3.0, +4.0]}
         constraints = {"ra": [134.288, 134.291], "dec": [+28.34, +28.351]}
         found = self.client.find(outfields, constraints=constraints, limit=3)
@@ -386,11 +390,14 @@ class SparclClientTest(unittest.TestCase):
     def test_find_1(self):
         """Get metadata using search spec."""
         outfields = ["data_release", "specid"]
-        constraints = ({"redshift": [0.191, 0.192],
-                        "exptime": [2100.2, 2100.31],
-                        "data_release": ['SDSS-DR16']})
-        found = self.client.find(outfields, constraints=constraints,
-                                 limit=1, sort="specid")  # @@@
+        constraints = {
+            "redshift": [0.191, 0.192],
+            "exptime": [2100.2, 2100.31],
+            "data_release": ["SDSS-DR16"],
+        }
+        found = self.client.find(
+            outfields, constraints=constraints, limit=1, sort="specid"
+        )  # @@@
         actual = sorted(found.records, key=lambda rec: rec["specid"])
         if showact:
             print(f"find_1: actual={pf(actual)}")
@@ -522,7 +529,7 @@ class SparclClientTest(unittest.TestCase):
         actual = [f["sparcl_id"] for f in res_reorder.records]
         if showact:
             print(f"reorder_2a: actual={pf(actual)}")
-        self.assertEqual(actual, ids[:2] + ['None'], msg="Actual to Expected")
+        self.assertEqual(actual, ids[:2] + ["None"], msg="Actual to Expected")
 
     def test_reorder_2b(self):
         """Reorder records when specid is missing from database, after
@@ -539,8 +546,9 @@ class SparclClientTest(unittest.TestCase):
         actual = [f["specid"] for f in res_reorder.records]
         if showact:
             print(f"reorder_2b: actual={pf(actual)}")
-        self.assertEqual(actual, specids[:2] + [None],
-                         msg="Actual to Expected")
+        self.assertEqual(
+            actual, specids[:2] + [None], msg="Actual to Expected"
+        )
 
     def test_reorder_3a(self):
         """Test for expected Exception when a list of sparcl_ids with
@@ -780,18 +788,18 @@ class AuthTest(unittest.TestCase):
                 sort="sparcl_id",
             )
         ).ids
-        #cls.uuid_pub = (  # cls.uuid_sdssdr16
+        # cls.uuid_pub = (  # cls.uuid_sdssdr16
         #    cls.client.find(
         #        outfields=out,
         #        constraints={"data_release": cls.Pub},
         #        limit=2,
         #        sort="sparcl_id",
         #    )
-        #).ids
+        # ).ids
         cls.uuid_pub = (
             cls.client.find(
                 outfields=out,
-                constraints={"data_release": ['BOSS-DR16']},
+                constraints={"data_release": ["BOSS-DR16"]},
                 limit=2,
                 sort="sparcl_id",
             )
@@ -821,6 +829,33 @@ class AuthTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pass
+
+    # curl -X 'POST' \
+    #   'http://localhost:8050/sparc/get_token/' \
+    #   -H 'Content-Type: application/json' \
+    #   -d '{"email": "test_user_1@noirlab.edu", "password": "XX"}'; echo
+    #
+    # > Could not get token from SSO server:
+    #   HTTPSConnectionPool(host='docker1.csdc.noirlab.edu', port=443):
+    #   Max retries exceeded with url: /api/token/
+    # (Caused by SSLError(SSLCertVerificationError(1,
+    #                                   '[SSL: CERTIFICATE_VERIFY_FAILED]
+    # certificate verify failed: unable to get local issuer certificate
+    # (_ssl.c:997)')))
+
+    def test_get_token(self):
+        """Make sure we can get expected SSO token."""
+        json = {"email": self.auth_user, "password": usrpw}
+        if showact:
+            print(f"test_get_token: {json=}")
+
+        expected = ""
+        res = requests.post(f"{self.client.apiurl}/get_token/", json=json)
+        self.assertEqual(res.status_code, 200, res.content.decode())
+
+        if showact:
+            print(f"test_get_token: {res=}")
+        self.assertEqual(res, expected, msg="Actual to Expected")
 
     def test_authorized_1(self):
         """Test authorized method with authorized user signed in"""
@@ -891,9 +926,7 @@ class AuthTest(unittest.TestCase):
         inc = ["sparcl_id", "data_release"]
         try:
             if drs is None:
-                got = self.client.retrieve(
-                    uuid_list=ids, include=inc
-                )
+                got = self.client.retrieve(uuid_list=ids, include=inc)
             else:
                 got = self.client.retrieve(
                     uuid_list=ids, include=inc, dataset_list=drs

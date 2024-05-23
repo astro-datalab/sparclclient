@@ -33,6 +33,9 @@ dynamic = ["version", "description"]
 [tool.flit.module]
 name = "sparcl"
 
+[tool.flit.sdist]
+exclude = ["**/UNPUBLISHED/", "**/OBSOLETE/"]
+
 [tool.black]
 # https://black.readthedocs.io/en/stable/usage_and_configuration/index.html
 line-length = 79
