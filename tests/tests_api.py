@@ -135,11 +135,18 @@ def testcase_log_console(lggr):
 def load_tests(loader, tests, ignore):
     import doctest
 
-    print(f"Arranging to run doctests against: sparcl.client")
-    tests.addTests(doctest.DocTestSuite(sparcl.client))
+    if serverurl == _PROD:
+        print(f"Arranging to run doctests against: sparcl.client")
+        tests.addTests(doctest.DocTestSuite(sparcl.client))
 
-    print(f"Arranging to run doctests against: sparcl.gather_2d")
-    tests.addTests(doctest.DocTestSuite(sparcl.gather_2d))
+        print(f"Arranging to run doctests against: sparcl.gather_2d")
+        tests.addTests(doctest.DocTestSuite(sparcl.gather_2d))
+    else:
+        print(
+            "Not running doctests since you are not running client"
+            " against the PRODUCTION server."
+        )
+
     return tests
 
 
