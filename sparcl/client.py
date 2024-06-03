@@ -658,7 +658,7 @@ class SparclClient:  # was SparclApi()
             are NOT stored in the SPARCL database.
 
         Example:
-            >>> client = SparclClient(url=_PAT)
+            >>> client = SparclClient()
             >>> found = client.find(outfields=['specid'], limit=2)
             >>> specids = [f.specid for f in found.records]
             >>> client.missing_specids(specids + ['bad_id'])
