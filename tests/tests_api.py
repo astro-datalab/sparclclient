@@ -843,19 +843,25 @@ class AuthTest(unittest.TestCase):
     # certificate verify failed: unable to get local issuer certificate
     # (_ssl.c:997)')))
 
+    def test_sso_server(self):
+        sso_server = "https://sso.csdc.noirlab.edu/"
+        response = requests.get(sso_server)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+
     def test_get_token(self):
         """Make sure we can get expected SSO token."""
         json = {"email": self.auth_user, "password": usrpw}
         if showact:
             print(f"test_get_token: {json=}")
 
-        expected = ""
+        expected = 281
         res = requests.post(f"{self.client.apiurl}/get_token/", json=json)
         self.assertEqual(res.status_code, 200, res.content.decode())
-
+        token = res.content.decode()
+        actual = len(token)
         if showact:
-            print(f"test_get_token: {res=}")
-        self.assertEqual(res, expected, msg="Actual to Expected")
+            print(f"test_get_token: ({len(token)}) {token=!s}")
+        self.assertEqual(actual, expected, msg="Actual to Expected")
 
     def test_authorized_1(self):
         """Test authorized method with authorized user signed in"""
