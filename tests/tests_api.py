@@ -61,8 +61,7 @@ import warnings
 
 # Local Packages
 from tests.utils import tic, toc
-import tests.expected_pat as exp_pat
-import tests.expected_dev1 as exp_dev
+import tests.expected_pat as exp
 import sparcl.exceptions as ex
 import sparcl.gather_2d as sg
 import sparcl.client
@@ -81,31 +80,19 @@ _STAGE = "https://sparclstage.datalab.noirlab.edu"  # noqa: E221
 _PROD = "https://astrosparcl.datalab.noirlab.edu"  # noqa: E221
 
 serverurl = os.environ.get("serverurl", _PROD)
-#!DEV_SERVERS = [_DEV1,]
-DEV_SERVERS = []
-
-if serverurl in DEV_SERVERS:
-    exp = exp_dev
-else:
-    exp = exp_pat
-
 showact = False
 showact = showact or os.environ.get("showact") == "1"
-
 showcurl = False
 showcurl = showcurl or os.environ.get("showcurl") == "1"
-
 clverb = False
 clverb = clverb or os.environ.get("clverb") == "1"
-
 showall = False
 showall = showall or os.environ.get("showall") == "1"
 if showall:
     showact = showcurl = clverb = True
 
-usrpw = os.environ.get("usrpw")
-
-show_run_context = True
+usrpw = os.environ.get("usrpw")  # password for test users
+show_run_context = True  # Print message about parameters of this test run
 
 
 @contextmanager
@@ -150,6 +137,22 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
+def print_run_context(cls):
+    print(
+        f"""
+    Running Client Tests
+      against Server: \t"{urlparse(serverurl).netloc}"
+      comparing to: \t{exp.__name__}
+      {showact=}
+      {showcurl=}
+      client={cls.client}
+
+    For REPRODUCIBLE RESULTS rebuild Server DB before running tests!
+    Use: init-db.sh
+    """
+    )
+
+
 class SparclClientTest(unittest.TestCase):
     """Test access to each endpoint of the Server API"""
 
@@ -180,14 +183,7 @@ class SparclClientTest(unittest.TestCase):
         global show_run_context
 
         if show_run_context:
-            print(
-                f"Running Client Tests\n"
-                f'  against Server: "{urlparse(serverurl).netloc}"\n'
-                f"  comparing to: {exp.__name__}\n"
-                f"  showact={showact}\n"
-                f"  showcurl={showcurl}\n"
-                f"  client={cls.client}\n"
-            )
+            print_run_context(cls)
             show_run_context = False
 
         # Get some id_lists to use in tests
@@ -377,23 +373,16 @@ class SparclClientTest(unittest.TestCase):
         """Get metadata using search spec."""
 
         outfields = ["data_release", "specid"]
-        # from list(FitsRecord.objects.all().values('ra','dec'))
-
         # To get suitable constraints (in sparc-shell on Server):
-        #   sorted(FitsRecord.objects.all().values('ra','dec'),
-        #          key=lambda r: r['dec'])
-        # if serverurl in DEV_SERVERS:
-        #    !constraints = {"ra": [246.0, 247.0], "dec": [+34.7, +34.8]}
-        #    constraints = {"ra": [194.0, 195.0], "dec": [+27.5, +27.6]}
-        # else:
-        #    constraints = {"ra": [340.0, 341.0], "dec": [+3.0, +4.0]}
-        constraints = {"ra": [134.288, 134.291], "dec": [+28.34, +28.351]}
+        #    list(FitsRecord.objects.all().values('ra','dec'))
+        constraints = {"ra": [132.1, 132.2], "dec": [+28.0, +28.1]}
         found = self.client.find(outfields, constraints=constraints, limit=3)
         actual = found.records[:2]
         if showact:
             print(f"find_0: actual={pf(actual[:2])}")
         self.assertEqual(actual, exp.find_0, msg="Actual to Expected")
 
+    @skip("fiddly bit skipped until we use factoryboy")
     def test_find_1(self):
         """Get metadata using search spec."""
         outfields = ["data_release", "specid"]
@@ -756,14 +745,7 @@ class AuthTest(unittest.TestCase):
         global show_run_context
 
         if show_run_context:
-            print(
-                f"Running Client Tests\n"
-                f'  against Server: "{urlparse(serverurl).netloc}"\n'
-                f"  comparing to: {exp.__name__}\n"
-                f"  showact={showact}\n"
-                f"  showcurl={showcurl}\n"
-                f"  client={cls.client}\n"
-            )
+            print_run_context(cls)
             show_run_context = False
 
         cls.outflds = ["sparcl_id", "data_release"]
