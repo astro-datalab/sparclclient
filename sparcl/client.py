@@ -487,7 +487,7 @@ class SparclClient:  # was SparclApi()
         limit=500,
         offset=0,
         sort=None,
-        # count=False,
+        count=False,
         # dataset_list=None,
         verbose=None,
     ):
@@ -555,7 +555,7 @@ class SparclClient:  # was SparclApi()
         uparams = dict(
             limit=limit,
             offset=offset,
-            #! count='Y' if count else 'N'
+            count='Y' if count else 'N'
         )
         if sort is not None:
             uparams["sort"] = sort
