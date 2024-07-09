@@ -163,7 +163,7 @@ class SparclClient:  # was SparclApi()
 
     """
 
-    KNOWN_GOOD_API_VERSION = 11.0  # @@@ Change when Server version incremented
+    KNOWN_GOOD_API_VERSION = 12.0  # @@@ Change when Server version incremented
 
     def __init__(
         self,
@@ -468,7 +468,7 @@ class SparclClient:  # was SparclApi()
         Example:
             >>> client = SparclClient()
             >>> client.version
-            11.0
+            12.0
         """
 
         if self.apiversion is None:
