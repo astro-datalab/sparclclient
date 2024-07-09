@@ -100,11 +100,22 @@ priv = ["SDSS-DR17-test"]
 unauth = "test_user_2@noirlab.edu"
 #
 auth_find_1 = auth_find_2 = pub_all + priv
-auth_find_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
+# OLD as of July 9, 2024
+#auth_find_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
+auth_find_3 = auth_retrieve_3 = (f"[DSDENIED] uname='{unauth}' is declined "
+                                 f"access to datasets={priv}; "
+                                 f"drs_requested={pub_all + priv} "
+                                 f"my_auth={pub_all}")
 auth_find_4 = auth_find_6 = pub_all
-auth_find_5 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"
-#
+# OLD as of July 9, 2024
+#auth_find_5 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"
+auth_find_5 = auth_retrieve_6 = ("[DSDENIED] uname='ANONYMOUS' is declined "
+                                 f"access to datasets={priv}; "
+                                 f"drs_requested={pub_all + priv} "
+                                 f"my_auth={pub_all}")
 auth_retrieve_1 = auth_retrieve_2 = pub_1 + priv
-auth_retrieve_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
+# OLD as of July 9, 2024
+#auth_retrieve_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
 auth_retrieve_4 = auth_retrieve_5 = auth_retrieve_7 = auth_retrieve_8 = pub_1
-auth_retrieve_6 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"
+# OLD as of July 9, 2024
+#auth_retrieve_6 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"  # noqa: E501
