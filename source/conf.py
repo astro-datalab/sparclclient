@@ -14,14 +14,13 @@
 import os
 import re
 import sys
-from sparcl import __version__
-
 sys.path.insert(0, os.path.abspath(".."))
+from sparcl import __version__
 
 # -- Project information -----------------------------------------------------
 
 project = "SPARCL"
-copyright = "2022, S.Pothier, A.Jacques"
+copyright = "2024, S.Pothier, A.Jacques"
 author = "S.Pothier, A.Jacques"
 
 #!version = client_version
