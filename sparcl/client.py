@@ -24,6 +24,7 @@ from urllib.parse import urlencode, urlparse
 from warnings import warn
 import pickle
 import getpass
+import datetime
 
 #!from pathlib import Path
 import tempfile
@@ -31,6 +32,7 @@ import tempfile
 ############################################
 # External Packages
 import requests
+import jwt
 
 #!from requests.auth import HTTPBasicAuth
 from requests.auth import AuthBase
@@ -118,12 +120,15 @@ RESERVED = set([DEFAULT, ALL])
 class TokenAuth(AuthBase):
     """Attaches HTTP Token Authentication to the given Request object."""
 
-    def __init__(self, token):
+    def __init__(self, token, renew_check):
         # setup any auth-related data here
         self.token = token
+        self.renew_check = renew_check # SparcClient Method
 
     def __call__(self, request):
         # modify and return the request
+        # check and renew token if needed
+        self.renew_check(renew=True)
         request.headers["Authorization"] = self.token
         return request
 
@@ -182,6 +187,8 @@ class SparclClient:  # was SparclApi()
         self.apiurl = f"{self.rooturl}/sparc"
         self.apiversion = None
         self.token = None
+        self.refresh_token = None
+        self.token_exp = None
         self.verbose = verbose
         self.show_curl = show_curl  # Show CURL equivalent of client method
         #!self.internal_names = internal_names
@@ -243,6 +250,35 @@ class SparclClient:  # was SparclApi()
             f" read_timeout={self.r_timeout})"
         )
 
+    def token_expired(self, renew=False):
+        """
+            POST http://localhost:8050/sparc/renew_token/
+            Content-Type: application/json
+            {
+              "refresh_token": "..."
+            }
+
+            Returns an 'access' token
+        """
+        now = datetime.datetime.now()
+        expired = True
+        if self.token_exp is None or self.token_exp <= now:
+            expired = True
+        else:
+            expired = False
+
+        if expired and renew:
+            url = f"{self.apiurl}/renew_token/"
+            resp = requests.post(url, json={"refresh_token": self.renew_token})
+            resp.raise_for_status()
+            data = resp.json()
+            #@print(f"{data=}")
+            self.token = data['access']
+            self.set_token_exp()
+            expired = False
+
+        return expired
+
     def login(self, email, password=None):
         """Login to the SPARCL service.
 
@@ -284,19 +320,31 @@ class SparclClient:  # was SparclApi()
         try:
             res.raise_for_status()
             #!print(f"DBG: {res.content=}")
-            self.token = res.json()
+            self.token = res.json()['access']
+            self.renew_token = res.json()['refresh']
             self.session.auth = (email, password)
         except Exception:
             self.session.auth = None
             self.token = None
+            self.renew_token = None
+            self.token_exp = None
             msg = (
                 "Could not login with given credentials."
                 ' Reverted to "Anonymous" user.'
             )
             return msg
 
+        self.set_token_exp()
         print(f"Logged in successfully with {email=}")
         return None
+
+    def set_token_exp(self):
+        decoded = jwt.decode(
+            self.token,
+            algorithms=['HS256',],
+            options={'verify_signature': False}
+        )
+        self.token_exp = datetime.datetime.fromtimestamp(decoded['exp'])
 
     def logout(self):
         """Logout of the SPARCL service.
@@ -317,7 +365,7 @@ class SparclClient:  # was SparclApi()
 
     @property
     def authorized(self):
-        auth = TokenAuth(self.token) if self.token else None
+        auth = TokenAuth(self.token, self.token_expired) if self.token else None  # noqa: E501
         response = requests.get(
             f"{self.apiurl}/auth_status/", auth=auth, timeout=self.timeout
         )
@@ -567,7 +615,7 @@ class SparclClient:  # was SparclApi()
             cmd = ut.curl_find_str(sspec, self.rooturl, qstr=qstr)
             print(cmd)
 
-        auth = TokenAuth(self.token) if self.token else None
+        auth = TokenAuth(self.token, self.token_expired) if self.token else None  # noqa: E501
         res = requests.post(url, json=sspec, auth=auth, timeout=self.timeout)
 
         if res.status_code != 200:
@@ -833,7 +881,7 @@ class SparclClient:  # was SparclApi()
             print(cmd)
 
         try:
-            auth = TokenAuth(self.token) if self.token else None
+            auth = TokenAuth(self.token, self.token_expired) if self.token else None  # noqa: E501
             res = requests.post(url, json=ids, auth=auth, timeout=self.timeout)
         except requests.exceptions.ConnectTimeout as reCT:
             raise ex.UnknownSparcl(f"ConnectTimeout: {reCT}")
