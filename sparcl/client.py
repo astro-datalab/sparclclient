@@ -123,7 +123,7 @@ class TokenAuth(AuthBase):
     def __init__(self, token, renew_check):
         # setup any auth-related data here
         self.token = token
-        self.renew_check = renew_check # SparcClient Method
+        self.renew_check = renew_check  # SparcClient Method
 
     def __call__(self, request):
         # modify and return the request
