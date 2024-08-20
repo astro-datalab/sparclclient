@@ -843,14 +843,50 @@ class AuthTest(unittest.TestCase):
         if showact:
             print(f"test_get_token: {json=}")
 
-        expected = 281
+        expected = 279
         res = requests.post(f"{self.client.apiurl}/get_token/", json=json)
         self.assertEqual(res.status_code, 200, res.content.decode())
-        token = res.content.decode()
+        token = res.json()['access']
         actual = len(token)
         if showact:
             print(f"test_get_token: ({len(token)}) {token=!s}")
         self.assertEqual(actual, expected, msg="Actual to Expected")
+
+    def getToken(self):
+        json = {"email": self.auth_user, "password": usrpw}
+        res = requests.post(f"{self.client.apiurl}/get_token/", json=json)
+        token = res.json()
+        self.client.token = token['access']
+        self.client.renew_token = token['refresh']
+
+    def test_token_not_expired(self):
+        self.getToken()
+        expired = self.client.token_expired(renew=False)
+        self.assertEqual(expired, False, "Token not expired")
+
+    def test_token_expired(self):
+        self.getToken()
+        if showact:
+            print(f"Token: {self.client.token=!s}")
+
+        self.client.token_exp = datetime.datetime.now()
+        expired = self.client.token_expired(renew=False)
+        self.assertEqual(expired, True, "Token expired")
+
+    def test_token_expired_renew(self):
+        """
+            POST http://localhost:8050/sparc/renew_token/
+            Content-Type: application/json
+            {
+              "token": "..."
+            }
+
+        """
+        self.getToken()
+        self.client.token_exp = datetime.datetime.now()
+
+        expired = self.client.token_expired(renew=True)
+        self.assertEqual(expired, False, "Token expired, renewed")
 
     def test_authorized_1(self):
         """Test authorized method with authorized user signed in"""
