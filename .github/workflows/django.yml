@@ -30,4 +30,4 @@ jobs:
           python -m pip install -r requirements-client.txt         
       - name: Run unittests
         run: |
-          serverurl=https://sparc1.datalab.noirlab.edu/ python -m unittest tests.tests_api
+          python -m unittest tests.tests_api
