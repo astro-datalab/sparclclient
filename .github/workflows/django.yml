@@ -27,4 +27,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        python manage.py test
+        serverurl=https://sparc1.datalab.noirlab.edu/ python -m unittest tests.tests_api
