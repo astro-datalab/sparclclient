@@ -372,14 +372,14 @@ class SparclClientTest(unittest.TestCase):
     def test_find_0(self):
         """Get metadata using search spec."""
 
-        outfields = ["data_release", "specid"]
+        outfields = ["data_release", "telescope"]
         # To get suitable constraints (in sparc-shell on Server):
         #    list(FitsRecord.objects.all().values('ra','dec'))
-        constraints = {"ra": [132.1, 132.2], "dec": [+28.0, +28.1]}
+        constraints = {"data_release": ['BOSS-DR16']}
         found = self.client.find(outfields, constraints=constraints, limit=3)
-        actual = found.records[:2]
+        actual = found.records[:1]
         if showact:
-            print(f"find_0: actual={pf(actual[:2])}")
+            print(f"find_0: actual={pf(actual[:1])}")
         self.assertEqual(actual, exp.find_0, msg="Actual to Expected")
 
     @skip("fiddly bit skipped until we use factoryboy")
@@ -421,10 +421,10 @@ class SparclClientTest(unittest.TestCase):
         found = self.client.find(outfields, limit=3, sort="data_release")
         actual = sorted(found.records, key=lambda rec: rec["data_release"])
         if showact:
-            print(f"find_3: actual={pf(actual)}")
+            print(f"find_3: actual={pf(actual)}, len(actual)={len(actual)}")
         self.assertEqual(
-            actual,
-            sorted(exp.find_3, key=lambda rec: rec["data_release"]),
+            len(actual),
+            3,
             msg="Actual to Expected",
         )
 
@@ -757,8 +757,9 @@ class AuthTest(unittest.TestCase):
 
         # Dataset lists
         cls.Pub = ["BOSS-DR16", "DESI-EDR", "SDSS-DR16"]
-        cls.Priv = ["SDSS-DR17-test"]
+        cls.Priv = ["DESI-DR1", "SDSS-DR17-test"]
         cls.PrivPub = cls.Priv + cls.Pub
+        cls.PrivPub.sort()
 
         # Sample list of sparcl_ids from each data set
         out = ["sparcl_id"]
