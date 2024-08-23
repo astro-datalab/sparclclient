@@ -40,11 +40,20 @@ retrieve_0b = ["_dr", "dec", "flux", "ra", "sparcl_id", "specid", "wavelength"]
 
 retrieve_5 = 2
 
+# OLD as of August 23, 2024
+#find_0 = [
+#    {
+#        "_dr": "BOSS-DR16",
+#        "data_release": "BOSS-DR16",
+#        "specid": -6444532452352045056,
+#    }
+#]
+
 find_0 = [
     {
-        "_dr": "BOSS-DR16",
-        "data_release": "BOSS-DR16",
-        "specid": -6444532452352045056,
+        '_dr': 'BOSS-DR16',
+        'data_release': 'BOSS-DR16',
+        'telescope': 'sloan25m'
     }
 ]
 
@@ -58,11 +67,12 @@ find_1 = [
 
 find_2 = 936894  # PAT
 
-find_3 = [
-    {"_dr": "BOSS-DR16", "data_release": "BOSS-DR16"},
-    {"_dr": "DESI-EDR", "data_release": "DESI-EDR"},
-    {"_dr": "SDSS-DR16", "data_release": "SDSS-DR16"},
-]
+# OLD as of August 23, 2024
+#find_3 = [
+#    {"_dr": "BOSS-DR16", "data_release": "BOSS-DR16"},
+#    {"_dr": "DESI-EDR", "data_release": "DESI-EDR"},
+#    {"_dr": "SDSS-DR16", "data_release": "SDSS-DR16"},
+#]
 
 find_4 = 36
 
@@ -77,6 +87,7 @@ authorized_1 = {
     "Loggedin_As": "test_user_1@noirlab.edu",
     "Authorized_Datasets": {
         "BOSS-DR16",
+        "DESI-DR1",
         "DESI-EDR",
         "SDSS-DR16",
         "SDSS-DR17-test",
@@ -96,26 +107,20 @@ authorized_3 = {
 # Private and Public
 pub_1 = ["BOSS-DR16"]
 pub_all = ["BOSS-DR16", "DESI-EDR", "SDSS-DR16"]
-priv = ["SDSS-DR17-test"]
+priv = ["DESI-DR1", "SDSS-DR17-test"]
+all_all = pub_all + priv
+all_all.sort()
 unauth = "test_user_2@noirlab.edu"
 #
-auth_find_1 = auth_find_2 = pub_all + priv
-# OLD as of July 9, 2024
-#auth_find_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
+auth_find_1 = auth_find_2 = all_all
 auth_find_3 = auth_retrieve_3 = (f"[DSDENIED] uname='{unauth}' is declined "
                                  f"access to datasets={priv}; "
-                                 f"drs_requested={pub_all + priv} "
+                                 f"drs_requested={all_all} "
                                  f"my_auth={pub_all}")
 auth_find_4 = auth_find_6 = pub_all
-# OLD as of July 9, 2024
-#auth_find_5 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"
 auth_find_5 = auth_retrieve_6 = ("[DSDENIED] uname='ANONYMOUS' is declined "
                                  f"access to datasets={priv}; "
-                                 f"drs_requested={pub_all + priv} "
+                                 f"drs_requested={all_all} "
                                  f"my_auth={pub_all}")
 auth_retrieve_1 = auth_retrieve_2 = pub_1 + priv
-# OLD as of July 9, 2024
-#auth_retrieve_3 = f"[DSDENIED] {unauth} is declined access to datasets {priv}"
 auth_retrieve_4 = auth_retrieve_5 = auth_retrieve_7 = auth_retrieve_8 = pub_1
-# OLD as of July 9, 2024
-#auth_retrieve_6 = f"[DSDENIED] ANONYMOUS is declined access to datasets {priv}"  # noqa: E501
