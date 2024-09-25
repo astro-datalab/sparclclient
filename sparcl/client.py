@@ -533,8 +533,9 @@ class SparclClient:  # was SparclApi()
         constraints={},  # dict(fname) = [op, param, ...]
         #! exclude_unauth = True,  # Not implemented yet
         limit=500,
+        offset=0,
         sort=None,
-        # count=False,
+        count=False,
         # dataset_list=None,
         verbose=None,
     ):
@@ -556,6 +557,9 @@ class SparclClient:  # was SparclApi()
 
             limit (:obj:`int`, optional): Maximum number of records to
                 return. Defaults to 500.
+
+            offset (:obj:`int`, optional): Number of records to skip before
+                returning records. Defaults to 0.
 
             sort (:obj:`list`, optional): Comma separated list of fields
                 to sort by. Defaults to None. (no sorting)
@@ -598,7 +602,8 @@ class SparclClient:  # was SparclApi()
             }
         uparams = dict(
             limit=limit,
-            #! count='Y' if count else 'N'
+            offset=offset,
+            count='Y' if count else 'N'
         )
         if sort is not None:
             uparams["sort"] = sort
