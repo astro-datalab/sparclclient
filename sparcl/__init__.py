@@ -32,4 +32,4 @@ __all__ = ["client", "align_records"]
 # __version__ = "1.2.1"
 # FIRST uncommented value will be used! (so only leave one uncommented)
 #__version__ = "1.2.2"
-__version__ = "1.2.3b1"
+__version__ = "1.2.3b2"
