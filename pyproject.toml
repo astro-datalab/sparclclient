@@ -24,7 +24,7 @@ license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
 # version is found in: ~/sandbox/sparclclient/sparcl/__init__.py
 dynamic = ["version", "description"]
-dependencies = ["requests==2.31.0", "numpy==1.26.1", "spectres", "pyjwt"]
+dependencies = ["requests==2.31.0", "numpy>=1.23.5,<1.26.4", "spectres", "pyjwt"]
 
 [project.urls]
 "Homepage" = "https://github.com/pypa/sparclclient"
